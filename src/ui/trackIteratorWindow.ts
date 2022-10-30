@@ -12,22 +12,17 @@ const buttonSize = 24;
 // const controlsSpinnerWidth = 146; // controlsWidth - (controlsLabelWidth + 4 + 12); // include spacing
 // const clampThenWrapMode: SpinnerWrapMode = "clampThenWrap";
 
-type TrackElementOnTile = {
-	element: TrackElement,
-	index: number,
-	ride: number,
-	coords: CoordsXY
-};
+const MPH = 29127;
 
 class TrackController {
 
 	readonly selectedCoords = store<CoordsXY>({ x: 0, y: 0 });
 
-	readonly trackElementsOnSelectedTile = arrayStore<TrackElementOnTile>();
+	readonly trackElementsOnSelectedTile = arrayStore<TrackElementItem>();
 	/**
 	 * A specific track element (a single-tile track piece like brakes, or a single tile's worth of a multi-element piece like a turn or loop)
 	 */
-	readonly selectedTrack = store<TrackElementOnTile>();
+	readonly selectedTrack = store<TrackElementItem>();
 
 	readonly selectedIterator = store<TrackIterator | null>(null);
 
@@ -39,27 +34,6 @@ class TrackController {
 		debug(`in constructor`);
 	}
 
-	/**
-	 * For a given coords, returns each track element and its index. Useful for getting a TrackIterator at the given coords.
-	 */
-	private getTrackElementsFromCoords = (coords: CoordsXY): TrackElementOnTile[] => {
-		// have to divide the coords by 32 to get the tile coords
-		debug(`trying to get the selected tile`);
-		const selectedTile = map.getTile(coords.x / 32, coords.y / 32);
-		const reducedTrackElements = selectedTile.elements.reduce<TrackElementOnTile[]>((filtered, el, index) => {
-			if (el.type === "track" && !isRideAStall(el.ride)) {
-				return filtered.concat({
-					element: el,
-					index: index,
-					ride: el.ride,
-					coords
-				});
-			}
-			return filtered;
-		}, []);
-		return reducedTrackElements;
-	};
-
 }
 
 const isPicking = store<boolean>(false);
@@ -67,10 +41,21 @@ const selectedCoords = store<CoordsXY>({ x: 0, y: 0 });
 /**
  * A specific track element (a single-tile track piece like brakes, or a single tile's worth of a multi-element piece like a turn or loop)
  */
-const selectedTrack = store<TrackElementOnTile>();
+const selectedTrack = store<TrackElementItem>();
 let nextTrackCoords: CoordsXYZD | null = null;
 let prevTrackCoords: CoordsXYZD | null = null;
 const selectedIterator = store<TrackIterator | null>(null);
+
+type SegmentItem = {
+	ride: number,
+	rideType: number,
+	segmentType: string,
+	hasChainLift: boolean,
+	coords: CoordsXYZD | null,
+	nextCoords: CoordsXYZD | null,
+	prevCoords: CoordsXYZD | null
+};
+const segmentMap: SegmentItem[] = [];
 
 selectedTrack.subscribe((newVal) => {
 	if (newVal) {
@@ -78,6 +63,7 @@ selectedTrack.subscribe((newVal) => {
 		const newTI = map.getTrackIterator({ x: newVal.coords.x, y: newVal.coords.y }, newVal.index);
 		debug(`new TI gotten`);
 		selectedIterator.set(newTI);
+		clearStationMapData();
 	}
 	else selectedIterator.set(null);
 });
@@ -85,7 +71,7 @@ selectedTrack.subscribe((newVal) => {
 
 
 
-const trackElementsOnSelectedTile = arrayStore<TrackElementOnTile>();
+const trackElementsOnSelectedTile = arrayStore<TrackElementItem>();
 
 let title = `Track iterator (v${pluginVersion})`;
 if (isDevelopment) {
@@ -129,10 +115,10 @@ export const trackIteratorWindow = window({
 				if (!seg) return ["No segment selected"];
 				return [
 					// `This ride: ${getTrackElementType(seg.type)}`,
-					`Ride: ${selectedTrack.get()?.ride}`,
-					`Ride type: ${map.getRide(selectedTrack.get()?.ride || 0).type}`,
+					`Ride: ${selectedTrack.get()?.element.ride}`,
+					`Ride type: ${map.getRide(selectedTrack.get()?.element.ride || 0).type}`,
 					`Ride type: ${map.getRide(0)?.type}`,
-					`Track element type:  ${getTrackElementType(seg.type)}`,
+					`Track element type:  ${getTrackElementTypeName(seg.type)}`,
 					`Next Position:  (${(iter.nextPosition?.x)}, ${iter.nextPosition?.y}, ${iter.nextPosition?.z}), dir ${iter.segment.endDirection}`,
 					`Previous Position: (${(iter.previousPosition?.x)}, ${iter.previousPosition?.y}, ${iter.previousPosition?.z})`,
 
@@ -150,7 +136,7 @@ export const trackIteratorWindow = window({
 					y: nextTrackCoords.y,
 					z: nextTrackCoords.z,
 					direction: nextTrackCoords.direction,
-					ride: selectedTrack.get()?.ride || 0,
+					ride: selectedTrack.get()?.element.ride || 0,
 					trackType: TrackElementType.Flat,
 					rideType: RideType["Hybrid Coaster"],
 				});
@@ -175,7 +161,7 @@ export const trackIteratorWindow = window({
 					y: prevTrackCoords.y,
 					z: prevTrackCoords.z,
 					direction: prevTrackCoords.direction,
-					ride: selectedTrack.get()?.ride || 0,
+					ride: selectedTrack.get()?.element.ride || 0,
 					trackType: TrackElementType.Flat,
 					rideType: RideType["Hybrid Coaster"],
 				});
@@ -188,30 +174,70 @@ export const trackIteratorWindow = window({
 				// ()
 				// selectedIterator.set(selectedIterator.get()?.next || null);
 			}
+		}),
+		button({
+			text: "Iterate over whole track",
+			disabled: compute(selectedIterator, ti => ti ? false : true),
+			onClick: () => createSegmentMap(selectedIterator.get())
 		})
 
 	]
 });
 
-/**
- * For a given coords, returns each track element and its index. Useful for getting a TrackIterator at the given coords.
- */
-const getTrackElementsFromCoords = (coords: CoordsXY): TrackElementOnTile[] => {
-	// have to divide the coords by 32 to get the tile coords
-	debug(`trying to get the selected tile`);
+type TileElementItem<T extends TileElement> = {
+	element: T,
+	index: number,
+	coords: CoordsXY
+}
+
+type TrackElementItem = TileElementItem<TrackElement>;
+
+// const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementProps[] => {
+const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementItem<T>[] => {
+	debug(`Qureying tile for ${elementType} elements at coords (${coords.x}, ${coords.y})`);
+
+	// have to divide the mapCoords by 32 to get the tile coords
 	const selectedTile = map.getTile(coords.x / 32, coords.y / 32);
-	const reducedTrackElements = selectedTile.elements.reduce<TrackElementOnTile[]>((filtered, el, index) => {
-		if (el.type === "track" && !isRideAStall(el.ride)) {
+
+	// filter and map to elements of the given type
+	const reducedELements = selectedTile.elements.reduce<TileElementItem<T>[]>((filtered, el, index) => {
+		if (el.type === elementType) {
 			return filtered.concat({
-				element: el,
+				element: <T>el,
 				index: index,
-				ride: el.ride,
 				coords
 			});
 		}
 		return filtered;
 	}, []);
-	return reducedTrackElements;
+
+	debug(`Query returned ${reducedELements.length} elements`);
+	return reducedELements;
+}
+
+/**
+ * For a given coords, returns each track element and its index. Useful for getting a TrackIterator at the given coords.
+ */
+const getTrackElementsFromCoords = (coords: CoordsXY): TrackElementItem[] => {
+	const potentialTrackElements = getTileElements<TrackElement>("track", coords);
+	const trackElementsWithoutStalls = potentialTrackElements.filter(t => !isRideAStall(t.element.ride));
+	return trackElementsWithoutStalls;
+}
+
+/**
+ * Get the TrackElementItem for a specific ride and given XYZD.
+ * This may behave unexpectedly if collision checks are off and there are multiple segments at the same XYZD.
+ * In that case, it will return the 0th element.
+ */
+const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): TrackElementItem => {
+	const trackELementsOnTile = getTrackElementsFromCoords({ x: coords.x, y: coords.y });
+	// make sure the ride matches this ride
+	const trackForThisRide = trackELementsOnTile.filter(e => e.element.ride === ride);
+
+	// if there are two segments for the same ride in this tile, make sure it's the proper one
+	const chosenTrack = trackForThisRide.filter(t => t.element.baseZ === coords.z);
+	if (chosenTrack.length > 1) console.log(`Error: There are two overlapping elements at this tile with the same XYZD. Returning the first.`);
+	return chosenTrack[0];
 };
 
 /**
@@ -223,16 +249,21 @@ const isRideAStall = (rideNumber: number): boolean => {
 };
 
 const processTileSelected = (coords: CoordsXY): void => {
+	// update model coords
 	selectedCoords.set(coords);
 	debug(`Selected coords are (${coords.x}, ${coords.y}`);
+
+	// update model trackElementsOnSelectedTile
 	trackElementsOnSelectedTile.set(getTrackElementsFromCoords(coords));
+
+	// update model selectedTrack to 0th val to display in ListView
+	// otherwise the Listview will be blank until one is selected from the dropdown
 	if (trackElementsOnSelectedTile.get().length > 0) {
 		selectedTrack.set(trackElementsOnSelectedTile.get()[0]);
 	}
-
 };
 
-const getTrackElementType = (val: number): string => {
+const getTrackElementTypeName = (val: number): string => {
 	return (TrackElementType)[val];
 
 };
@@ -255,6 +286,7 @@ type TrackElementProps = {
 };
 
 const buildTrackElement = (trackProps: TrackElementProps, callback?: (result: GameActionResult) => void): void => {
+
 	toggleRideBuildingCheats(true);
 	// eslint-disable-next-line prefer-const
 	let { brakeSpeed, colour, seatRotation, trackPlaceFlags, isFromTrackDesign, flags, ...mainProps } = trackProps;
@@ -282,12 +314,112 @@ const buildTrackElement = (trackProps: TrackElementProps, callback?: (result: Ga
 		if (callback) callback(result);
 	});
 
+	toggleRideBuildingCheats(false);
 };
 
-// TODO refactor to use gameactions for network compatability
+// TODOO check what the values were before toggling  and set them back to what they were so we're not turning off cheats the user wants to be on
 const toggleRideBuildingCheats = (cheatsOn: boolean) => {
+
+	// TODO refactor to use gameactions for network compatability
 	// context.executeAction("setcheataction", ) // figure out what the args are
 	cheats.buildInPauseMode = cheatsOn;
 	cheats.allowArbitraryRideTypeChanges = cheatsOn;
+
+};
+
+const createSegmentMap = (ti: TrackIterator | null): void => {
+
+	if (!ti) {
+		debug(`no track iterator selected`);
+		return;
+	}
+
+	for (let i = 0; i < 5000; i++) {
+		const completed = pushSegmentToSegmentMap(ti);
+		if (completed) {
+			debug(`Total track segments: ${i}`);
+			break;
+		}
+		const nextSegment = ti.next();
+		if (!nextSegment) break;
+		// TODO add in after like 3k iterations to break that it couldn't find stations
+
+	}
+
+	// remove all the duplicate piece so that the array starts at a BeginStation
+	debug(`firstStationIndex: `);
+	const finalSegMap = segmentMap.slice(firstStationIndex);
+
+	debug(`Count of station sections: ${finalSegMap.filter(segment => segment.segmentType === "BeginStation" || segment.segmentType === "MiddleStation" || segment.segmentType === "EndStation").length}`);
+
+	debug(`Total pieces after slice: ${finalSegMap.length}`);
+	finalSegMap.map((seg, i) => {
+		debug(`segment ${i}: ${seg.segmentType} pointing ${seg.coords?.direction}${seg.hasChainLift ? ", \tchainlift" : ""}`);
+	});
+};
+
+const stationMap: SegmentItem[] = [];
+
+const pushSegmentToSegmentMap = (ti: TrackIterator): boolean => {
+
+	const ride = selectedTrack.get()?.element.ride || 0;
+	const rideType = map.getRide(selectedTrack.get()?.element.ride || 0).type;
+	const segmentType = getTrackElementTypeName(ti.segment?.type || 0);
+	const thisElement = getSpecificTrackElement(ride, ti.position);
+
+	const thisSegment: SegmentItem = {
+		ride,
+		rideType,
+		segmentType,
+		hasChainLift: doesElementHaveChainLift(thisElement),
+		coords: ti.position,
+		nextCoords: ti.previousPosition,
+		prevCoords: ti.nextPosition
+	};
+
+	// rather than checking if it's a complete circuit every time a segment is built,
+	// only check on station pieces. This should significantly cut down on computation.
+	if (segmentType === "BeginStation" || segmentType === "MiddleStation" || segmentType === "EndStation") {
+		debug(`New station piece found at ${printSegmentCoords(thisSegment)}`);
+		const foundAMatch = stationMap.filter((s => {
+			return (
+				s.coords?.direction == thisSegment.coords?.direction &&
+				s.coords?.x == thisSegment.coords?.x &&
+				s.coords?.y == thisSegment.coords?.y &&
+				s.coords?.z == thisSegment.coords?.z
+			);
+		}));
+
+		if (foundAMatch.length > 0) { // made a loop
+			debug(`Loop completed at piece ${foundAMatch[0].segmentType} at ${foundAMatch[0].coords}`);
+			return true;
+		}
+		// haven't completed the loop, so keep iterating
+		if (stationMap.length === 0) { firstStationIndex = segmentMap.length; }
+		stationMap.push(thisSegment);
+	}
+
+	// not a station
+	debug(thisSegment.segmentType);
+	segmentMap.push(thisSegment);
+	return false; // haven't made a lap yet
+};
+
+const printSegmentCoords = (segment: SegmentItem) => {
+	const { coords } = segment;
+	return `(${coords?.x}), ${coords?.y}, ${coords?.z}, dir ${coords?.direction}. `;
+};
+
+const clearStationMapData = () => {
+	segmentMap.length = 0;
+	stationMap.length = 0;
+};
+
+let firstStationIndex: number;
+
+
+
+const doesElementHaveChainLift = (trackElem: TrackElementItem) => {
+	return trackElem.element.hasChainLift;
 
 };
