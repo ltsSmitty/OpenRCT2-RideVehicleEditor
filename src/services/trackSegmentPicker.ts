@@ -31,3 +31,4 @@ export function toggleXYZPicker(isPressed: boolean, onPick: (coords: CoordsXYZ) 
         }
     }
 }
+
