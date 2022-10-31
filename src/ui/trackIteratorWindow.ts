@@ -3,8 +3,9 @@ import { arrayStore, button, compute, dropdown, listview, SpinnerWrapMode, store
 import { toggleXYZPicker } from "../services/trackSegmentPicker";
 import { isDevelopment, pluginVersion } from "../environment";
 import { TrackElementType } from "../utilities/trackElementType";
-import { RideType } from "../utilities/rideType";
 import { debug } from "../utilities/logger";
+import { buildTrackElement } from "../services/rideBuilder";
+import { getBuildableSegments } from "../services/segmentValidator";
 
 const buttonSize = 24;
 // const controlsWidth = 244;
@@ -12,39 +13,22 @@ const buttonSize = 24;
 // const controlsSpinnerWidth = 146; // controlsWidth - (controlsLabelWidth + 4 + 12); // include spacing
 // const clampThenWrapMode: SpinnerWrapMode = "clampThenWrap";
 
-const MPH = 29127;
-
-class TrackController {
-
-	readonly selectedCoords = store<CoordsXY>({ x: 0, y: 0 });
-
-	readonly trackElementsOnSelectedTile = arrayStore<TrackElementItem>();
-	/**
-	 * A specific track element (a single-tile track piece like brakes, or a single tile's worth of a multi-element piece like a turn or loop)
-	 */
-	readonly selectedTrack = store<TrackElementItem>();
-
-	readonly selectedIterator = store<TrackIterator | null>(null);
-
-	nextTrackCoords: CoordsXYZD | null = null;
-	prevTrackCoords: CoordsXYZD | null = null;
-
-	constructor() {
-		// TODO somethign in here
-		debug(`in constructor`);
-	}
-
-}
-
 const isPicking = store<boolean>(false);
 const selectedCoords = store<CoordsXY>({ x: 0, y: 0 });
 /**
  * A specific track element (a single-tile track piece like brakes, or a single tile's worth of a multi-element piece like a turn or loop)
  */
 const selectedTrack = store<TrackElementItem>();
-let nextTrackCoords: CoordsXYZD | null = null;
-let prevTrackCoords: CoordsXYZD | null = null;
+
+const nextTrackCoords = store<CoordsXYZD | null>(null);
+
+const prevTrackCoords = store<CoordsXYZD | null>(null);
+
 const selectedIterator = store<TrackIterator | null>(null);
+
+const buildableSegments = arrayStore<TrackElementType>();
+
+const segmentToBuild = store<TrackElementType | null>(null);
 
 type SegmentItem = {
 	ride: number,
@@ -64,9 +48,23 @@ selectedTrack.subscribe((newVal) => {
 		debug(`new TI gotten`);
 		selectedIterator.set(newTI);
 		clearStationMapData();
+		nextTrackCoords.set(selectedIterator.get()?.nextPosition || null);
+		prevTrackCoords.set(selectedIterator.get()?.previousPosition || null)
+		buildableSegments.set(getBuildableSegments(newVal.element.trackType));
+
+		if (buildableSegments.get().length > 0) {
+			debug(`setting segmentToBuild to 0th option`);
+			segmentToBuild.set(buildableSegments.get()[0]);
+		}
 	}
 	else selectedIterator.set(null);
 });
+
+selectedIterator.subscribe((newTIVal) => {
+	debug(`iter: ${JSON.stringify(newTIVal ? newTIVal.position : null)}`);
+	nextTrackCoords.set((newTIVal ? newTIVal.nextPosition : null));
+	prevTrackCoords.set((newTIVal ? newTIVal.previousPosition : null));
+})
 
 
 
@@ -89,7 +87,7 @@ export const trackIteratorWindow = window({
 	content: [
 		toggle({
 			width: buttonSize, height: buttonSize,
-			tooltip: "Use the picker to select a vehicle by clicking it",
+			tooltip: "Use the picker to select a track segment by clicking it",
 			image: 29467, // SPR_G2_EYEDROPPER
 			isPressed: isPicking,
 			// disabled: model.isEditDisabled,
@@ -101,15 +99,13 @@ export const trackIteratorWindow = window({
 		}),
 		dropdown({
 			items: compute(trackElementsOnSelectedTile, (elements) => elements.map(e => `Ride: ${e.element.ride}, height: ${e.element.baseHeight}, i: ${e.index}`)),
-			onChange: (selectedIndex) => { selectedTrack.set(trackElementsOnSelectedTile.get()[selectedIndex]); }
+			onChange: (selectedIndex) => { selectedTrack.set(trackElementsOnSelectedTile.get()[selectedIndex]); },
+			selectedIndex: compute(buildableSegments, segments => segments.indexOf(segmentToBuild.get() || 0))
 		}),
+
 		listview({
 			items: compute(selectedIterator, iter => {
 				if (!iter) return ["No track iterator selected"];
-
-				debug(`iter: ${JSON.stringify(iter.position)}`);
-				nextTrackCoords = (iter.nextPosition);
-				prevTrackCoords = (iter.previousPosition);
 
 				const seg = iter.segment;
 				if (!seg) return ["No segment selected"];
@@ -125,54 +121,81 @@ export const trackIteratorWindow = window({
 				];
 			})
 		}),
+		dropdown({
+			disabled: compute(buildableSegments, segments => { return segments ? false : true; }),
+			items: compute(buildableSegments, segments => {
+				const allSegments = segments.map(seg => TrackElementType[seg])
+				return allSegments;
+			}),
+			onChange: (index) => {
+				segmentToBuild.set(buildableSegments.get()[index]);
+				if (segmentToBuild.get())
+					debug(`Segment to build changed to ${TrackElementType[segmentToBuild.get()!]}`)
+			}
+		}),
+		listview({
+			items: compute(segmentToBuild, segment => {
+				if (!segment) return ["No segment selected"];
+				return [`${JSON.stringify(context.getTrackSegment(segment))}`]
+				// const segDetails = context.getTrackSegment(segment)
+				// // const detailMap = Object.keys(segDetails || {}).map((key) => { return (segDetails ? `${key}: ${segDetails[key]}` : "") })
+				// debug(`detailMap: ${detailMap}`)
+				// return [...detailMap];
+			})
+		}),
 		button({
 			text: "Build at next position",
 			onClick: () => {
 				//build a piece at the supposed next place
-				if (!selectedTrack.get() || !nextTrackCoords) { debug(`no track iterator selected`); return; }
+				const nextCoords = nextTrackCoords.get();
+				const thisRide = selectedTrack.get()?.element;
+				if (!selectedTrack.get() || !nextCoords || segmentToBuild.get() == null || thisRide?.ride == null) {
+					debug(`nextCoords: ${JSON.stringify(nextCoords)}`);
+					debug(`thisRide: ${JSON.stringify(thisRide?.ride)}`);
+					debug(`selectedTrack: ${JSON.stringify(selectedTrack.get())}`);
+					debug(`segmentToBuild.get(): ${JSON.stringify(segmentToBuild.get())}`);
+					return;
+				}
 
 				buildTrackElement({
-					x: nextTrackCoords.x,
-					y: nextTrackCoords.y,
-					z: nextTrackCoords.z,
-					direction: nextTrackCoords.direction,
-					ride: selectedTrack.get()?.element.ride || 0,
-					trackType: TrackElementType.Flat,
-					rideType: RideType["Hybrid Coaster"],
+					x: nextCoords.x,
+					y: nextCoords.y,
+					z: nextCoords.z,
+					direction: nextCoords.direction,
+					ride: thisRide.ride,
+					trackType: segmentToBuild.get() || 0,
+					rideType: thisRide.rideType,
 				});
-				//update the current trackIterator value
 
-				// const nextTI = selectedIterator.get()?.next;
-				// if (nextTI) { //selectedIterator
-
-				// }
-				// ()
-				// selectedIterator.set(selectedIterator.get()?.next || null);
+				// move TI to next space
+				// show next tiles that can be build
+				iterateToNextSelectedTrack()
 			}
 		}),
 		button({
 			text: "Build at previous position",
 			onClick: () => {
-				//build a piece at the supposed next place
-				if (!selectedTrack.get() || !prevTrackCoords) { debug(`no track iterator selected`); return; }
+				debug(JSON.stringify(context.getTrackSegment(10)?.beginAngle))
+				// //build a piece at the supposed next place
+				// const prevCoords = prevTrackCoords.get()
 
-				buildTrackElement({
-					x: prevTrackCoords.x,
-					y: prevTrackCoords.y,
-					z: prevTrackCoords.z,
-					direction: prevTrackCoords.direction,
-					ride: selectedTrack.get()?.element.ride || 0,
-					trackType: TrackElementType.Flat,
-					rideType: RideType["Hybrid Coaster"],
-				});
-				//update the current trackIterator value
-
-				// const nextTI = selectedIterator.get()?.next;
-				// if (nextTI) { //selectedIterator
-
+				// const thisRide = <number>selectedTrack.get()?.element.ride;
+				// if (!selectedTrack.get() || !prevCoords || segmentToBuild.get() == null || thisRide == null) {
+				// 	debug(`prevCoords: ${JSON.stringify(prevCoords)}`);
+				// 	debug(`thisRide: ${JSON.stringify(thisRide)}`);
+				// 	debug(`selectedTrack: ${JSON.stringify(selectedTrack.get())}`);
+				// 	debug(`segmentToBuild.get(): ${JSON.stringify(segmentToBuild.get())}`);
+				// 	return;
 				// }
-				// ()
-				// selectedIterator.set(selectedIterator.get()?.next || null);
+				// buildTrackElement({
+				// 	x: prevCoords.x,
+				// 	y: prevCoords.y,
+				// 	z: prevCoords.z,
+				// 	direction: prevCoords.direction,
+				// 	ride: selectedTrack.get()?.element.ride || 0,
+				// 	trackType: TrackElementType.Flat,
+				// 	rideType: RideType["Hybrid Coaster"],
+				// });
 			}
 		}),
 		button({
@@ -184,6 +207,8 @@ export const trackIteratorWindow = window({
 	]
 });
 
+type relativeSegment = "previousSegment" | "thisSegment" | "nextSegment";
+
 type TileElementItem<T extends TileElement> = {
 	element: T,
 	index: number,
@@ -192,7 +217,6 @@ type TileElementItem<T extends TileElement> = {
 
 type TrackElementItem = TileElementItem<TrackElement>;
 
-// const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementProps[] => {
 const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementItem<T>[] => {
 	debug(`Qureying tile for ${elementType} elements at coords (${coords.x}, ${coords.y})`);
 
@@ -265,65 +289,6 @@ const processTileSelected = (coords: CoordsXY): void => {
 
 const getTrackElementTypeName = (val: number): string => {
 	return (TrackElementType)[val];
-
-};
-
-
-type TrackElementProps = {
-	x: number, // not tile x, but the big x
-	y: number,
-	z: number,
-	direction: Direction,
-	ride: number, // will log an error if you specify a ride # that doesn't exist
-	trackType: TrackElementType, // e.g. TrackElementType.LeftBankedDown25ToDown25
-	rideType: RideType,
-	brakeSpeed?: number,
-	colour?: number,
-	seatRotation?: number | null,
-	trackPlaceFlags?: number, // the ghost flag is 104
-	isFromTrackDesign?: boolean, // default is false
-	flags?: number
-};
-
-const buildTrackElement = (trackProps: TrackElementProps, callback?: (result: GameActionResult) => void): void => {
-
-	toggleRideBuildingCheats(true);
-	// eslint-disable-next-line prefer-const
-	let { brakeSpeed, colour, seatRotation, trackPlaceFlags, isFromTrackDesign, flags, ...mainProps } = trackProps;
-
-	(brakeSpeed ? brakeSpeed : brakeSpeed = 0);
-	(colour ? colour : colour = 0);
-	(seatRotation ? seatRotation : seatRotation = 4);
-	(trackPlaceFlags ? trackPlaceFlags : trackPlaceFlags = 0);
-	(isFromTrackDesign ? isFromTrackDesign : isFromTrackDesign = false);
-	(flags ? flags : flags = 0);
-
-	const trackPlaceParams = {
-		...mainProps,
-		brakeSpeed,
-		colour,
-		seatRotation,
-		trackPlaceFlags,
-		isFromTrackDesign,
-		flags
-	};
-
-	context.executeAction("trackplace", trackPlaceParams, (result) => {
-		debug(`Build result: ${JSON.stringify(result)}`);
-		toggleRideBuildingCheats(false);
-		if (callback) callback(result);
-	});
-
-	toggleRideBuildingCheats(false);
-};
-
-// TODOO check what the values were before toggling  and set them back to what they were so we're not turning off cheats the user wants to be on
-const toggleRideBuildingCheats = (cheatsOn: boolean) => {
-
-	// TODO refactor to use gameactions for network compatability
-	// context.executeAction("setcheataction", ) // figure out what the args are
-	cheats.buildInPauseMode = cheatsOn;
-	cheats.allowArbitraryRideTypeChanges = cheatsOn;
 
 };
 
@@ -423,3 +388,19 @@ const doesElementHaveChainLift = (trackElem: TrackElementItem) => {
 	return trackElem.element.hasChainLift;
 
 };
+
+const iterateToNextSelectedTrack = () => {
+	// get the specific ride
+	const ride = selectedTrack.get()?.element.ride;
+	const theseTrackCoords = nextTrackCoords.get();
+	if (ride != null && theseTrackCoords) {
+		const nextSegment = getSpecificTrackElement(ride, theseTrackCoords)
+		selectedTrack.set(nextSegment)
+		return;
+	}
+	else {
+		debug(`ride: ${ride}`);
+		debug(`nextTrackCoords: ${JSON.stringify(theseTrackCoords)}`)
+		debug(`Either a ride of the next track coords are missing.`);
+	}
+}
