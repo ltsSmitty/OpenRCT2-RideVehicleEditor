@@ -14,11 +14,11 @@ export class Segment {
     private _trackType: TrackElementType; // e.g. TrackElementType.LeftBankedDown25ToDown25
     private _rideType: RideType;
 
-    constructor({ location: CoordsXYZD, ride: number, trackType: TrackElementType, rideType: RideType }) {
-        this._location = location;
-        this._ride = ride;
-        this._trackType = trackType;
-        this._rideType = rideType;
+    constructor(segment: SegmentDescriptor) {
+        this._location = segment.location;
+        this._ride = segment.ride;
+        this._trackType = segment.trackType;
+        this._rideType = segment.rideType;
     }
 
     public get(): SegmentDescriptor {
@@ -30,4 +30,3 @@ export class Segment {
         };
     }
 }
-
