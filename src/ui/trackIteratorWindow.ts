@@ -269,6 +269,12 @@ const isRideAStall = (rideNumber: number): boolean => {
 };
 
 const processTileSelected = (coords: CoordsXY): void => {
+
+	// get a Segment[]
+
+
+
+
 	// update model coords
 	// selectedCoords.set(coords);
 	// debug(`Selected coords are (${coords.x}, ${coords.y}`);

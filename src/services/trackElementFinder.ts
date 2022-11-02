@@ -1,5 +1,7 @@
+import { Segment } from '../objects/segment';
 import { TileElementItem, TrackElementItem } from './SegmentController';
 import { debug } from "../utilities/logger";
+
 
 export const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementItem<T>[] => {
     debug(`Qureying tile for ${elementType} elements at coords (${coords.x}, ${coords.y})`);

@@ -1,3 +1,7 @@
+/**
+ * An enum the describes the specific segment type, such as "Flat" = 0, "RightQuarterTurn5TilesDown25" = 37,
+ *  "SBendLeft" = 38, etc.
+ */
 export enum TrackElementType {
     "Flat" = 0,
     "EndStation" = 1,
