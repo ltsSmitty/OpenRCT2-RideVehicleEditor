@@ -1,4 +1,3 @@
-import { Segment } from '../objects/segment';
 import { TileElementItem, TrackElementItem } from './SegmentController';
 import { debug } from "../utilities/logger";
 
