@@ -14,7 +14,7 @@ export class Segment {
     private _trackType: TrackElementType; // e.g. TrackElementType.LeftBankedDown25ToDown25
     private _rideType: RideType;
 
-    constructor(location: CoordsXYZD, ride: number, trackType: TrackElementType, rideType: RideType) {
+    constructor({ location: CoordsXYZD, ride: number, trackType: TrackElementType, rideType: RideType }) {
         this._location = location;
         this._ride = ride;
         this._trackType = trackType;
