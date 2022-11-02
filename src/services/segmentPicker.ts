@@ -1,6 +1,4 @@
 import * as log from "../utilities/logger";
-
-
 const pickerToolId = "ti-pick-xy";
 
 
@@ -15,7 +13,7 @@ export function toggleXYZPicker(isPressed: boolean, onPick: (coords: CoordsXYZ) 
             onDown: args => {
                 // The picker will choose coords
                 const coords = args.mapCoords; // the tool's selected coords
-                log.debug(JSON.stringify(args));
+                // log.debug(JSON.stringify(args));
                 if (coords) {
                     onPick(<CoordsXYZ>coords);
                     ui.tool?.cancel();
@@ -31,4 +29,3 @@ export function toggleXYZPicker(isPressed: boolean, onPick: (coords: CoordsXYZ) 
         }
     }
 }
-

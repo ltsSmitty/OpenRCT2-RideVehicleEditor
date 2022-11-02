@@ -1,11 +1,13 @@
+import { SegmentSelector } from './../objects/segmentSelector';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { arrayStore, button, compute, dropdown, listview, SpinnerWrapMode, store, toggle, window } from "openrct2-flexui";
-import { toggleXYZPicker } from "../services/trackSegmentPicker";
+import { toggleXYZPicker } from "../services/segmentPicker";
 import { isDevelopment, pluginVersion } from "../environment";
 import { TrackElementType } from "../utilities/trackElementType";
 import { debug } from "../utilities/logger";
-import { buildTrackElement } from "../services/rideBuilder";
+import { buildTrackElement, buildFollowingSegment } from "../services/rideBuilder";
 import { getBuildableSegments } from "../services/segmentValidator";
+import { TileElementItem, TrackElementItem } from '../services/SegmentController';
 
 const buttonSize = 24;
 // const controlsWidth = 244;
@@ -14,21 +16,28 @@ const buttonSize = 24;
 // const clampThenWrapMode: SpinnerWrapMode = "clampThenWrap";
 
 const isPicking = store<boolean>(false);
-const selectedCoords = store<CoordsXY>({ x: 0, y: 0 });
-/**
- * A specific track element (a single-tile track piece like brakes, or a single tile's worth of a multi-element piece like a turn or loop)
- */
-const selectedTrack = store<TrackElementItem>();
 
-const nextTrackCoords = store<CoordsXYZD | null>(null);
+// const sC = new SegmentController();
 
-const prevTrackCoords = store<CoordsXYZD | null>(null);
-
-const selectedIterator = store<TrackIterator | null>(null);
+const onNext = (result: boolean) => {
+	debug(`Iterated to next segment:`)
+	debug(`${segment.getSegmentInfo()?.position}`)
+};
+const onPrevious = (result: boolean) => {
+	debug(`onPrevious callback: ${result}`);
+};
 
 const buildableSegments = arrayStore<TrackElementType>();
-
 const segmentToBuild = store<TrackElementType | null>(null);
+const segment = new SegmentSelector(onNext, onPrevious);
+const segmentPositionStore = segment.positionStore;
+
+segmentToBuild.subscribe((newSegment) => {
+	debug(`segmentInfo upon trying to build preview: \n${JSON.stringify(segment.getSegmentInfo())}`)
+	if (segment.getSegmentInfo() && newSegment !== null) {
+		buildFollowingSegment(segment.getSegmentInfo(), newSegment, "preview");
+	}
+})
 
 type SegmentItem = {
 	ride: number,
@@ -41,30 +50,45 @@ type SegmentItem = {
 };
 const segmentMap: SegmentItem[] = [];
 
-selectedTrack.subscribe((newVal) => {
-	if (newVal) {
-		debug(`new val in selected track. ${JSON.stringify(newVal.coords)}, ${newVal.index}.`);
-		const newTI = map.getTrackIterator({ x: newVal.coords.x, y: newVal.coords.y }, newVal.index);
-		debug(`new TI gotten`);
-		selectedIterator.set(newTI);
-		clearStationMapData();
-		nextTrackCoords.set(selectedIterator.get()?.nextPosition || null);
-		prevTrackCoords.set(selectedIterator.get()?.previousPosition || null)
-		buildableSegments.set(getBuildableSegments(newVal.element.trackType));
-
-		if (buildableSegments.get().length > 0) {
-			debug(`setting segmentToBuild to 0th option`);
-			segmentToBuild.set(buildableSegments.get()[0]);
-		}
+// selectedSegment.subscribe((newVal) => {
+// 	if (newVal) {
+// 		debug(`new val in selected track. ${JSON.stringify(newVal.coords)}, ${newVal.index}.`);
+// 		const newTI = map.getTrackIterator({ x: newVal.coords.x, y: newVal.coords.y }, newVal.index);
+// 		debug(`new TI gotten`);
+// 		selectedIterator.set(newTI);
+// 		clearStationMapData();
+// 		nextTrackCoords.set(selectedIterator.get()?.nextPosition || null);
+// 		prevTrackCoords.set(selectedIterator.get()?.previousPosition || null)
+segmentPositionStore.subscribe(newPosition => {
+	debug(`segment store updated`);
+	if (!segment.getSegmentInfo()?.position) {
+		debug(`no segment selected`);
+		return;
 	}
-	else selectedIterator.set(null);
-});
+	debug(`seg: ${JSON.stringify(segment.getSegmentInfo())}`)
+	const segInfo = segment.getSegmentInfo();
 
-selectedIterator.subscribe((newTIVal) => {
-	debug(`iter: ${JSON.stringify(newTIVal ? newTIVal.position : null)}`);
-	nextTrackCoords.set((newTIVal ? newTIVal.nextPosition : null));
-	prevTrackCoords.set((newTIVal ? newTIVal.previousPosition : null));
+	if (!segInfo) {
+		debug(`no segment info able to be gotten`);
+		return;
+	}
+	buildableSegments.set(getBuildableSegments(segInfo.segment.type));
+
+	if (buildableSegments.get().length > 0) {
+		debug(`setting segmentToBuild to 0th option`);
+		segmentToBuild.set(buildableSegments.get()[0]);
+	}
 })
+
+// 	}
+// 	else selectedIterator.set(null);
+// });
+
+// selectedIterator.subscribe((newTIVal) => {
+// 	debug(`iter: ${JSON.stringify(newTIVal ? newTIVal.position : null)}`);
+// 	nextTrackCoords.set((newTIVal ? newTIVal.nextPosition : null));
+// 	prevTrackCoords.set((newTIVal ? newTIVal.previousPosition : null));
+// })
 
 
 
@@ -99,24 +123,22 @@ export const trackIteratorWindow = window({
 		}),
 		dropdown({
 			items: compute(trackElementsOnSelectedTile, (elements) => elements.map(e => `Ride: ${e.element.ride}, height: ${e.element.baseHeight}, i: ${e.index}`)),
-			onChange: (selectedIndex) => { selectedTrack.set(trackElementsOnSelectedTile.get()[selectedIndex]); },
+			onChange: (selectedIndex) => { segment.setSegment(trackElementsOnSelectedTile.get()[selectedIndex]); },
 			selectedIndex: compute(buildableSegments, segments => segments.indexOf(segmentToBuild.get() || 0))
 		}),
 
 		listview({
-			items: compute(selectedIterator, iter => {
-				if (!iter) return ["No track iterator selected"];
+			items: compute(segmentPositionStore, newPosition => {
+				if (!segment.getSegmentInfo()) return ["No track iterator selected"];
 
-				const seg = iter.segment;
-				if (!seg) return ["No segment selected"];
+				const segInfo = segment.getSegmentInfo();
+				if (!segInfo) return ["No segment selected"];
 				return [
-					// `This ride: ${getTrackElementType(seg.type)}`,
-					`Ride: ${selectedTrack.get()?.element.ride}`,
-					`Ride type: ${map.getRide(selectedTrack.get()?.element.ride || 0).type}`,
-					`Ride type: ${map.getRide(0)?.type}`,
-					`Track element type:  ${getTrackElementTypeName(seg.type)}`,
-					`Next Position:  (${(iter.nextPosition?.x)}, ${iter.nextPosition?.y}, ${iter.nextPosition?.z}), dir ${iter.segment.endDirection}`,
-					`Previous Position: (${(iter.previousPosition?.x)}, ${iter.previousPosition?.y}, ${iter.previousPosition?.z})`,
+					`Ride: ${segInfo.ride}`,
+					`Ride type: ${map.getRide(segInfo.ride || 0).type}`,
+					`Track element type:  ${getTrackElementTypeName(segInfo.segment.type)}`,
+					`Next Position:  (${segInfo.nextPosition.x}, ${segInfo.nextPosition?.y}, ${segInfo.nextPosition?.z}), dir ${segInfo.nextPosition.direction}`,
+					`Previous Position: (${(segInfo.previousPosition?.x)}, ${segInfo.previousPosition?.y}, ${segInfo.previousPosition?.z}), dir ${segInfo.nextPosition.direction}`,
 
 				];
 			})
@@ -128,6 +150,7 @@ export const trackIteratorWindow = window({
 				return allSegments;
 			}),
 			onChange: (index) => {
+				debug(`Segment selection dropdown changed.`);
 				segmentToBuild.set(buildableSegments.get()[index]);
 				if (segmentToBuild.get())
 					debug(`Segment to build changed to ${TrackElementType[segmentToBuild.get()!]}`)
@@ -147,25 +170,25 @@ export const trackIteratorWindow = window({
 			text: "Build at next position",
 			onClick: () => {
 				//build a piece at the supposed next place
-				const nextCoords = nextTrackCoords.get();
-				const thisRide = selectedTrack.get()?.element;
-				if (!selectedTrack.get() || !nextCoords || segmentToBuild.get() == null || thisRide?.ride == null) {
+				const thisSegmentInfo = segment.getSegmentInfo();
+				const nextCoords = thisSegmentInfo?.nextPosition;
+				const thisRide = thisSegmentInfo?.ride;
+				if (!thisSegmentInfo || !nextCoords || segmentToBuild.get() == null || thisRide == null) {
+					debug(`error building at this position:`);
 					debug(`nextCoords: ${JSON.stringify(nextCoords)}`);
-					debug(`thisRide: ${JSON.stringify(thisRide?.ride)}`);
-					debug(`selectedTrack: ${JSON.stringify(selectedTrack.get())}`);
+					debug(`thisRide: ${JSON.stringify(thisRide)}`);
+					debug(`selectedSegment: ${JSON.stringify(thisSegmentInfo?.segment)}`);
 					debug(`segmentToBuild.get(): ${JSON.stringify(segmentToBuild.get())}`);
 					return;
 				}
 
-				buildTrackElement({
-					x: nextCoords.x,
-					y: nextCoords.y,
-					z: nextCoords.z,
-					direction: nextCoords.direction,
-					ride: thisRide.ride,
-					trackType: segmentToBuild.get() || 0,
-					rideType: thisRide.rideType,
-				});
+				buildFollowingSegment(thisSegmentInfo, segmentToBuild.get(), "real");
+				// buildTrackElement({
+				// 	buildLocation: nextCoords,
+				// 	ride: thisRide,
+				// 	trackType: segmentToBuild.get() || 0,
+				// 	rideType: map.getRide(thisRide)?.type,
+				// });
 
 				// move TI to next space
 				// show next tiles that can be build
@@ -176,46 +199,19 @@ export const trackIteratorWindow = window({
 			text: "Build at previous position",
 			onClick: () => {
 				debug(JSON.stringify(context.getTrackSegment(10)?.beginAngle))
-				// //build a piece at the supposed next place
-				// const prevCoords = prevTrackCoords.get()
 
-				// const thisRide = <number>selectedTrack.get()?.element.ride;
-				// if (!selectedTrack.get() || !prevCoords || segmentToBuild.get() == null || thisRide == null) {
-				// 	debug(`prevCoords: ${JSON.stringify(prevCoords)}`);
-				// 	debug(`thisRide: ${JSON.stringify(thisRide)}`);
-				// 	debug(`selectedTrack: ${JSON.stringify(selectedTrack.get())}`);
-				// 	debug(`segmentToBuild.get(): ${JSON.stringify(segmentToBuild.get())}`);
-				// 	return;
-				// }
-				// buildTrackElement({
-				// 	x: prevCoords.x,
-				// 	y: prevCoords.y,
-				// 	z: prevCoords.z,
-				// 	direction: prevCoords.direction,
-				// 	ride: selectedTrack.get()?.element.ride || 0,
-				// 	trackType: TrackElementType.Flat,
-				// 	rideType: RideType["Hybrid Coaster"],
-				// });
 			}
 		}),
-		button({
-			text: "Iterate over whole track",
-			disabled: compute(selectedIterator, ti => ti ? false : true),
-			onClick: () => createSegmentMap(selectedIterator.get())
-		})
+		// button({
+		// 	text: "Iterate over whole track",
+		// 	disabled: compute(selectedIterator, ti => ti ? false : true),
+		// 	onClick: () => createSegmentMap(selectedIterator.get())
+		// })
 
 	]
 });
 
-type relativeSegment = "previousSegment" | "thisSegment" | "nextSegment";
 
-type TileElementItem<T extends TileElement> = {
-	element: T,
-	index: number,
-	coords: CoordsXY
-}
-
-type TrackElementItem = TileElementItem<TrackElement>;
 
 const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementItem<T>[] => {
 	debug(`Qureying tile for ${elementType} elements at coords (${coords.x}, ${coords.y})`);
@@ -274,16 +270,23 @@ const isRideAStall = (rideNumber: number): boolean => {
 
 const processTileSelected = (coords: CoordsXY): void => {
 	// update model coords
-	selectedCoords.set(coords);
-	debug(`Selected coords are (${coords.x}, ${coords.y}`);
+	// selectedCoords.set(coords);
+	// debug(`Selected coords are (${coords.x}, ${coords.y}`);
+
+	// const elementsOnCoords = getTrackElementsFromCoords(coords);
 
 	// update model trackElementsOnSelectedTile
 	trackElementsOnSelectedTile.set(getTrackElementsFromCoords(coords));
 
-	// update model selectedTrack to 0th val to display in ListView
+	// debug(`number of trackElements found: ${trackElementsOnSelectedTile.get().length}`);
+	// update model selectedSegment to 0th val to display in ListView
 	// otherwise the Listview will be blank until one is selected from the dropdown
 	if (trackElementsOnSelectedTile.get().length > 0) {
-		selectedTrack.set(trackElementsOnSelectedTile.get()[0]);
+		segment.setSegment(trackElementsOnSelectedTile.get()[0]);
+
+		// debug(`segment deets: ${JSON.stringify(segment.getSegmentInfo())}`)
+		// const segmentCopy = <SegmentSelector>{ ...segment };
+		// segmentStore.set(segmentCopy);
 	}
 };
 
@@ -327,8 +330,8 @@ const stationMap: SegmentItem[] = [];
 
 const pushSegmentToSegmentMap = (ti: TrackIterator): boolean => {
 
-	const ride = selectedTrack.get()?.element.ride || 0;
-	const rideType = map.getRide(selectedTrack.get()?.element.ride || 0).type;
+	const ride = selectedSegment.get()?.element.ride || 0;
+	const rideType = map.getRide(selectedSegment.get()?.element.ride || 0).type;
 	const segmentType = getTrackElementTypeName(ti.segment?.type || 0);
 	const thisElement = getSpecificTrackElement(ride, ti.position);
 
@@ -390,17 +393,24 @@ const doesElementHaveChainLift = (trackElem: TrackElementItem) => {
 };
 
 const iterateToNextSelectedTrack = () => {
-	// get the specific ride
-	const ride = selectedTrack.get()?.element.ride;
-	const theseTrackCoords = nextTrackCoords.get();
-	if (ride != null && theseTrackCoords) {
-		const nextSegment = getSpecificTrackElement(ride, theseTrackCoords)
-		selectedTrack.set(nextSegment)
-		return;
-	}
-	else {
-		debug(`ride: ${ride}`);
-		debug(`nextTrackCoords: ${JSON.stringify(theseTrackCoords)}`)
-		debug(`Either a ride of the next track coords are missing.`);
-	}
+	const iterationResult = segment.nextSegment();
+
+	debug(`iterationResult: ${iterationResult}`);
+
+	// // get the specific ride
+	// const ride = selectedSegment.get()?.element.ride;
+	// const theseTrackCoords = nextTrackCoords.get();
+	// if (ride != null && theseTrackCoords) {
+	// 	const nextSegment = getSpecificTrackElement(ride, theseTrackCoords)
+	// 	selectedSegment.set(nextSegment)
+	// 	return;
+	// }
+	// else {
+	// 	debug(`ride: ${ride}`);
+	// 	debug(`nextTrackCoords: ${JSON.stringify(theseTrackCoords)}`)
+	// 	debug(`Either a ride of the next track coords are missing.`);
+	// }
 }
+
+
+
