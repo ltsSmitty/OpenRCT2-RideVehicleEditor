@@ -9,6 +9,8 @@ import { buildTrackElement, buildFollowingSegment } from "../services/rideBuilde
 import { getBuildableSegments } from "../services/segmentValidator";
 import { TileElementItem, TrackElementItem } from '../services/SegmentController';
 
+import { SegmentModel } from '../viewmodels/segmentModel';
+
 const buttonSize = 24;
 // const controlsWidth = 244;
 // const controlsLabelWidth = 82;
