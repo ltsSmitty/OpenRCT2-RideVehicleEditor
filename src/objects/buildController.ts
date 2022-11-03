@@ -1,11 +1,15 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { TrackElementProps } from './../services/rideBuilder';
+import { SegmentDescriptor } from './segment';
 import { Flags } from './../utilities/Flags';
-import { Segment } from './segment';
+import { TrackElementType } from '../utilities/trackElementType';
+import { RideType } from '../utilities/rideType';
 
 
 
-type TrackPlaceProps = {
+export type TrackPlaceProps = {
+    location?: CoordsXYZD;
+    ride?: number;
+    trackType?: TrackElementType;
+    rideType?: RideType;
     brakeSpeed?: number,
     colour?: number,
     seatRotation?: number | null,
@@ -14,62 +18,61 @@ type TrackPlaceProps = {
     flags?: number
 };
 
-type TrackRemoveProps = {
+export type TrackRemoveProps = {
+    location?: CoordsXYZD;
+    ride?: number;
+    trackType?: TrackElementType;
+    rideType?: RideType;
     sequence: number, // for distinguisihing between multi-tile segments
     flags: number
 };
 
+const defaultTrackPlaceProps: TrackPlaceProps = {
+    trackPlaceFlags: Flags.BuildTrackReal, // the ghost flag is 104
+    isFromTrackDesign: false, // default is false
+    flags: Flags.BuildTrackReal
+};
+
+const defaultTrackRemoveProps: TrackRemoveProps = {
+    sequence: 0,
+    flags: Flags.BuildTrackReal
+};
+
 export class SegmentBuildController {
-    private _segment: Segment;
-    private _trackPlaceProps: TrackPlaceProps;
-    private _trackRemoveProps: TrackRemoveProps;
-    private _buildInstructions!: { build: TrackElementProps, remove: TrackElementProps };
+    private _trackPlaceProps: TrackPlaceProps = defaultTrackPlaceProps;
+    private _trackRemoveProps: TrackRemoveProps = defaultTrackRemoveProps;
+    private _buildInstructions!: { build: TrackPlaceProps, remove: TrackRemoveProps };
 
-    constructor(segment: Segment, trackPlaceProps: TrackPlaceProps, trackRemoveProps: TrackRemoveProps) {
-        this._segment = segment;
-        this._trackPlaceProps = trackPlaceProps;
-        this._trackRemoveProps = trackRemoveProps;
-        this.makeBuildInstructions();
+    constructor(trackPlaceProps?: TrackPlaceProps, trackRemoveProps?: TrackRemoveProps) {
+
+        this._trackPlaceProps = trackPlaceProps || defaultTrackPlaceProps;
+        this._trackRemoveProps = trackRemoveProps || defaultTrackRemoveProps;
     }
 
-    updateSegment(seg: Segment) {
-        this._segment = seg;
-    }
-
-    updaterackPlaceProps(props: TrackPlaceProps) {
-        this._trackPlaceProps = props;
-    }
-
-    updateTrackRemoveProps(props: TrackRemoveProps) {
-        this._trackRemoveProps = props;
-    }
-
-    real() {
+    private real(): void {
         this._trackPlaceProps.trackPlaceFlags = Flags.BuildTrackReal;
         this._trackPlaceProps.flags = Flags.BuildTrackReal;
         this._trackRemoveProps.flags = Flags.BuildTrackReal;
-        return this.makeBuildInstructions();
     }
 
-    preview() {
+    private ghost(): void {
         this._trackPlaceProps.trackPlaceFlags = Flags.BuildTrackPreview;
         this._trackPlaceProps.flags = Flags.BuildTrackPreview;
         this._trackRemoveProps.flags = Flags.BuildTrackPreview;
-        return this.makeBuildInstructions();
     }
 
-    makeBuildInstructions() {
-        const seg = this._segment.get();
+    makeBuildInstructions(segment: SegmentDescriptor, type: "real" | "ghost"): { build: TrackPlaceProps; remove: TrackRemoveProps; } {
+        (type === "real") ? this.real() : this.ghost();
         const placeProps = this._trackPlaceProps;
         const removeProps = this._trackRemoveProps;
 
         this._buildInstructions = {
             build: {
-                ...seg,
+                ...segment,
                 ...placeProps
             },
             remove: {
-                ...seg,
+                ...segment,
                 ...removeProps
             }
         };
