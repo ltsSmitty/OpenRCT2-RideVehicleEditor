@@ -18,8 +18,6 @@ export class SegmentModel {
     readonly buildDirection = store<"next" | "prev" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
 
-    readonly nextBuildPosition = store<CoordsXYZD | null>(null);
-
     /**
      *Used for looking up the possible segments that can be built next
      */
@@ -31,7 +29,6 @@ export class SegmentModel {
         this.buildRotation.subscribe((rotation) => this.onRotationChange(rotation));
         this.buildableSegments.subscribe((newBuildableSegmentsList) => this.onBuildableSegmentsChange(newBuildableSegmentsList));
         this.selectedBuild.subscribe((newSelectedBuild) => this.onSelectedBuildChange(newSelectedBuild));
-        this.nextBuildPosition.subscribe((next => this.onNextBuildPositionChange(next)));
     }
 
     buildSelectedNextPiece() {
@@ -74,18 +71,13 @@ export class SegmentModel {
         if (direction === "next") {
             //set the next build position based on any one of the buildable segments location
             debug(`changing next build position to ${newBuildableOptions.next[0]?.get().location}`);
-            this.nextBuildPosition.set(newBuildableOptions.next[0].get().location || null);
 
             this.buildableSegments.set(newBuildableOptions.next);
-            debug(`next build position: ${JSON.stringify(this.nextBuildPosition.get())}`);
             return;
         }
         if (direction === "prev") {
-            //set the next build position based on any one of the buildable segments location
-            this.nextBuildPosition.set(newBuildableOptions.previous[0].get().location || null);
 
             this.buildableSegments.set(newBuildableOptions.previous);
-            debug(`next build position: ${JSON.stringify(this.nextBuildPosition.get())}`);
             return;
         }
         debug(`No direction was set for the buildable segments. This should not happen.`);
@@ -141,14 +133,12 @@ export class SegmentModel {
             return;
         }
 
-        assert(newSelectedBuild.get().location.z === this.nextBuildPosition.get()?.z, " the newSelectedBuild location.z does not match the nextBuildPosition.z ");
 
         // for downsloped tracks, this gives the z-value pre-shifted down by 8.
         const trackAtBuildLocation = doesSegmentExistHere(newSelectedBuild);
 
         debug(`
             newSelectedBuild.z: ${newSelectedBuild.get().location.z}
-            nextBuildPosition.z: ${this.nextBuildPosition.get()?.z}
             selectedSegment.z: ${this.selectedSegment.get()?.get().location.z}
             `);
 
