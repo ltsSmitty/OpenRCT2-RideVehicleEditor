@@ -6,7 +6,7 @@ export type SegmentDescriptor = {
     ride: number; // will log an error if you specify a ride # that doesn't exist
     trackType: TrackElementType; // e.g. TrackElementType.LeftBankedDown25ToDown25
     rideType: RideType;
-}
+};
 
 export class Segment {
     private _location: CoordsXYZD;

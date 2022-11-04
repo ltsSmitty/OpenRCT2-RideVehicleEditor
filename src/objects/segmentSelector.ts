@@ -61,7 +61,7 @@ export class SegmentSelector {
             this._nextSegmentPosition = this._TIAtCoords.nextPosition;
             this._previousSegmentPosition = this._TIAtCoords.previousPosition;
             this.positionStore.set(this._position);
-            ui.tileSelection.tiles = [this._position];
+            // ui.tileSelection.tiles = [this._position];
         }
 
         debug(`supposedly coords are set.`);
@@ -82,7 +82,7 @@ export class SegmentSelector {
             this.positionStore.set(this._position)
 
             this._surfaceAtPositon = getSurfaceElementsFromCoords(this._position)[0];
-            ui.tileSelection.tiles = [this._position];
+            // ui.tileSelection.tiles = [this._position];
         }
     }
 

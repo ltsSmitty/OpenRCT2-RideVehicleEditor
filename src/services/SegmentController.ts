@@ -4,9 +4,9 @@ import { store, Store, arrayStore, ArrayStore } from "openrct2-flexui";
 import { TrackElementType } from "../utilities/trackElementType";
 import { ParkTile } from "../objects/parkTile";
 
-import { buildTrackElement } from "./rideBuilder";
 import { getBuildableSegments } from "./segmentValidator";
 import track from "../../tests/.trackable/trackable";
+import { Segment } from '../objects/segment';
 
 
 type relativeSegment = "previousSegment" | "thisSegment" | "nextSegment";
@@ -24,7 +24,9 @@ export type TileElementItem<T extends TileElement> = {
 /**
  * A specific track-based TileELementItem to keep typing cleaner
  */
-export type TrackElementItem = TileElementItem<TrackElement>;
+export interface TrackElementItem extends TileElementItem<TrackElement> {
+    segment: Segment | null
+}
 
 
 export class SegmentController {
