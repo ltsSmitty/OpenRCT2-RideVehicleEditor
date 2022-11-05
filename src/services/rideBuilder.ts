@@ -4,9 +4,6 @@ import { RideType } from "../utilities/rideType";
 import { debug } from "../utilities/logger";
 import * as Selector from "../objects/segmentSelector";
 
-
-let currentPreviewTrackType: TrackElementType | null = null;
-
 export type TrackElementProps = {
 
     location: CoordsXYZD,
@@ -27,14 +24,13 @@ type ConstructionProps = {
     placement: "real" | "preview"
 }
 
-export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action: "build" | "remove", callback?: (result: GameActionResult) => void): void => {
+export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action: "build" | "remove", normalizeZ: boolean, callback?: (result: GameActionResult) => void): void => {
     // debug(`TrackElementProps.location.z:  \n[     ${trackProps.location.z}      ]\n`)
     const gameActionEvent = (action === "build" ? "trackplace" : "trackremove");
     toggleRideBuildingCheats(true);
-    const copyOfTrackProps = { ...trackProps };
 
     // eslint-disable-next-line prefer-const
-    let { location: buildLocation, trackType, brakeSpeed, colour, seatRotation, trackPlaceFlags, isFromTrackDesign, flags, ...mainProps } = copyOfTrackProps;
+    let { location: buildLocation, trackType, brakeSpeed, colour, seatRotation, trackPlaceFlags, isFromTrackDesign, flags, ...mainProps } = trackProps;
 
     (brakeSpeed ? brakeSpeed : brakeSpeed = 0);
     (colour ? colour : colour = 0);
@@ -48,10 +44,10 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
     // if the ride is has a negative slope (e.g. Down25),
     // then it actually is stored with startZ of 16 and endZ of 0.
     // This function will change it to make it  0 and -16
-    const zModifier = normalizeBeginAndEndZValues(trackType);
-    // debug(`zModifier: ${zModifier.beginZ}, ${zModifier.endZ}`);
-    buildLocation.z = buildLocation.z + zModifier.beginZ
-    // debug(`Tweaking the buildLocation.z: ${buildLocation.z} to handle the slope`);
+    if (normalizeZ) {
+        const zModifier = normalizeBeginAndEndZValues(trackType);
+        buildLocation.z = buildLocation.z + zModifier.beginZ;
+    }
 
     const gameActionParams = {
         ...mainProps,
@@ -64,7 +60,7 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
         isFromTrackDesign,
         flags
     };
-
+    debug(`about to build using gameActionParans: \n${JSON.stringify(gameActionParams, null, 2)}`);
     context.executeAction(gameActionEvent, gameActionParams, (result) => {
         // debug(`Build result: ${JSON.stringify(result)}`);
         toggleRideBuildingCheats(false);
