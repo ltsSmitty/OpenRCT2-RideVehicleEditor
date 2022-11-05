@@ -83,23 +83,26 @@ export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): Track
     return chosenTrack[0];
 };
 
-export const doesSegmentExistHere = (segmentAtLocationInquestion: Segment | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
+export const doesSegmentExistHere = (selectedSegment: Segment | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
 
-    if (segmentAtLocationInquestion == null) return { exists: false, element: null };
-    // debug(`What is the deal with segmentAtlocation? ${JSON.stringify(segmentAtLocationInquestion)}`)
-    // destructure from the segment and rename the props to match
-    const { location: coords, ride: rideNumber } = segmentAtLocationInquestion.get();
-    const trackELementsOnTile = getTrackElementsFromCoords({ x: coords.x, y: coords.y });
+    if (selectedSegment == null || selectedSegment.nextLocation == null) return { exists: false, element: null };
+
+    const { x, y, z, direction } = selectedSegment.nextLocation; // location of next track element
+    const trackELementsOnNextTile = getTrackElementsFromCoords({ x, y });
     // make sure the ride matches this ride
-    const trackForThisRide = trackELementsOnTile.filter(e => e.element.ride === rideNumber);
+    const trackForThisRide = trackELementsOnNextTile.filter(e => e.element.ride === selectedSegment.get().ride);
 
     // if there are two segments for the same ride in this tile, make sure it's the proper one
-    const chosenTrack = trackForThisRide.filter(t => t.element.baseZ === coords.z);
+    if (trackForThisRide.length > 1) console.log(`Error: There are two overlapping elements at this tile with the same XYZ. Returning the first.`);
+    const chosenTrack = trackForThisRide.filter(t => t.element.baseZ === z);
     const thisSegmentELement = chosenTrack[0];
 
 
     if (!thisSegmentELement) return { exists: false, element: null };
     // TODO make sure this actually checks. Otherwise going to have to attempt to build and get the flags? Or can query the segmentMap
+    debug(`A segment for ride ${selectedSegment.get().ride} exists at (${x}, ${y}). \t
+    Note the segment in the next tile has a z value of ${thisSegmentELement.segment?.get().location.z} compared to the current segment's z value of ${selectedSegment.get().location.z}.
+    Are the z values equal: ${thisSegmentELement.segment?.get().location.z === selectedSegment.get().location.z}`);
     if (thisSegmentELement.element.isGhost) return { exists: "ghost", element: thisSegmentELement };
     return { exists: "real", element: thisSegmentELement };
 };
@@ -113,7 +116,7 @@ const isRideAStall = (rideNumber: number): boolean => {
 };
 
 
-export const getTIAtSegment = (segment: Segment): TrackIterator | null => {
+export const getTIAtSegment = (segment: Segment | null): TrackIterator | null => {
     if (segment == null) {
         debug(`segment was null`);
         return null;
