@@ -1,5 +1,4 @@
 import { doesSegmentExistHere } from './../services/trackElementFinder';
-import { SegmentSelector2 } from './../objects/segmentSelector2';
 import { Segment } from './../objects/segment';
 import * as highlighter from '../services/highlightGround';
 import * as builder from './builderModel';
@@ -15,8 +14,8 @@ import { TrackElementType } from '../utilities/trackElementType';
 export class SegmentModel {
 
     readonly selectedSegment = store<Segment | null>(null);
-    readonly buildableSegments = store<Segment[]>([]);
-    readonly selectedBuild = store<Segment | null>(null);
+    readonly buildableSegments = store<TrackElementType[]>([]);
+    readonly selectedBuild = store<TrackElementType | null>(null);
     readonly buildDirection = store<"next" | "prev" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
 
@@ -35,10 +34,10 @@ export class SegmentModel {
     buildSelectedNextPiece() {
         const segToBuild = this.selectedBuild.get();
         if (segToBuild == null) {
-            debug("no piece to build");
+            debug("no selected track type to build");
             return;
         }
-        builder.remove(segToBuild, "ghost");
+        builder.removeTrackAtNextPosition(this.selectedSegment, "ghost");
         builder.build(segToBuild, "real", (result) => {
             if (result.error) {
                 debug(`Error building that piece. ${result?.errorMessage}`);
@@ -133,32 +132,34 @@ export class SegmentModel {
         // // todo make sure to set nextBuildPosition at the sme time
     };
 
-    private onBuildableSegmentsChange = (newBuildableSegments: Segment[]): void => {
+    private onBuildableSegmentsChange = (newBuildOptions: TrackElementType[]): void => {
         debug(`Buildable segments have changed.`);
-
 
         // this is where it might be worthwhile to use another class to do this hard work.
         // todo make it return something better than just the 0th element.
-        const recommendedSegment = getSuggestedNextSegment(newBuildableSegments, this.selectedSegment.get(), this.selectedBuild.get());
+        const recommendedSegment = getSuggestedNextSegment(newBuildOptions, this.selectedSegment.get(), this.selectedBuild.get());
 
         this.selectedBuild.set(recommendedSegment);
     };
 
-    private onSelectedBuildChange = (newSelectedBuild: Segment | null): void => {
+    private onSelectedBuildChange = (selectedTrackType: TrackElementType | null): void => {
         // todo highlight the ground under the first piece that's being built
-        if (newSelectedBuild == null) {
+        if (selectedTrackType == null) {
             highlighter.highlightGround(null);
             return;
         }
 
+        const segment = this.selectedSegment.get()
+        // Big goal: build a preview of the selectedTrackType at this.selectedSegment.nextBuildPosition
+        // Might have to delete an existing other preview piece first though.
+        //         // for downsloped tracks, this gives the z-value pre-shifted down by 8.
+        const trackAtNextBuildLocation = doesSegmentExistHere(segment);
+        const trackAtBuildLocation = doesSegmentExistHere(segment?.nextLocation, segment);
 
-        // for downsloped tracks, this gives the z-value pre-shifted down by 8.
-        const trackAtBuildLocation = doesSegmentExistHere(newSelectedBuild);
-
-        debug(`
-newSelectedBuild.z: ${newSelectedBuild.get().location.z}
-selectedSegment.z: ${this.selectedSegment.get()?.get().location.z}
-`);
+        //         debug(`
+        // newSelectedBuild.z: ${newSelectedBuild.get().location.z}
+        // selectedSegment.z: ${this.selectedSegment.get()?.get().location.z}
+        // `);
 
         // case: the next location is free
         if (!trackAtBuildLocation.exists) {
