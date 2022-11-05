@@ -44,14 +44,15 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
     // if the ride is has a negative slope (e.g. Down25),
     // then it actually is stored with startZ of 16 and endZ of 0.
     // This function will change it to make it  0 and -16
+    const newBuildLocation: CoordsXYZD = { ...buildLocation };
     if (normalizeZ) {
         const zModifier = normalizeBeginAndEndZValues(trackType);
-        buildLocation.z = buildLocation.z + zModifier.beginZ;
+        newBuildLocation.z = buildLocation.z + zModifier.beginZ;
     }
 
     const gameActionParams = {
         ...mainProps,
-        ...buildLocation,
+        ...newBuildLocation,
         trackType,
         brakeSpeed,
         colour,
