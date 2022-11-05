@@ -38,44 +38,22 @@ const defaultTrackRemoveProps: TrackRemoveProps = {
     flags: Flags.BuildTrackReal
 };
 
-export class SegmentBuildController {
-    private _trackPlaceProps: TrackPlaceProps = defaultTrackPlaceProps;
-    private _trackRemoveProps: TrackRemoveProps = defaultTrackRemoveProps;
-    private _buildInstructions!: { build: TrackPlaceProps, remove: TrackRemoveProps };
+export const makeBuildInstructions = (segment: SegmentDescriptor, type: "real" | "ghost"): { build: TrackPlaceProps; remove: TrackRemoveProps; } => {
+    const trackPlaceProps = defaultTrackPlaceProps;
+    const trackRemoveProps = defaultTrackRemoveProps;
 
-    constructor(trackPlaceProps?: TrackPlaceProps, trackRemoveProps?: TrackRemoveProps) {
-
-        this._trackPlaceProps = trackPlaceProps || defaultTrackPlaceProps;
-        this._trackRemoveProps = trackRemoveProps || defaultTrackRemoveProps;
+    if (type === "real") {
+        trackPlaceProps.trackPlaceFlags = Flags.BuildTrackReal;
+        trackPlaceProps.flags = Flags.BuildTrackReal;
+        trackRemoveProps.flags = Flags.BuildTrackReal;
+    } else {
+        // ghost
+        trackPlaceProps.trackPlaceFlags = Flags.BuildTrackPreview;
+        trackPlaceProps.flags = Flags.BuildTrackPreview;
+        trackRemoveProps.flags = Flags.BuildTrackPreview;
     }
-
-    private real(): void {
-        this._trackPlaceProps.trackPlaceFlags = Flags.BuildTrackReal;
-        this._trackPlaceProps.flags = Flags.BuildTrackReal;
-        this._trackRemoveProps.flags = Flags.BuildTrackReal;
-    }
-
-    private ghost(): void {
-        this._trackPlaceProps.trackPlaceFlags = Flags.BuildTrackPreview;
-        this._trackPlaceProps.flags = Flags.BuildTrackPreview;
-        this._trackRemoveProps.flags = Flags.BuildTrackPreview;
-    }
-
-    makeBuildInstructions(segment: SegmentDescriptor, type: "real" | "ghost"): { build: TrackPlaceProps; remove: TrackRemoveProps; } {
-        (type === "real") ? this.real() : this.ghost();
-        const placeProps = this._trackPlaceProps;
-        const removeProps = this._trackRemoveProps;
-
-        this._buildInstructions = {
-            build: {
-                ...segment,
-                ...placeProps
-            },
-            remove: {
-                ...segment,
-                ...removeProps
-            }
-        };
-        return this._buildInstructions;
-    }
+    return {
+        build: { ...trackPlaceProps, ...segment },
+        remove: { ...trackRemoveProps, ...segment }
+    };
 }
