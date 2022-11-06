@@ -89,53 +89,43 @@ export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): Track
     return trackForThisRide[0];
 };
 
-export const doesSegmentExistHere = (selectedSegment: Segment | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
+/**
+ * For a given segment, return whether or not a next segment exists and if so, what it is.
+ */
+export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
 
     if (selectedSegment == null || selectedSegment.nextLocation() == null) {
         debug(`${selectedSegment == null ? "selectedSegment is null" : "selectedSegment.nextLocation() is null"}`);
         return { exists: false, element: null };
     }
 
-    const { x, y, z } = selectedSegment.nextLocation()!; // location of next track element
+    const { x, y, z, direction } = selectedSegment.nextLocation()!; // location of next track element
     const trackELementsOnNextTile = getTrackElementsFromCoords({ x, y });
+
+    if (trackELementsOnNextTile.length === 0) {
+        debug(`No track elements on next tile`);
+        return { exists: false, element: null };
+    }
+
     // make sure the ride matches this ride
     const trackForThisRide = trackELementsOnNextTile.filter(e => e.element.ride === selectedSegment.get().ride);
     debug(`There are ${trackForThisRide.length} track elements for this ride on the next tile.`);
     // if there are two segments for the same ride in this tile, make sure it's the proper one
     let thisTrack: TrackElementItem;
     if (trackForThisRide.length > 1) {
-        console.log(`Error: There are two overlapping elements at this tile with the same XYZ. Returning the first.`);
+        debug(`There is more than one element at the next tile for this ride ${x},${y}`);
+        // trackForThisRide.forEach((trackElement, index) => debug(`Piece ${index}: ${trackElement.element?.baseZ},${trackElement.element?.direction}`));
         const chosenTrack = trackForThisRide.filter(t => t.element.baseZ === z);
         thisTrack = chosenTrack[0];
     } else { thisTrack = trackForThisRide[0]; }
-    debug(`thisTrack: ${JSON.stringify(thisTrack)}`);
 
+    if (!thisTrack?.element) {
+        debug(`I must have filtered too well and there are no track elements for this ride at the next tile.`);
 
-    if (!thisSegmentELement) {
-        debug(`searched for tracks on this ride, but apparently there were none?`);
-        return { exists: false, element: null };
     }
 
-    // TODO make sure this actually checks. Otherwise going to have to attempt to build and get the flags? Or can query the segmentMap
-    debug(`A segment for ride ${selectedSegment.get().ride} exists at (${x}, ${y}). \t
-    Note the segment in the next tile has a z value of ${thisSegmentELement.segment?.get().location.z} compared to the current segment's z value of ${selectedSegment.get().location.z}.
-    Are the z values equal: ${thisSegmentELement.segment?.get().location.z === selectedSegment.get().location.z}`);
-
-    if (thisSegmentELement.element.isGhost) return { exists: "ghost", element: thisSegmentELement };
-    return { exists: "real", element: thisSegmentELement };
-    // // if there are two segments for the same ride in this tile, make sure it's the proper one
-    // if (trackForThisRide.length > 1) {
-    //     console.log(`Error: There are two overlapping elements at this tile with the same XYZ. Returning the first.`);
-    //     // this filter isn't working with down-facing tracks
-    //     const chosenTrack = trackForThisRide.filter(t => t.element.baseZ === z);
-    //     thisTrack = chosenTrack[0];
-    // } else thisTrack = trackForThisRide[0];
-    // debug(`number of tracks for this ride: ${trackForThisRide.length}`);
-
-    // // TODO make sure this actually checks. Otherwise going to have to attempt to build and get the flags? Or can query the segmentMap
-    // if (thisTrack.element.isGhost) return { exists: "ghost", element: thisTrack };
-    // return { exists: "real", element: thisTrack };
-
+    if (thisTrack.element.isGhost) return { exists: "ghost", element: thisTrack };
+    return { exists: "real", element: thisTrack };
 };
 
 
