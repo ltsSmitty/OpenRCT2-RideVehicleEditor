@@ -136,7 +136,7 @@ export const trackIteratorWindow = window({
 		}),
 		// display stats for the selected segment
 		listview({
-			items: compute(model.selectedSegment, model.nextBuildPosition, (segment, newPosition) => {
+			items: compute(model.selectedSegment, (segment) => {
 				if (!segment) return ["No segment selected"];
 
 				const segInfo = segment.get();
@@ -146,28 +146,31 @@ export const trackIteratorWindow = window({
 					`Track element type:  ${getTrackElementTypeName(segInfo.trackType)}`,
 					`Location: ${segInfo.location.x}, ${segInfo.location.y}, ${segInfo.location.z}; ${segInfo.location.direction}`,
 					``,
-					`newPosition x y z d: (${newPosition?.x}, ${newPosition?.y}, ${newPosition?.z}) , ${newPosition?.direction}`,
+					`Next: ${segment.nextLocation()?.x}, ${segment.nextLocation()?.y}, ${segment.nextLocation()?.z}; ${segment.nextLocation()?.direction}`,
+					`Previous: ${segment.previousLocation()?.x}, ${segment.previousLocation()?.y}, ${segment.previousLocation()?.z}; ${segment.previousLocation()?.direction}`,
 				];
 			})
 		}),
 		// choose a new buildable segment
 		dropdown({
-			disabled: compute(model.buildableSegments, segments => { return segments.length > 0 ? false : true; }),
-			items: compute(model.buildableSegments, segments => {
-				const allSegments = segments.map(seg => TrackElementType[seg.get().trackType]);
+			disabled: compute(model.buildableTrackTypes, trackTypes => { return trackTypes.length > 0 ? false : true; }),
+			items: compute(model.buildableTrackTypes, trackTypes => {
+				const allSegments = trackTypes.map(trackType => TrackElementType[trackType]);
 				return allSegments;
 			}),
 			onChange: (index) => {
 				// todo make sure this functionality isn't exclusive because this doesn't fire upon initial segment selection
-				debug(`Segment selection dropdown changed.`);
-				const newSegment = model.buildableSegments.get()[index];
-				if (newSegment) {
-					// debug(`	nextBuildPostiton location.z: ${model.nextBuildPosition.get()?.z}`);
-					debug(`model.selectedSegment location.z and newSegment.location.z: ${model.selectedSegment.get()?.get().location.z}, ${newSegment.get().location.z}`);
-					model.selectedBuild.set(newSegment);
-					debug(`Segment to build changed to ${TrackElementType[newSegment.get().trackType]}`);
+				debug(`Segment selection dropdown changed to index ${index}`);
+				const newTrackType = model.buildableTrackTypes.get()[index];
+				if (newTrackType !== null) {
+					model.selectedBuild.set(newTrackType);
 				}
-			}
+			},
+			selectedIndex: compute(model.selectedBuild, (selectedBuild) => {
+				const potentialIndexOf = model.buildableTrackTypes.get().indexOf(selectedBuild || 0);
+				return (potentialIndexOf === -1 ? 0 : potentialIndexOf);
+			})
+
 		}),
 		// listview({
 		// 	items: compute(segmentToBuild, segment => {
@@ -182,12 +185,8 @@ export const trackIteratorWindow = window({
 		button({
 			text: "Build at next position",
 			onClick: () => {
-				//build a piece at the supposed next place, return the segment or null if it failed
-
-				//  update the segment
-
-
 				model.buildSelectedNextPiece();
+				model.moveToNextSegment("next");
 				// buildFollowingSegment(thisSegmentInfo, segmentToBuild.get(), "real");
 				// 		// buildTrackElement({
 				// 		// 	buildLocation: nextCoords,
@@ -220,8 +219,8 @@ export const trackIteratorWindow = window({
 
 const processTileSelected = (coords: CoordsXY): void => {
 	const elementsOnCoords = getTrackElementsFromCoords(coords);
-	// update model trackElementsOnSelectedTile
 	trackElementsOnSelectedTile.set(elementsOnCoords);
+
 	// update model selectedSegment to 0th val to display in ListView
 	// otherwise the Listview will be blank until one is selected from the dropdown
 	if (trackElementsOnSelectedTile.get().length > 0) {

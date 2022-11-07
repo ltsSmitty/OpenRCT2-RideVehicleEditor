@@ -61,7 +61,7 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
         isFromTrackDesign,
         flags
     };
-    debug(`about to build using gameActionParans: \n${JSON.stringify(gameActionParams, null, 2)}`);
+    // debug(`about to build using gameActionParans: \n${JSON.stringify(gameActionParams, null, 2)}`);
     context.executeAction(gameActionEvent, gameActionParams, (result) => {
         // debug(`Build result: ${JSON.stringify(result)}`);
         toggleRideBuildingCheats(false);

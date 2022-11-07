@@ -4,7 +4,7 @@ import { getSpecificTrackElement } from "./trackElementFinder";
 import { debug } from "../utilities/logger";
 import * as finder from "../services/trackElementFinder";
 
-export const highlightGround = (segment: Segment | null) => {
+export const highlightMapRange = (segment: Segment | null, callback?: (highlightedMapRange: MapRange | null) => void) => {
     if (segment == null) {
         ui.tileSelection.range = null;
         return;
@@ -35,7 +35,7 @@ export const highlightGround = (segment: Segment | null) => {
     // debug(`ui.tileSelection.range before apply: ${JSON.stringify(ui.tileSelection.range)}`)
     // debug(`MapRange about to apply is ${JSON.stringify(mapRange)}`)
     ui.tileSelection.range = mapRange;
-    ui.tileSelection.range = mapRange
+    ui.tileSelection.range = mapRange;
     // debug(`ui.tileSelection.range after apply: ${JSON.stringify(ui.tileSelection.range)}`)
 }
 
