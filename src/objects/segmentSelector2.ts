@@ -1,6 +1,6 @@
 import { Segment } from './segment';
 import { getBuildableSegments } from '../services/segmentValidator';
-import { getSpecificTrackElement, getTIAtSegment } from '../services/trackElementFinder';
+import { getASpecificTrackElement, getTIAtSegment } from '../services/trackElementFinder';
 import { debug } from '../utilities/logger';
 import { RideType } from '../utilities/rideType';
 
@@ -64,7 +64,7 @@ export class SegmentSelector2 {
         }
         const seg = this._selectedSegment.get(); // shorthand for this segment
         debug(`\tthis seg location.z: ${seg.location.z}`);
-        const thisSegmentIndex = getSpecificTrackElement(seg.ride, seg.location).index; // needed for iterator
+        const thisSegmentIndex = getASpecificTrackElement(seg.ride, seg.location).index; // needed for iterator
         const newTI = map.getTrackIterator(<CoordsXY>seg.location, thisSegmentIndex); // set up TI
 
         if (newTI == null) {

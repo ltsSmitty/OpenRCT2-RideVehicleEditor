@@ -9,7 +9,7 @@ import { TileElementItem } from './../services/SegmentController';
  */
 
 import { TrackElementItem } from "../services/SegmentController";
-import { getSpecificTrackElement, getSurfaceElementsFromCoords } from "../services/trackElementFinder";
+import { getASpecificTrackElement, getSurfaceElementsFromCoords } from "../services/trackElementFinder";
 import { debug } from "../utilities/logger";
 import { store } from "openrct2-flexui";
 
@@ -95,7 +95,7 @@ export class SegmentSelector {
             debug(`Cannot get imageIndex: position not set.`)
             return null;
         }
-        const thisTrackElement = getSpecificTrackElement(this._ride, this._position);
+        const thisTrackElement = getASpecificTrackElement(this._ride, this._position);
         return thisTrackElement.index;
     }
 
@@ -124,7 +124,7 @@ export class SegmentSelector {
             debug(`Error getting element: ride or position undefined.`);
             return null;
         }
-        return getSpecificTrackElement(this._ride, this._position);
+        return getASpecificTrackElement(this._ride, this._position);
 
     }
 

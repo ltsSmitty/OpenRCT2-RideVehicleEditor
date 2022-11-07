@@ -1,22 +1,26 @@
 import { getTrackElementsFromCoords } from './../services/trackElementFinder';
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { arrayStore, button, compute, dropdown, listview, SpinnerWrapMode, store, toggle, window } from "openrct2-flexui";
+import { arrayStore, button, compute, dropdown, groupbox, horizontal, listview, SpinnerWrapMode, toggle, store, window } from "openrct2-flexui";
+import { rideBuildToggle } from '../objects/rideToggle';
 import { toggleXYZPicker } from "../services/segmentPicker";
 import { isDevelopment, pluginVersion } from "../environment";
 import { TrackElementType } from "../utilities/trackElementType";
 import { debug } from "../utilities/logger";
-// import { buildTrackElement, buildFollowingSegment } from "../services/rideBuilder";
-import { TileElementItem, TrackElementItem } from '../services/SegmentController';
-import { Segment } from '../objects/segment';
+import { TrackElementItem } from '../services/SegmentController';
 import { SegmentModel } from '../viewmodels/segmentModel';
+import { ButtonSelectorModel } from '../viewmodels/buttonSelectorModel';
 
-const buttonSize = 24;
+const buttonSize = 15;
+const directionButtonHeight = 25;
+const directionButtonWidth = 18;
+const buttonRowHeight = 30
 // const controlsWidth = 244;
 // const controlsLabelWidth = 82;
 // const controlsSpinnerWidth = 146; // controlsWidth - (controlsLabelWidth + 4 + 12); // include spacing
 // const clampThenWrapMode: SpinnerWrapMode = "clampThenWrap";
 
 const model = new SegmentModel();
+const buttonModel = new ButtonSelectorModel(model);
 const isPicking = store<boolean>(false);
 
 const trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
@@ -98,33 +102,287 @@ const trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
 
 // const trackElementsOnSelectedTile = arrayStore<TrackElementItem>();
 
-let title = `Track iterator (v${pluginVersion})`;
+// let titleName = map.getRide(model.selectedSegment.get()?.get().ride || 0)?.name || "Track Iterator";
+
+let title = `Advanced Build Menu v${pluginVersion}`;
 if (isDevelopment) {
 	title += " [DEBUG]";
 }
 
 export const trackIteratorWindow = window({
 	title,
-	width: 500, minWidth: 465, maxWidth: 560,
-	height: 401,
+	width: 200,
+	height: 500,
 	spacing: 5,
 	// onOpen: () => model.open(),
 	// onUpdate: () => model.update(),
 	// onClose: () => rideWindow.close(),
 	content: [
-		// segment tile selector tool
-		toggle({
-			width: buttonSize, height: buttonSize,
-			tooltip: "Use the picker to select a track segment by clicking it",
-			image: 29467, // SPR_G2_EYEDROPPER
-			isPressed: isPicking,
-			// disabled: model.isEditDisabled,
-			onChange: p => toggleXYZPicker(p,
-				(coords) => processTileSelected(coords),
-				() => {
-					isPicking.set(false);
-				})
+		// turn banking and steepness
+		groupbox({
+			// spacing: 5,
+			// padding: 2,
+
+			text: "Direction",
+			content: [
+
+				// 7 buttons
+				horizontal({
+					height: buttonRowHeight,
+					content: [
+						button({
+							disabled
+						}),
+						rideBuildToggle({
+							buttonType: 'left1Tile',
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5135,// 1 tile left turn
+						}),
+						rideBuildToggle({
+							buttonType: "left3Tile",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5140 // 3 tile left turn
+						}),
+						rideBuildToggle({
+							buttonType: "left5Tile",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5133 // 5 tile left turn
+						}),
+						rideBuildToggle({
+							buttonType: "straightTrack",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5137 // straight
+						}),
+						rideBuildToggle({
+							buttonType: "right5Tile",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5139	// 5 tile right turn
+						}),
+						rideBuildToggle({
+							buttonType: "right3Tile",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5141 // 3 tile right turn
+						}),
+						rideBuildToggle({
+							buttonType: "right1Tile",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5136 // 1 tile right turn
+						}),
+					]
+				}),
+				// large turns and s-bends
+
+				horizontal({
+					height: buttonRowHeight,
+					content: [
+						rideBuildToggle({
+							buttonType: "sBendLeft",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5142, // todo replace with an s-bend image
+						}),
+						rideBuildToggle({
+							buttonType: "leftLargeTurn",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5142 // large half left turn
+						}),
+						rideBuildToggle({
+							buttonType: "rightLargeTurn",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5143 // large half right turn
+						}),
+						rideBuildToggle({
+							buttonType: "sBendRight",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5143 // todo replace with an s-bend image
+						}),
+					]
+				}),
+				// banking
+				horizontal({
+					height: buttonRowHeight,
+					content: [
+						rideBuildToggle({
+							buttonType: "bankLeft",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5153 // left bank
+						}),
+						rideBuildToggle({
+							buttonType: "noBank",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5154 // no bank
+						}),
+						rideBuildToggle({
+							buttonType: "bankRight",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5155 // right bank
+						})
+					]
+				}),
+				// steepness
+				horizontal({
+					height: buttonRowHeight,
+					content: [
+						rideBuildToggle({
+							buttonType: "down90",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5150 // down90
+						}),
+						rideBuildToggle({
+							buttonType: "down60",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5144 // down60
+						}),
+						rideBuildToggle({
+							buttonType: "down25",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5145 // down25
+						}),
+						rideBuildToggle({
+							buttonType: "flat",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5146 // flat
+						}),
+						rideBuildToggle({
+							buttonType: "up25",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5147 // Up25
+						}),
+						rideBuildToggle({
+							buttonType: "up60",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5148 // up60
+						}),
+						rideBuildToggle({
+							buttonType: "up90",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5149 // up90
+						}),
+					]
+				}),
+				// keep the special dropdown for now
+				// button({
+				// 	padding: { top: 4 },
+				// 	text: "Special...",
+				// })
+			],
 		}),
+		groupbox({
+			text: "Details",
+			content: [
+				horizontal({
+					content: [
+						rideBuildToggle({
+							buttonType: "chainLift",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5163 // chain
+						}),
+						rideBuildToggle({
+							buttonType: "boosters",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5130 // boost
+						}),
+						rideBuildToggle({
+							buttonType: "camera",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5089 // camera
+						}),
+					]
+				}),
+				horizontal({
+					content: [
+						rideBuildToggle({
+							buttonType: "brakes",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5131 // brakes
+						}),
+						rideBuildToggle({
+							buttonType: "blockBrakes",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5116 // block brakes
+						}),
+					]
+				}),
+			]
+		}),
+		// demolish, move forward/back, select, trial run
+		groupbox({
+			content: [
+				horizontal({
+					content: [
+						rideBuildToggle({
+							buttonType: "demolish",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5162 // demolish
+						}),
+						rideBuildToggle({
+							buttonType: "iteratePrevious",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5160 // iterate to previous track
+						}),
+						// segment tile selector tool
+						rideBuildToggle({
+							buttonType: "select",
+							width: buttonSize, height: buttonSize,
+							tooltip: "Use the picker to select a track segment by clicking it",
+							image: 29467, // SPR_G2_EYEDROPPER
+							isPressed: isPicking,
+							// disabled: model.isEditDisabled,
+							onChange: p => toggleXYZPicker(p,
+								(coords) => processTileSelected(coords),
+								() => {
+									isPicking.set(false);
+								})
+						}),
+						rideBuildToggle({
+							buttonType: "iterateNext",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 5161 // iterate to next track
+						}),
+						rideBuildToggle({
+							buttonType: "simulate",
+							width: directionButtonWidth,
+							height: directionButtonHeight,
+							image: 29481 // start trial run
+						}),
+					]
+				})
+
+			],
+		}),
+		button({
+			text: `${TrackElementType[model.selectedBuild.get() || 0]}`, // todo make this more friendly
+			height: 50
+		}),
+
 		// choose which segment from the selected tile
 		dropdown({
 			items: compute(trackElementsOnSelectedTile, (elements) => elements.map(e => `Ride: ${e.element.ride}, height: ${e.element.baseHeight}, i: ${TrackElementType[e.segment?.get().trackType || 0]}`)),
