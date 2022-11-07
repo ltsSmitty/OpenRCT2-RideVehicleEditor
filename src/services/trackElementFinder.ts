@@ -2,6 +2,8 @@ import { highlightMapRange } from './highlightGround';
 import { TileElementItem, TrackElementItem } from './SegmentController';
 import { debug } from "../utilities/logger";
 import { Segment } from '../objects/segment';
+import { TrackElementType } from '../utilities/trackElementType';
+import track from '../../tests/.trackable/trackable';
 
 
 export const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementItem<T>[] => {
@@ -73,16 +75,42 @@ export const getSurfaceElementsFromCoords = (coords: CoordsXY | CoordsXYZ | Coor
  * This may behave unexpectedly if collision checks are off and there are multiple segments at the same XYZD.
  * In that case, it will return the 0th element.
  */
-export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): TrackElementItem => {
+export const getASpecificTrackElement = (ride: number, coords: CoordsXYZD): TrackElementItem => {
     const trackELementsOnTile = getTrackElementsFromCoords({ x: coords.x, y: coords.y });
-    debug(`Getting the track elements at coords ${coords.x}, ${coords.y}..
-    ${trackELementsOnTile.length} total track element exists on this tile.`);
+    debug(`Getting the track elements at coords ${coords.x}, ${coords.y}. ${trackELementsOnTile.length} total track elements exists on this tile.`);
+
     // make sure the ride matches this ride
     const trackForThisRide = trackELementsOnTile.filter(e => e.element.ride === ride);
     debug(`${trackForThisRide.length} of those track elements are for this ride.`);
+
     // if there are two segments for the same ride in this tile, make sure it's the proper one
     if (trackForThisRide.length > 1) {
-        const chosenTrack = trackForThisRide.filter(t => (t.element.baseZ === coords.z && t.element.direction === coords.direction));
+        debug(`There are multiple segments for this ride at this tile. Checking for the proper one.`);
+
+        // todo tweak z by subtracting from it based on the TrackType
+        const zModifiers = trackForThisRide.map(e => {
+            const trackType = context.getTrackSegment(e.element.trackType)
+            return trackType?.beginZ || 0; // the default value of 0 is just to clean up potential ugliness downstream.
+        });
+
+        // check each of the potential segments to see if it's the right one
+        // this is complicated because the z value can be off by an amount depending on what track type was built.
+        const chosenTrack = trackForThisRide.filter((t, index) => {
+            debug(`Element ${index} z and direction are ${t.element.baseZ} and ${t.element.direction} and the modifier is ${zModifiers[index]}`);
+
+            const areTheZsEqual = t.element.baseZ === coords.z;
+            const areTheZsAdjustEqual = t.element.baseZ + zModifiers[index] === coords.z;
+            const areTheZsSubtractEqual = t.element.baseZ - zModifiers[index] === coords.z;
+            const areTheDirectionsTheSame = t.element.direction === coords.direction;
+
+            debug(`Equality tests:
+            areTheZsEqual: ${areTheZsEqual}
+            areTheZsAdjustEqual: ${areTheZsAdjustEqual}
+            areTheZsSubtractEqual: ${areTheZsSubtractEqual}
+            areTheDirectionsTheSame: ${areTheDirectionsTheSame}`);
+
+            return ((areTheZsEqual || areTheZsAdjustEqual || areTheZsSubtractEqual) && areTheDirectionsTheSame);
+        });
         if (chosenTrack.length > 1) console.log(`Error: There are two overlapping elements at this tile with the same XYZD. Returning the 0th.`);
         return chosenTrack[0];
     }
@@ -92,7 +120,7 @@ export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): Track
 /**
  * For a given segment, return whether or not a next segment exists and if so, what it is.
  */
-export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
+export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, selectedBuild: TrackElementType): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
 
     if (selectedSegment == null || selectedSegment.nextLocation() == null) {
         debug(`${selectedSegment == null ? "selectedSegment is null" : "selectedSegment.nextLocation() is null"}`);
@@ -110,8 +138,48 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null): { e
     // make sure the ride matches this ride
     const trackForThisRide = trackELementsOnNextTile.filter(e => e.element.ride === selectedSegment.get().ride);
     debug(`There are ${trackForThisRide.length} track elements for this ride on the next tile.`);
-    // if there are two segments for the same ride in this tile, make sure it's the proper one
+
+    const selectedBuildBeginZ = (context.getTrackSegment(selectedBuild)?.beginZ || 0);
+    debug(`Attempting to place ${TrackElementType[selectedBuild]} at z ${z} direction ${direction}. This element has a beginZ of ${selectedBuildBeginZ}`);
+
+    const nextTracksWhichMatchDirectionAndZ = trackForThisRide.filter(t => {
+        // t is a track element that already exists on the tile in question. it may has a different z and direction than the one we're trying to place
+        const trackSegment = t.segment?.get();
+
+
+        const selectedSegmentBaseZ = context.getTrackSegment(trackSegment?.trackType || 0)?.beginZ || 0;
+        debug(`Existing track piece.baseZ + selectedSegmentBaseZ = ${t.element.baseZ} + ${selectedSegmentBaseZ} = ${t.element.baseZ + selectedSegmentBaseZ}`);
+        debug(`Existing track piece baseZ - selectedSegmentBaseZ = ${t.element.baseZ} - ${selectedSegmentBaseZ} = ${t.element.baseZ - selectedSegmentBaseZ}`);
+        debug(`Existing track piece baseZ = z: ${t.element.baseZ} ?= ${z}`);
+        return (t.element.direction === direction && (t.element.baseZ + selectedSegmentBaseZ === z || t.element.baseZ - selectedSegmentBaseZ === z || t.element.baseZ === z));
+    });
+
+    const isThereActuallyASegmentToDelete = (selectedSegment: Segment | null, existingConflictingSegment: Segment | null) => {
+
+        if (selectedSegment == null || existingConflictingSegment == null) return false;
+
+        const nextLocation = selectedSegment.get().location;
+        const { x, y, z, direction } = nextLocation;
+        // get the z modifier that we need to check for.
+        // for example, if there's a track from the same ride with the same direction but the z is off by 25, is that a conflict?
+        // this checks for that. the most likely beginZ differences are with Down25, Down60 and the big DownToFlat on hypercoasters, etc.
+        const selectedBuildBeginZ = (context.getTrackSegment(selectedBuild)?.beginZ || 0);
+        debug(`Attempting to place ${TrackElementType[selectedBuild]} at z ${z} direction ${direction}. This element has a beginZ of ${selectedBuildBeginZ}`);
+    }
+
     let thisTrack: TrackElementItem;
+
+    // if there are two segments for the same ride in this tile, make sure it's the proper one
+    if (nextTracksWhichMatchDirectionAndZ.length === 0) {
+        debug(`There is a track at the next coords, but it doesn't match the proper z range and direction, so returning that there is no next track.`);
+
+
+        debug(`Searching for direction ${direction} and adjusted z (z ${z}+selectedBuildBeginZ ${selectedBuildBeginZ}) ${z + selectedBuildBeginZ}`);
+        debug(`${trackForThisRide.map(t => ` baseZ: (${t.element.baseZ}, direction: ${t.element.direction})`)}`);
+
+        return { exists: false, element: null };
+    }
+
     if (trackForThisRide.length > 1) {
         debug(`There is more than one element at the next tile for this ride ${x},${y}`);
         // trackForThisRide.forEach((trackElement, index) => debug(`Piece ${index}: ${trackElement.element?.baseZ},${trackElement.element?.direction}`));
@@ -146,7 +214,7 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
         return null;
     }
     debug(`Getting specific track element of ride ${segment.get().ride} at (${segment.get().location.x}, ${segment.get().location.y})`);
-    const thisSegmentIndex = getSpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator
+    const thisSegmentIndex = getASpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator
     const newTI = map.getTrackIterator(<CoordsXY>segment.get().location, thisSegmentIndex); // set up TI
 
     if (newTI == null) {

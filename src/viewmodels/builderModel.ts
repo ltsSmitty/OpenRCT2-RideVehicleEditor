@@ -1,6 +1,6 @@
 import { TrackElementProps } from './../services/rideBuilder';
 import { Segment } from '../objects/segment';
-import { TrackPlaceProps, TrackRemoveProps, makeBuildInstructions } from './../objects/buildController';
+import { makeBuildInstructions } from './../objects/buildController';
 import { buildOrRemoveTrackElement } from './../services/rideBuilder';
 import { debug } from '../utilities/logger';
 import { TrackElementItem } from '../services/SegmentController';
@@ -8,33 +8,58 @@ import { getBuildableSegments } from '../services/segmentValidator';
 import * as finder from '../services/trackElementFinder';
 import { TrackElementType } from '../utilities/trackElementType';
 
-export const removeTrackAtNextPosition = (selectedSegment: Segment, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)) => {
+export const removeTrackAtNextPosition = (selectedSegment: Segment | null, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)) => {
     // get the next position from selectedSegment
-    const nextLocation = selectedSegment.nextLocation;
+    if (selectedSegment == null) {
+        debug("no selected segment");
+        return;
+    }
+    const nextLocation = selectedSegment.nextLocation();
     if (nextLocation == null) {
         debug(`Unable to remove track: no next location`);
         return;
     }
-    const elementToRemove = finder.getSpecificTrackElement(selectedSegment.get().ride, nextLocation);
+    const elementToRemove = finder.getASpecificTrackElement(selectedSegment.get().ride, nextLocation);
+
+    debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
+
+    debug(`Trying to remove a ${type} segment at ${nextLocation.x}, ${nextLocation.y}. If it's pointing down, make sure it gets removed too.
+    The element to remove is has a startZ of ${elementToRemove.element.baseZ}.
+    ${elementToRemove.element.baseZ <= 0 ? "" : "It's pointing down"}`);
+
+    // debug(`compare nextLocation z with elementToRemove z: ${nextLocation.z} ${elementToRemove?.segment?.get().location.z}`);
+
     buildOrRemove(elementToRemove, "remove", type, false, (result) => {
         if (callback) callback(result);
     });
 }
 
-export const buildTrackAtNextPosition = (selectedSegment: Segment, trackToBuild: TrackElementType, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)) => {
-    const nextLocation = selectedSegment.nextLocation;
+export const buildTrackAtNextPosition = (selectedSegment: Segment | null, trackToBuild: TrackElementType, type: "real" | "ghost",
+    callback?: ((response: { result: GameActionResult, newlyBuiltSegment: Segment }) => void)) => {
+    if (selectedSegment == null) {
+        debug("no selected segment");
+        return;
+    }
+    const nextLocation = selectedSegment.nextLocation();
     if (nextLocation == null) {
         debug(`Unable to build track: no next location`);
         return;
     }
-    const elementToBuild = finder.getSpecificTrackElement(selectedSegment.get().ride, nextLocation);
-    if (elementToBuild == null || elementToBuild.segment == null) {
-        debug(`Unable to build track: no track element found at next location`);
-        return;
-    }
-    elementToBuild.segment.get().trackType = trackToBuild;
-    buildOrRemove(elementToBuild, "build", type, true, (result) => {
-        if (callback) callback(result);
+
+    const segmentToBuild = new Segment({
+        location: nextLocation,
+        ride: selectedSegment.get().ride,
+        trackType: trackToBuild,
+        rideType: selectedSegment.get().rideType
+    });
+    // todo need to pass in this because it might be different than the selectedSegment's rideType
+
+    buildOrRemove(segmentToBuild, "build", type, true, (result) => {
+        const response = {
+            result,
+            newlyBuiltSegment: segmentToBuild
+        }
+        if (callback) callback(response);
     });
 }
 
@@ -65,45 +90,31 @@ const buildOrRemove = (segmentToBuild: Segment | TrackElementItem | null, action
 
 
 
-export const getBuildOptionsForSegment = (segment: Segment | null): { next: Segment[], previous: Segment[] } => {
-    let next: Segment[] = [];
-    let previous: Segment[] = [];
+export const getBuildOptionsForSegment = (segment: Segment | null): { next: TrackElementType[], previous: TrackElementType[] } => {
+    let next: TrackElementType[] = [];
+    let previous: TrackElementType[] = [];
     if (!segment) return { next, previous };
 
     const seg = segment.get();
     debug(`Getting build options for segment at ${JSON.stringify(seg.location)}.`);
 
-
-    // got forward potential builds
-    const nextLocation = segment.nextLocation; // for some reason needing to create a copy of it so that location won't suspect a potential null value
+    // get forward potential builds
+    const nextLocation = segment.nextLocation(); // for some reason needing to create a copy of it so that location won't suspect a potential null value
 
     if (nextLocation !== null) {
         const buildableTrackTypes = getBuildableSegments(seg.trackType);
-        const buildableSegments = buildableTrackTypes.map(elementType => {
-            return new Segment({
-                location: nextLocation,
-                ride: seg.ride,
-                trackType: elementType,
-                rideType: seg.rideType
-            });
-        });
-        next = buildableSegments;
+        next = buildableTrackTypes;
     }
 
+    // todo make this actually work
     // get backward potential builds.
-    const backLocation = segment.previousLocation;
+    const backLocation = segment.previousLocation();
 
     if (backLocation !== null) {
-        const buildableTrackTypes = getBuildableSegments(seg.trackType);
-        const buildableSegments = buildableTrackTypes.map(elementType => {
-            return new Segment({
-                location: backLocation,
-                ride: seg.ride,
-                trackType: elementType,
-                rideType: seg.rideType
-            });
-        });
-        previous = buildableSegments;
+        // const buildableTrackTypes = getBuildableSegments(seg.trackType);
+        // previous = buildableTrackTypes;
+        // todo reenable and fix this
+        previous = [];
     }
 
     return { next, previous };
