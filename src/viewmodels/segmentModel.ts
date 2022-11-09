@@ -1,4 +1,5 @@
-import { doesSegmentHaveNextSegment } from './../services/trackElementFinder';
+import { SegmentElementPainter } from './../objects/segmentElementPainter';
+import { doesSegmentHaveNextSegment, getASpecificTrackElement } from './../services/trackElementFinder';
 import { Segment } from './../objects/segment';
 import * as highlighter from '../services/highlightGround';
 import * as builder from './builderModel';
@@ -7,7 +8,7 @@ import * as finder from '../services/trackElementFinder';
 import { compute, Store, store } from 'openrct2-flexui';
 import { getSuggestedNextSegment } from '../utilities/suggestedNextSegment';
 
-import { debug, assert } from '../utilities/logger';
+import { debug } from '../utilities/logger';
 import { TrackElementType } from '../utilities/trackElementType';
 
 
@@ -19,6 +20,8 @@ export class SegmentModel {
     readonly previewSegment = store<Segment | null>(null)
     readonly buildDirection = store<"next" | "prev" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
+
+    private segmentPainter = new SegmentElementPainter();
 
     /**
      *Used for looking up the possible segments that can be built next
@@ -93,6 +96,18 @@ export class SegmentModel {
         }
 
         debug(`Segment changed to ${TrackElementType[newSeg?.get().trackType]}`);
+
+        debug(`about to try repainting the selected segment `);
+        const wasPaintOfSelectedSegmentSucessful = this.segmentPainter.paintSelectedSegment(newSeg);
+        // on segment change, check if lastSelectedSegment has a value. if so, repaint it back to the original color
+        // then get the colours of the current segment, save that as lastSelectedSegment
+        // then highlight the current segment
+        // if (this.lastSelectedSegment.segment == null) {
+        //     this.lastSelectedSegment.segment = newSeg;
+        //     this.lastSelectedSegment.trackColours = finder.getTrackColours(newSeg);
+        //     return;
+        // }
+
         const newBuildableOptions = builder.getBuildOptionsForSegment(newSeg);
         debug(`After segment change, assessing new buildable options based on whether this segment points up, down, is inverted, etc.`);
         const direction = this.buildDirection.get();
@@ -162,7 +177,7 @@ export class SegmentModel {
     private onSelectedBuildChange = (selectedTrackType: TrackElementType | null): void => {
         debug(`onSelectedBuildChange`);
         if (selectedTrackType == null) {
-            highlighter.highlightMapRange(null);
+            highlighter.highlightMapRangeUnderSegment(null);
             // highlighter.highlightMapRange(this.selectedSegment.get());
             return;
         }
@@ -220,7 +235,7 @@ export class SegmentModel {
             return;
         }
 
-        // todo remove the ghost if this edit window closes or another ride is placed on that tile
+        // todo remove the ghost if this edit window closes
         // todo the ghost will be remove if the build is reselected, but it'd be nice if it were done on subscription of some sort.
     };
 
@@ -230,11 +245,10 @@ export class SegmentModel {
 
     private onPreviewSegmentChange(newPreviewSegment: Segment | null): void {
         debug(`preview segment changed to ${JSON.stringify(newPreviewSegment?.get())} `);
-
-        // todo reenable once the down segment is deleting properly
-        // highlighter.highlightMapRange(newPreviewSegment);
+        highlighter.highlightMapRangeUnderSegment(newPreviewSegment);
     }
-
 }
+
+
 
 
