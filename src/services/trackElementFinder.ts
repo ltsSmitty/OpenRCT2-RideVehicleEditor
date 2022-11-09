@@ -1,11 +1,14 @@
-import { highlightMapRange } from './highlightGround';
+
 import { TileElementItem, TrackElementItem } from './SegmentController';
 import { debug } from "../utilities/logger";
 import { Segment } from '../objects/segment';
 import { TrackElementType } from '../utilities/trackElementType';
-import track from '../../tests/.trackable/trackable';
 
 
+/**
+ * Utility function to get a specific type of TileElement at a given CoordsXY
+ * @returns
+ */
 export const getTileElements = <T extends TileElement>(elementType: TileElementType, coords: CoordsXY): TileElementItem<T>[] => {
     // debug(`Querying tile for ${elementType} elements at coords (${coords.x}, ${coords.y})`);
 
@@ -27,10 +30,15 @@ export const getTileElements = <T extends TileElement>(elementType: TileElementT
     // debug(`Query returned ${reducedELements.length} elements`);
     return reducedELements;
 };
-
+/**
+ * Utility function to get all "surface" elements at a given coords.
+ */
+export const getSurfaceElementsFromCoords = (coords: CoordsXY | CoordsXYZ | CoordsXYZD) => {
+    return getTileElements<SurfaceElement>("surface", { x: coords.x, y: coords.y });
+};
 
 /**
- * For a given coords, returns each track element and its index. Useful for getting a TrackIterator at the given coords.
+ * Get the robust TrackElementItems for a given coords.
  */
 export const getTrackElementsFromCoords = (coords: CoordsXY): TrackElementItem[] => {
     // get all the track tile elements at coords
@@ -48,6 +56,10 @@ export const getTrackElementsFromCoords = (coords: CoordsXY): TrackElementItem[]
     return theseTrackEementsWithSegments;
 };
 
+
+/**
+ * Utility to get the segment data at a TileElementItem.
+ */
 const getSegmentFromTrackElement = (e: TileElementItem<TrackElement>): Segment | null => {
     const tempTI = map.getTrackIterator(e.coords, e.index);
     if (!tempTI) {
@@ -66,9 +78,93 @@ const getSegmentFromTrackElement = (e: TileElementItem<TrackElement>): Segment |
     });
 };
 
-export const getSurfaceElementsFromCoords = (coords: CoordsXY | CoordsXYZ | CoordsXYZD) => {
-    return getTileElements<SurfaceElement>("surface", { x: coords.x, y: coords.y });
+
+/**
+ * @summary Returns an array of relative coords of the track elements for the segment.
+ *
+ * @description E.g. for a large left turn, it returns 7 relatively spaced coords (for the seven tiles it covers)) that go from (0,0) to (+/-64,+/-64) depending on how the segment is rotated.
+ */
+const getRelativeElementCoordsUnderSegment = (segment: Segment): TrackSegmentElement[] | null => {
+    // get the element index of this segment in order to
+    const thisTI = getTIAtSegment(segment)
+    const segmentElements = thisTI?.segment?.elements
+    if (!segmentElements) return null;
+    return segmentElements;
 };
+
+/**
+ * @summary Get all TrackElementItems for a given segment. Use to get all elements of a multi-element segment (e.g. LeftQuarterTurn3Tiles, LeftQuarterTurn5Tiles, etc.). Useful for painting each element of the segment.
+ * @description E.g. for a large left turn, there are 7 elements  with relatively spaced coords (for the seven tiles it covers) that go from (0,0) to (+/-64,+/-64) depending on how the segment is rotated. Convert those coords to absolute positioning.
+ *
+ * @returns the TrackElementItems with their absolute position the element, e.g. (1248, 1984)
+ */
+export const getAllSegmentTrackElements = (segment: Segment): TrackElementItem[] => {
+    if (segment == null) {
+        return [];
+    }
+
+    const segmentElements = getRelativeElementCoordsUnderSegment(segment);
+
+    if (!segmentElements) {
+        debug(`Error: somehow this segment has no elements`);
+        return [];
+    }
+
+    const coords = segment.get().location;
+    const x1 = coords.x;
+    const y1 = coords.y;
+    const z1 = coords.z;
+
+    // get the proper position based on the direction of the segment and the element
+    const exactCoordsUnderSegment = segmentElements.map((segmentElement) => {
+        debug(`What is the relative z of this segment? ${segmentElement.z}`);
+        switch (coords.direction) {
+            case 0: {
+                return {
+                    x: x1 + segmentElement.x,
+                    y: y1 + segmentElement.y,
+                    z: z1 + segmentElement.z
+                };
+            }
+            case 1: {
+                return {
+                    x: x1 + segmentElement.y,
+                    y: y1 - segmentElement.x,
+                    z: z1 + segmentElement.z
+                };
+            }
+            case 2: {
+                return {
+                    x: x1 - segmentElement.x,
+                    y: y1 - segmentElement.y,
+                    z: z1 + segmentElement.z
+                };
+            }
+            case 3: {
+                return {
+                    x: x1 - segmentElement.y,
+                    y: y1 + segmentElement.x,
+                    z: z1 + segmentElement.z
+                };
+            }
+        }
+    })
+
+    debug(`Attempting to return all the track elements for the ${TrackElementType[segment.get().trackType]} segment at (${coords.x}, ${coords.y}, ${coords.z})`);
+
+    const allTheseElements = exactCoordsUnderSegment.map((coords) => {
+        debug(`\n
+
+
+
+
+
+        Getting the elements at these exact coords (${coords.x}, ${coords.y}, ${coords.z}, direction ${segment.get().location.direction})`);
+        return getASpecificTrackElement(segment.get().ride, { ...coords, direction: segment.get().location.direction })
+    });
+
+    return allTheseElements;
+}
 
 /**
  * Get the TrackElementItem for a specific ride and given XYZD.
@@ -223,3 +319,14 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
     }
     return newTI;
 }
+
+export const getTrackColours = (newSeg: Segment | null): TrackColour => {
+    // ride.colourSchemes is one option, but i wonder if you can do better
+    // TrackElement. colour scheme => look up
+    if (newSeg == null) return { main: -1, additional: -1, supports: -1 };
+
+    const thisSeg = getASpecificTrackElement(newSeg?.get().ride || 0, newSeg?.get().location);
+    const thisColourScheme = thisSeg.element.colourScheme
+    const theseTrackColours = map.getRide(newSeg.get().ride)?.colourSchemes[thisColourScheme || 0];
+    return theseTrackColours;
+};

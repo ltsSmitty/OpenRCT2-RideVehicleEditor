@@ -1,4 +1,4 @@
-import { getSpecificTrackElement } from './trackElementFinder';
+import * as finder from './trackElementFinder';
 import { debug } from "../utilities/logger";
 import { store, Store, arrayStore, ArrayStore } from "openrct2-flexui";
 import { TrackElementType } from "../utilities/trackElementType";
