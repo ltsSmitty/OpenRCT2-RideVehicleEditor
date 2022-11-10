@@ -60,11 +60,11 @@ export class SegmentElementPainter {
 
     private startToggling() {
         // setTimeout(this.toggleToOtherScheme.bind(this), 500);
-        context.setInterval(this.toggleToOtherScheme.bind(this), 1000);
+        // context.setInterval(this.toggleToOtherScheme.bind(this), 1000);
     }
 
     private toggleToOtherScheme() {
-        debug(`toggling to other scheme. ${this._lastElements.length} elements.`);
+        // debug(`toggling to other scheme. ${this._lastElements.length} elements.`);
         this._lastElements.forEach(element => {
             element.element.element.colourScheme = (element.element.element.colourScheme === 3 ? 0 : 3);
         });
