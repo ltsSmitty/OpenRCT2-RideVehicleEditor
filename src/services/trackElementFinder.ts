@@ -117,7 +117,7 @@ export const getAllSegmentTrackElements = (segment: Segment): TrackElementItem[]
 
     // get the proper position based on the direction of the segment and the element
     const exactCoordsUnderSegment = segmentElements.map((segmentElement) => {
-        debug(`What is the relative z of this segment? ${segmentElement.z}`);
+        // debug(`What is the relative z of this segment? ${segmentElement.z}`);
         switch (coords.direction) {
             case 0: {
                 return {
@@ -150,16 +150,9 @@ export const getAllSegmentTrackElements = (segment: Segment): TrackElementItem[]
         }
     })
 
-    debug(`Attempting to return all the track elements for the ${TrackElementType[segment.get().trackType]} segment at (${coords.x}, ${coords.y}, ${coords.z})`);
+    // debug(`Attempting to return all the track elements for the ${TrackElementType[segment.get().trackType]} segment at (${coords.x}, ${coords.y}, ${coords.z})`);
 
     const allTheseElements = exactCoordsUnderSegment.map((coords) => {
-        debug(`\n
-
-
-
-
-
-        Getting the elements at these exact coords (${coords.x}, ${coords.y}, ${coords.z}, direction ${segment.get().location.direction})`);
         return getASpecificTrackElement(segment.get().ride, { ...coords, direction: segment.get().location.direction })
     });
 
@@ -207,8 +200,14 @@ export const getASpecificTrackElement = (ride: number, coords: CoordsXYZD): Trac
 
             return ((areTheZsEqual || areTheZsAdjustEqual || areTheZsSubtractEqual) && areTheDirectionsTheSame);
         });
-        if (chosenTrack.length > 1) console.log(`Error: There are two overlapping elements at this tile with the same XYZD. Returning the 0th.`);
-        return chosenTrack[0];
+        if (chosenTrack.length > 1) {
+            console.log(`Error: There are two overlapping elements at this tile with the same XYZD. Returning the 0th.`);
+            return chosenTrack[0];
+        }
+
+        if (chosenTrack.length === 0) {
+            debug(`There are no matching segments, so this is going to error out undefined downstream.`);
+        }
     }
     return trackForThisRide[0];
 };

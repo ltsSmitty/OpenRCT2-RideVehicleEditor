@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { TrackElementType } from '../utilities/trackElementType';
 import { RideType } from '../utilities/rideType';
-import * as finder from "../services/trackElementFinder"
+import * as finder from "../services/trackElementFinder";
 import { debug } from '../utilities/logger';
-import { doesSegmentHaveNextSegment } from '../services/trackElementFinder';
 
 export type SegmentDescriptor = {
     location: CoordsXYZD;

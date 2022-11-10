@@ -1,5 +1,4 @@
 import { SegmentElementPainter } from './../objects/segmentElementPainter';
-import { doesSegmentHaveNextSegment, getASpecificTrackElement } from './../services/trackElementFinder';
 import { Segment } from './../objects/segment';
 import * as highlighter from '../services/highlightGround';
 import * as builder from './builderModel';
@@ -17,7 +16,7 @@ export class SegmentModel {
     readonly selectedSegment = store<Segment | null>(null);
     readonly buildableTrackTypes = store<TrackElementType[]>([]);
     readonly selectedBuild = store<TrackElementType | null>(null);
-    readonly previewSegment = store<Segment | null>(null)
+    readonly previewSegment = store<Segment | null>(null);
     readonly buildDirection = store<"next" | "prev" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
 
@@ -188,7 +187,7 @@ export class SegmentModel {
         // Big goal: build a preview of the selectedTrackType at this.selectedSegment.nextBuildPosition
         // Might have to delete an existing other preview piece first though.
         // for downsloped tracks, this gives the z-value pre-shifted down by 8.
-        const trackAtNextBuildLocation = doesSegmentHaveNextSegment(segment, this.selectedBuild.get() || 0);
+        const trackAtNextBuildLocation = finder.doesSegmentHaveNextSegment(segment, this.selectedBuild.get() || 0);
         // case: the next location is free~
         if (!trackAtNextBuildLocation.exists) {
             debug(`There was no track at the location of the selected build.Building it now.`);
@@ -198,6 +197,8 @@ export class SegmentModel {
             });
 
         }
+
+
 
         // case: the next location is occupied by a ghost
         if (trackAtNextBuildLocation.exists === "ghost") {
