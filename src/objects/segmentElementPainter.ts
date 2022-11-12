@@ -38,7 +38,9 @@ export class SegmentElementPainter {
 
         // save the new selection
         this._lastSegment = newSeg;
+        debug(`In paintSelectedSegment. Attempting to get the elements to paint the newly selected segment.`);
         const theseElements = finder.getAllSegmentTrackElements(newSeg);
+        debug(`In paintSelectedSegment. Found ${theseElements.length} elements to paint the newly selected segment.`)
         // convert to ElementValues
         const thisRide = map.getRide(newSeg.get().ride);
         this._lastElements = theseElements.map((element) => {
