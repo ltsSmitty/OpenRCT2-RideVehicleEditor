@@ -1,26 +1,31 @@
 import { getTrackElementsFromCoords } from './../services/trackElementFinder';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { arrayStore, button, compute, dropdown, groupbox, horizontal, listview, SpinnerWrapMode, toggle, store, window } from "openrct2-flexui";
-import { rideBuildToggle } from '../objects/rideToggle';
+// import { rideBuildToggle } from '../objects/rideToggle';
+import { ElementWrapper } from '../viewmodels/elementWrapper';
 import { toggleXYZPicker } from "../services/segmentPicker";
 import { isDevelopment, pluginVersion } from "../environment";
 import { TrackElementType } from "../utilities/trackElementType";
 import { debug } from "../utilities/logger";
 import { TrackElementItem } from '../services/SegmentController';
 import { SegmentModel } from '../viewmodels/segmentModel';
-import { ButtonSelectorModel } from '../viewmodels/buttonSelectorModel';
 
 const buttonSize = 15;
 const directionButtonHeight = 25;
-const directionButtonWidth = 18;
-const buttonRowHeight = 30
+const buttonWidthSmall = 25
+const buttonWidthMedium = 25
+// const buttonWidthLarge = 18
+const directionButtonWidth = 25;
+const buttonRowHeight = 30;
+const windowWidth = 220;
 // const controlsWidth = 244;
 // const controlsLabelWidth = 82;
 // const controlsSpinnerWidth = 146; // controlsWidth - (controlsLabelWidth + 4 + 12); // include spacing
 // const clampThenWrapMode: SpinnerWrapMode = "clampThenWrap";
 
 const model = new SegmentModel();
-const buttonModel = new ButtonSelectorModel(model);
+const element = new ElementWrapper(model);
+// const buttonModel = new ButtonSelectorModel(model);
 const isPicking = store<boolean>(false);
 
 const trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
@@ -34,75 +39,6 @@ const trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
 // 	debug(`onPrevious callback: ${result}`);
 // };
 
-// const buildableSegments = arrayStore<TrackElementType>();
-// const segmentToBuild = store<TrackElementType | null>(null);
-// const segment = new SegmentSelector(onNext, onPrevious);
-// const segmentPositionStore = segment.positionStore;
-
-// segmentToBuild.subscribe((newSegment) => {
-// 	debug(`segmentInfo upon trying to build preview: \n${JSON.stringify(segment.getSegmentInfo())}`)
-// 	if (segment.getSegmentInfo() && newSegment !== null) {
-// 		buildFollowingSegment(segment.getSegmentInfo(), newSegment, "preview");
-// 	}
-// })
-
-// type SegmentItem = {
-// 	ride: number,
-// 	rideType: number,
-// 	segmentType: string,
-// 	hasChainLift: boolean,
-// 	coords: CoordsXYZD | null,
-// 	nextCoords: CoordsXYZD | null,
-// 	prevCoords: CoordsXYZD | null
-// };
-// const segmentMap: SegmentItem[] = [];
-
-// // selectedSegment.subscribe((newVal) => {
-// // 	if (newVal) {
-// // 		debug(`new val in selected track. ${JSON.stringify(newVal.coords)}, ${newVal.index}.`);
-// // 		const newTI = map.getTrackIterator({ x: newVal.coords.x, y: newVal.coords.y }, newVal.index);
-// // 		debug(`new TI gotten`);
-// // 		selectedIterator.set(newTI);
-// // 		clearStationMapData();
-// // 		nextTrackCoords.set(selectedIterator.get()?.nextPosition || null);
-// // 		prevTrackCoords.set(selectedIterator.get()?.previousPosition || null)
-// segmentPositionStore.subscribe(newPosition => {
-// 	debug(`segment store updated`);
-// 	if (!segment.getSegmentInfo()?.position) {
-// 		debug(`no segment selected`);
-// 		return;
-// 	}
-// 	debug(`seg: ${JSON.stringify(segment.getSegmentInfo())}`)
-// 	const segInfo = segment.getSegmentInfo();
-
-// 	if (!segInfo) {
-// 		debug(`no segment info able to be gotten`);
-// 		return;
-// 	}
-// 	buildableSegments.set(getBuildableSegments(segInfo.segment.type));
-
-// 	if (buildableSegments.get().length > 0) {
-// 		debug(`setting segmentToBuild to 0th option`);
-// 		segmentToBuild.set(buildableSegments.get()[0]);
-// 	}
-// })
-
-// // 	}
-// // 	else selectedIterator.set(null);
-// // });
-
-// // selectedIterator.subscribe((newTIVal) => {
-// // 	debug(`iter: ${JSON.stringify(newTIVal ? newTIVal.position : null)}`);
-// // 	nextTrackCoords.set((newTIVal ? newTIVal.nextPosition : null));
-// // 	prevTrackCoords.set((newTIVal ? newTIVal.previousPosition : null));
-// // })
-
-
-
-
-// const trackElementsOnSelectedTile = arrayStore<TrackElementItem>();
-
-// let titleName = map.getRide(model.selectedSegment.get()?.get().ride || 0)?.name || "Track Iterator";
 
 let title = `Advanced Build Menu v${pluginVersion}`;
 if (isDevelopment) {
@@ -111,10 +47,20 @@ if (isDevelopment) {
 
 export const trackIteratorWindow = window({
 	title,
-	width: 200,
+	width: windowWidth,
 	height: 500,
 	spacing: 5,
-	// onOpen: () => model.open(),
+	onOpen: () => {
+		// if there's nothing already, selected, open the picker tool
+		if (model.selectedSegment.get() === null) {
+			isPicking.set(true)
+			toggleXYZPicker(true,
+				(coords) => processTileSelected(coords),
+				() => {
+					isPicking.set(false);
+				})
+		}
+	},
 	// onUpdate: () => model.update(),
 	// onClose: () => rideWindow.close(),
 	content: [
@@ -130,48 +76,48 @@ export const trackIteratorWindow = window({
 				horizontal({
 					height: buttonRowHeight,
 					content: [
-						button({
-							disabled
-						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: 'left1Tile',
-							width: directionButtonWidth,
+							width: buttonWidthSmall,
 							height: directionButtonHeight,
 							image: 5135,// 1 tile left turn
+							// onChange: (isPressed) => { debug(`hi`) }
+
+
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "left3Tile",
-							width: directionButtonWidth,
+							width: buttonWidthSmall,
 							height: directionButtonHeight,
 							image: 5140 // 3 tile left turn
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "left5Tile",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5133 // 5 tile left turn
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "straightTrack",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5137 // straight
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "right5Tile",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5139	// 5 tile right turn
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "right3Tile",
-							width: directionButtonWidth,
+							width: buttonWidthSmall,
 							height: directionButtonHeight,
 							image: 5141 // 3 tile right turn
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "right1Tile",
-							width: directionButtonWidth,
+							width: buttonWidthSmall,
 							height: directionButtonHeight,
 							image: 5136 // 1 tile right turn
 						}),
@@ -182,25 +128,25 @@ export const trackIteratorWindow = window({
 				horizontal({
 					height: buttonRowHeight,
 					content: [
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "sBendLeft",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5142, // todo replace with an s-bend image
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "leftLargeTurn",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5142 // large half left turn
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "rightLargeTurn",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5143 // large half right turn
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "sBendRight",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
@@ -212,19 +158,19 @@ export const trackIteratorWindow = window({
 				horizontal({
 					height: buttonRowHeight,
 					content: [
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "bankLeft",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5153 // left bank
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "noBank",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5154 // no bank
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "bankRight",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
@@ -236,43 +182,43 @@ export const trackIteratorWindow = window({
 				horizontal({
 					height: buttonRowHeight,
 					content: [
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "down90",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5150 // down90
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "down60",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5144 // down60
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "down25",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5145 // down25
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "flat",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5146 // flat
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "up25",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5147 // Up25
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "up60",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5148 // up60
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "up90",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
@@ -292,19 +238,19 @@ export const trackIteratorWindow = window({
 			content: [
 				horizontal({
 					content: [
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "chainLift",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5163 // chain
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "boosters",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5130 // boost
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "camera",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
@@ -314,13 +260,13 @@ export const trackIteratorWindow = window({
 				}),
 				horizontal({
 					content: [
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "brakes",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5131 // brakes
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "blockBrakes",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
@@ -335,20 +281,20 @@ export const trackIteratorWindow = window({
 			content: [
 				horizontal({
 					content: [
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "demolish",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5162 // demolish
 						}),
-						rideBuildToggle({
+						element.button({
 							buttonType: "iteratePrevious",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
 							image: 5160 // iterate to previous track
 						}),
 						// segment tile selector tool
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "select",
 							width: buttonSize, height: buttonSize,
 							tooltip: "Use the picker to select a track segment by clicking it",
@@ -361,13 +307,13 @@ export const trackIteratorWindow = window({
 									isPicking.set(false);
 								})
 						}),
-						rideBuildToggle({
+						element.button({
 							buttonType: "iterateNext",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
-							image: 5161 // iterate to next track
+							image: 5161, // iterate to next track
 						}),
-						rideBuildToggle({
+						element.toggle({
 							buttonType: "simulate",
 							width: directionButtonWidth,
 							height: directionButtonHeight,
@@ -380,7 +326,7 @@ export const trackIteratorWindow = window({
 		}),
 		button({
 			text: `${TrackElementType[model.selectedBuild.get() || 0]}`, // todo make this more friendly
-			height: 50
+			// height: 50
 		}),
 
 		// choose which segment from the selected tile
@@ -394,6 +340,7 @@ export const trackIteratorWindow = window({
 		}),
 		// display stats for the selected segment
 		listview({
+			height: 100,
 			items: compute(model.selectedSegment, (segment) => {
 				if (!segment) return ["No segment selected"];
 
@@ -430,16 +377,6 @@ export const trackIteratorWindow = window({
 			})
 
 		}),
-		// listview({
-		// 	items: compute(segmentToBuild, segment => {
-		// 		if (!segment) return ["No segment selected"];
-		// 		return [`${JSON.stringify(context.getTrackSegment(segment))} `]
-		// 		// const segDetails = context.getTrackSegment(segment)
-		// 		// // const detailMap = Object.keys(segDetails || {}).map((key) => { return (segDetails ? `${ key }: ${ segDetails[key] } ` : "") })
-		// 		// debug(`detailMap: ${ detailMap } `)
-		// 		// return [...detailMap];
-		// 	})
-		// }),
 		button({
 			text: "Build at next position",
 			onClick: () => {
