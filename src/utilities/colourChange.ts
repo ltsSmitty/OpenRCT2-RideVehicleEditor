@@ -53,4 +53,18 @@ export default class ColourChange {
     public static setRideStationStyle = (ride: Ride, stationStyle: number) => {
         ColourChange.setRideColourPart(ride, 7, stationStyle);
     };
+
+    public static setColourSchemeSegment = (coords: CoordsXYZD, trackType: number, colourScheme: number, callback?: (result: GameActionResult) => any) => {
+        context.executeAction(
+            "ridesetcolourscheme",
+            {
+                ...coords,
+                trackType,
+                colourScheme,
+            },
+            (result) => {
+                if (callback) (callback(result))
+            }
+        );
+    };
 }
