@@ -1,3 +1,4 @@
+import { TrackElementItem } from './../services/SegmentController';
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { TrackElementType } from '../utilities/trackElementType';
 import { RideType } from '../utilities/rideType';
@@ -56,24 +57,24 @@ export class Segment {
         return this._previousLocation;
     };
 
-    public isThereARealNextSegment = (direction: "next" | "previous"): boolean => {
+    public isThereANextSegment = (direction: "next" | "previous"): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
         const thisTI = finder.getTIAtSegment(this);
 
         if (direction === "next") {
             const IsThereANextSegment = thisTI?.next(); // check if there's a next segment
-            if ((IsThereANextSegment)) { // if there is, check if it's a ghost
-                // ghosts will return false
-                if (finder.getASpecificTrackElement(this._ride, thisTI?.position!).element.isGhost) return false;
+            if ((IsThereANextSegment)) {
+                const thisElement = finder.getSpecificTrackElements(this._ride, thisTI?.position!)[0];
+                return { exists: (thisElement.element.isGhost ? "ghost" : "real"), element: thisElement };
             }
-            return (IsThereANextSegment || false);
+
         }
         if (direction === "previous") {
-            const IsThereAPreviousSegment = thisTI?.previous();
+            const IsThereAPreviousSegment = thisTI?.previous(); // check if there's a next segment
             if ((IsThereAPreviousSegment)) {
-                if (finder.getASpecificTrackElement(this._ride, thisTI?.position!).element.isGhost) return false;
+                const thisElement = finder.getSpecificTrackElements(this._ride, thisTI?.position!)[0];
+                return { exists: (thisElement.element.isGhost ? "ghost" : "real"), element: thisElement };
             }
-            return IsThereAPreviousSegment || false;
         }
-        return false;
+        return { exists: false, element: null };
     };
 }

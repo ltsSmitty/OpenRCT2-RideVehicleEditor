@@ -68,7 +68,9 @@ export class SegmentModel {
         const isThereANextSegment = tiAtSelectedSegment.next(); // moves the iterator to the next segment and returns true if it worked;
         if (isThereANextSegment) {
             // if the player is changing track types so they can add additional non-standard segments, we can't assume to know the track type they've used at the next coords.
-            const nextTrackElementItem = finder.getASpecificTrackElement(this.selectedSegment.get()?.get().ride || 0, tiAtSelectedSegment.position);
+            debug(`in moveToNextSegment, direction is ${direction}. about to get the next TrackElementItem.
+            The TI says the ride should be found at (${tiAtSelectedSegment.position.x}, ${tiAtSelectedSegment.position.y}, ${tiAtSelectedSegment.position.z}, direction: ${tiAtSelectedSegment.position.direction})`);
+            const nextTrackElementItem = finder.getSpecificTrackElements(this.selectedSegment.get()?.get().ride || 0, tiAtSelectedSegment.position)[0];
 
             // add to nextSegment to create a whole new segment object
             const nextSegment = new Segment({
@@ -82,6 +84,10 @@ export class SegmentModel {
             return true;
         }
         return false;
+    }
+
+    debugButtonChange(action: any) {
+        debug(`button pressed: ${action}`);
     }
 
     private onSegmentChange = (newSeg: Segment | null): void => {
@@ -98,14 +104,10 @@ export class SegmentModel {
 
         debug(`about to try repainting the selected segment `);
         const wasPaintOfSelectedSegmentSucessful = this.segmentPainter.paintSelectedSegment(newSeg);
-        // on segment change, check if lastSelectedSegment has a value. if so, repaint it back to the original color
-        // then get the colours of the current segment, save that as lastSelectedSegment
-        // then highlight the current segment
-        // if (this.lastSelectedSegment.segment == null) {
-        //     this.lastSelectedSegment.segment = newSeg;
-        //     this.lastSelectedSegment.trackColours = finder.getTrackColours(newSeg);
-        //     return;
-        // }
+
+        if (!wasPaintOfSelectedSegmentSucessful) {
+            debug(`failed to paint the selected segment!!!!!!!`);
+        }
 
         const newBuildableOptions = builder.getBuildOptionsForSegment(newSeg);
         debug(`After segment change, assessing new buildable options based on whether this segment points up, down, is inverted, etc.`);
@@ -181,13 +183,15 @@ export class SegmentModel {
             return;
         }
 
-        debug(`Selected build changed to ${TrackElementType[selectedTrackType]}. Prepping to ghost build it.`);
-
+        debug(`Selected build changed to ${TrackElementType[selectedTrackType]}. Validating then ghost building it.`);
         const segment = this.selectedSegment.get();
-        // Big goal: build a preview of the selectedTrackType at this.selectedSegment.nextBuildPosition
-        // Might have to delete an existing other preview piece first though.
-        // for downsloped tracks, this gives the z-value pre-shifted down by 8.
-        const trackAtNextBuildLocation = finder.doesSegmentHaveNextSegment(segment, this.selectedBuild.get() || 0);
+
+        if (segment == null) {
+            debug(`selectedBuild changed, but selectedSegment is null. Unable to build a ghost segment.`);
+            return;
+        }
+        const trackAtNextBuildLocation = segment.isThereANextSegment("next");
+
         // case: the next location is free~
         if (!trackAtNextBuildLocation.exists) {
             debug(`There was no track at the location of the selected build.Building it now.`);
@@ -226,7 +230,7 @@ export class SegmentModel {
 
         // highlight the ground under the piece that's being built
         // todo fix this
-        // highlighter.highlightGround(newSelectedBuild);
+        // highlighter.highlightMapRangeUnderSegment(trackAtNextBuildLocation.element?.segment || null);
 
         // case: the next location is occupied by a real track piece
         if (trackAtNextBuildLocation.exists === "real") {

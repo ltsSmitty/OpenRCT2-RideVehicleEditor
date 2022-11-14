@@ -1,6 +1,5 @@
 import { TrackElementItem } from './SegmentController';
 import { Segment } from "../objects/segment";
-import { getASpecificTrackElement } from "./trackElementFinder";
 import { debug } from "../utilities/logger";
 import * as finder from "../services/trackElementFinder";
 
@@ -50,7 +49,7 @@ export const highlightMapRangeUnderSegment = (segment: Segment | null, callback?
 
 export const highlightSelectedElements = (segment: Segment | null) => {
     if (segment == null) { return }
-    const selectedElement = finder.getASpecificTrackElement(segment.get().ride, segment.get().location);
+    const selectedElement = finder.getSpecificTrackElements(segment.get().ride, segment.get().location)[0];
     // for each event in selectElenents, highlight the tile
     // selectedElement.element.isHighlighted = true;
     // todo figure out a better way to highligth a segment since highlight is the same as ghost
