@@ -36,6 +36,17 @@ export class SegmentModel {
     }
 
     /**
+     * Call when the window is closed. Requirements include:
+     * * Remove the ghost track
+     * * Remove the highlighter
+     * * Set values to null
+     * * Able to clean up the window in case the park was force-closed
+     */
+    close() {
+        debug("closing segment model");
+    }
+
+    /**
      * Main function called by the Ui to construct the selected segment.
      */
     buildSelectedNextPiece() {
