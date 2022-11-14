@@ -19,7 +19,7 @@ export const removeTrackAtNextPosition = (selectedSegment: Segment | null, type:
         debug(`Unable to remove track: no next location`);
         return;
     }
-    const elementToRemove = finder.getASpecificTrackElement(selectedSegment.get().ride, nextLocation);
+    const elementToRemove = finder.getSpecificTrackElements(selectedSegment.get().ride, nextLocation)[0];
 
     debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
 
