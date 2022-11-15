@@ -93,8 +93,8 @@ export class SegmentModel {
         const isThereANextSegment = tiAtSelectedSegment.next(); // moves the iterator to the next segment and returns true if it worked;
         if (isThereANextSegment) {
             // if the player is changing track types so they can add additional non-standard segments, we can't assume to know the track type they've used at the next coords.
-            debug(`in moveToNextSegment, direction is ${direction}. about to get the next TrackElementItem.
-            The TI says the ride should be found at (${tiAtSelectedSegment.position.x}, ${tiAtSelectedSegment.position.y}, ${tiAtSelectedSegment.position.z}, direction: ${tiAtSelectedSegment.position.direction})`);
+            // debug(`in moveToNextSegment, direction is ${direction}. about to get the next TrackElementItem.
+            // The TI says the ride should be found at (${tiAtSelectedSegment.position.x}, ${tiAtSelectedSegment.position.y}, ${tiAtSelectedSegment.position.z}, direction: ${tiAtSelectedSegment.position.direction})`);
             const nextTrackElementItem = finder.getSpecificTrackElements(this.selectedSegment.get()?.get().ride || 0, tiAtSelectedSegment.position)[0];
 
             // add to nextSegment to create a whole new segment object
@@ -223,7 +223,7 @@ export class SegmentModel {
         // can use the TI.nextLocation() method to get the next location, but this fails if there's only a ghost piece
         // so the first method uses the TI strategy, and if that fails then it uses a fallback method.
         let trackAtNextBuildLocation = segment.isThereANextSegment("next");
-        debug(`Looking for a track at the next build location. Found: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
+        // debug(`Looking for a track at the next build location. Found: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
         if (trackAtNextBuildLocation.exists == false) {
             debug(`! ! ! ! ! ! ! There is no real track at the next build location. Check if there's a ghost segment.`);
             trackAtNextBuildLocation = finder.doesSegmentHaveNextSegment(segment, selectedTrackType);
@@ -233,7 +233,7 @@ export class SegmentModel {
         if (!trackAtNextBuildLocation.exists) {
             debug(`There was no track at the location of the selected build.Building it now.`);
             builder.buildTrackAtNextPosition(segment, selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
-                debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
+                // debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
                 this.previewSegment.set(newlyBuiltSegment);
             });
         }
@@ -251,12 +251,12 @@ export class SegmentModel {
             }
 
             builder.removeTrackAtNextPosition(segment, "ghost", (result) => {
-                debug(`Result of removing the ghost piece: ${JSON.stringify(result, null, 2)}`);
+                // debug(`Result of removing the ghost piece: ${JSON.stringify(result, null, 2)}`);
             });
 
             debug(`Ghost removed. Building the new piece now.\n\n\n`);
             builder.buildTrackAtNextPosition(segment, selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
-                debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
+                // debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
                 if (newlyBuiltSegment) {
                     this.previewSegment.set(newlyBuiltSegment);
                 }

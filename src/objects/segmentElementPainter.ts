@@ -68,8 +68,8 @@ export class SegmentElementPainter {
             // (result) => { debug(`setColourSchemeSegment returned ${JSON.stringify(result, null, 2)}`); }
         );
         // this.startToggling();
-        debug(`In paintSelectedSegment:
-             Painting complete`);
+        // debug(`In paintSelectedSegment:
+        //      Painting complete`);
         return true;
     }
 
