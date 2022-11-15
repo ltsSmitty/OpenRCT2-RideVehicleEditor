@@ -33,6 +33,20 @@ export class SegmentModel {
         this.buildableTrackTypes.subscribe((newbuildableTrackTypesList) => this.onbuildableTrackTypesChange(newbuildableTrackTypesList));
         this.selectedBuild.subscribe((newSelectedBuild) => this.onSelectedBuildChange(newSelectedBuild));
         this.previewSegment.subscribe((newPreviewSegment) => this.onPreviewSegmentChange(newPreviewSegment));
+
+        // context.subscribe("action.execute", (event: GameActionEventArgs) => {
+        //     const action = event.action as ActionType;
+        //     switch (action) {
+        //         case "ridesetappearance":
+        //         case "ridesetcolourscheme": {
+        //             debug(`<${action}>\n\t- type: ${event.type}
+        // \t- args: ${JSON.stringify(
+        //                 event.args, null, 2
+        //             )}\n\t- result: ${JSON.stringify(event.result)}`);
+        //             break;
+        //         }
+        //     }
+        // })
     }
 
     /**
@@ -101,6 +115,8 @@ export class SegmentModel {
         debug(`button pressed: ${action}`);
     }
 
+    // TODO create a function the deletes the ghost track and the highlighter
+
     private onSegmentChange = (newSeg: Segment | null): void => {
         if (newSeg == null) {
             debug("no segment selected");
@@ -111,9 +127,11 @@ export class SegmentModel {
             debug("The selected segment has no track type");
         }
 
-        debug(`Segment changed to ${TrackElementType[newSeg?.get().trackType]}`);
+        debug(`Segment changed to ${TrackElementType[newSeg?.get().trackType]} at coords (${newSeg?.get().location.x}, ${newSeg?.get().location.y}, ${newSeg?.get().location.z}, direction: ${newSeg?.get().location.direction})`);
 
-        debug(`about to try repainting the selected segment `);
+
+
+        // debug(`about to try repainting the selected segment `);
         const wasPaintOfSelectedSegmentSucessful = this.segmentPainter.paintSelectedSegment(newSeg);
 
         if (!wasPaintOfSelectedSegmentSucessful) {
@@ -121,7 +139,7 @@ export class SegmentModel {
         }
 
         const newBuildableOptions = builder.getBuildOptionsForSegment(newSeg);
-        debug(`After segment change, assessing new buildable options based on whether this segment points up, down, is inverted, etc.`);
+        debug(`After segment change, assessing new buildable options.`);
         const direction = this.buildDirection.get();
         if (direction === "next") {
             debug(`There are ${newBuildableOptions.next.length} buildable options for the next segment`);
@@ -190,7 +208,6 @@ export class SegmentModel {
         debug(`onSelectedBuildChange`);
         if (selectedTrackType == null) {
             highlighter.highlightMapRangeUnderSegment(null);
-            // highlighter.highlightMapRange(this.selectedSegment.get());
             return;
         }
 
@@ -201,7 +218,16 @@ export class SegmentModel {
             debug(`selectedBuild changed, but selectedSegment is null. Unable to build a ghost segment.`);
             return;
         }
-        const trackAtNextBuildLocation = segment.isThereANextSegment("next");
+
+        // check if there's a next track segment.
+        // can use the TI.nextLocation() method to get the next location, but this fails if there's only a ghost piece
+        // so the first method uses the TI strategy, and if that fails then it uses a fallback method.
+        let trackAtNextBuildLocation = segment.isThereANextSegment("next");
+        debug(`Looking for a track at the next build location. Found: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
+        if (trackAtNextBuildLocation.exists == false) {
+            debug(`! ! ! ! ! ! ! There is no real track at the next build location. Check if there's a ghost segment.`);
+            trackAtNextBuildLocation = finder.doesSegmentHaveNextSegment(segment, selectedTrackType);
+        }
 
         // case: the next location is free~
         if (!trackAtNextBuildLocation.exists) {
@@ -210,7 +236,6 @@ export class SegmentModel {
                 debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
                 this.previewSegment.set(newlyBuiltSegment);
             });
-
         }
 
 
@@ -264,7 +289,6 @@ export class SegmentModel {
         highlighter.highlightMapRangeUnderSegment(newPreviewSegment);
     }
 }
-
 
 
 

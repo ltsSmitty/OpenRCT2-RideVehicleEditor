@@ -60,10 +60,13 @@ export class Segment {
     public isThereANextSegment = (direction: "next" | "previous"): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
         const thisTI = finder.getTIAtSegment(this);
 
+        // debug(`Is there a ${direction} segment?`);
         if (direction === "next") {
             const IsThereANextSegment = thisTI?.next(); // check if there's a next segment
+            // debug(`Is there a next segment? ${IsThereANextSegment}`);
             if ((IsThereANextSegment)) {
                 const thisElement = finder.getSpecificTrackElements(this._ride, thisTI?.position!)[0];
+                // debug(`The next element is ${JSON.stringify(thisElement, null, 2)}`);
                 return { exists: (thisElement.element.isGhost ? "ghost" : "real"), element: thisElement };
             }
 

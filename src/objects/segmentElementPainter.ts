@@ -1,3 +1,4 @@
+import { TrackElementType } from './../utilities/trackElementType';
 import { TrackElementItem } from "../services/SegmentController";
 import { Segment } from "./segment";
 import * as finder from "../services/trackElementFinder";
@@ -19,14 +20,20 @@ export class SegmentElementPainter {
         // get the ride to repaint
         const thisRide = map.getRide(this._initialSegment.get().ride);
 
+        const thisElement = finder.getSpecificTrackElements(this._initialSegment.get().ride, this._initialSegment.get().location)[0];
+        const elBaseZ = thisElement.element.baseZ;
+
+        const { x, y, direction } = this._initialSegment.get().location;
+        const newCoordAttempt = { x, y, z: elBaseZ, direction };
+
         // restore the colour scheme
         const { main, additional, supports } = this._initialColourSchemeValue;
         ColourChange.setRideColour(thisRide, main, additional, supports, -1, -1, -1, this._initialTrackColourScheme);
         ColourChange.setColourSchemeSegment(
-            this._initialSegment.get().location,
+            newCoordAttempt,
             this._initialSegment.get().trackType,
-            this._initialTrackColourScheme,
-            (result) => { debug(`Restored the initial track segment colour: ${JSON.stringify(result)}`) });
+            this._initialTrackColourScheme)
+        // (result) => { debug(`Restored the initial track segment colour: ${JSON.stringify(result)}`) });
     }
 
     /**
@@ -42,21 +49,27 @@ export class SegmentElementPainter {
         // save the new selection
         this._initialSegment = newSeg;
         const thisRide = map.getRide(newSeg.get().ride);
-        // need to save the colour scheme # and colours of the current segment
-        debug(`In paintSelectedSegment. Trying to find the track element at ${newSeg.get().location.x}, ${newSeg.get().location.y} in order to save that colour and scheme.`);
-        const trackElement = finder.getSpecificTrackElements(newSeg.get().ride, newSeg.get().location)[0];
-        const thisColourScheme = <ColourSchemeValue>trackElement.element.colourScheme || 0;
+
+        // need to find the element to get the proper colour scheme and element.baseZ
+        // unfortunately using the segment.location.z doesn't work for some complex pieces like helixes
+        // but this does work
+        const thisElement = finder.getSpecificTrackElements(newSeg.get().ride, newSeg.get().location)[0];
+        const elBaseZ = thisElement.element.baseZ;
+
+        const { x, y, direction } = newSeg.get().location;
+        const newCoordAttempt = { x, y, z: elBaseZ, direction };
+
+        const thisColourScheme = <ColourSchemeValue>thisElement.element.colourScheme || 0;
         this._initialTrackColourScheme = thisColourScheme;
         this._initialColourSchemeValue = thisRide.colourSchemes[thisColourScheme];
 
-        // paint the new selection
         ColourChange.setRideColour(thisRide, 17, 17, 17, -1, -1, -1, 3); // paint it yellow
-        ColourChange.setColourSchemeSegment(newSeg.get().location, newSeg.get().trackType, 3, (result) => {
-            debug(`setColourSchemeSegment returned ${result}`);
-        });
-        this.startToggling();
+        ColourChange.setColourSchemeSegment(newCoordAttempt, newSeg.get().trackType, 3,
+            // (result) => { debug(`setColourSchemeSegment returned ${JSON.stringify(result, null, 2)}`); }
+        );
+        // this.startToggling();
         debug(`In paintSelectedSegment:
-             Painting complete`)
+             Painting complete`);
         return true;
     }
 
