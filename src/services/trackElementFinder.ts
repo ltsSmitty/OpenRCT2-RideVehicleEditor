@@ -155,7 +155,7 @@ export const getAllSegmentTrackElements = (segment: Segment | null): TrackElemen
 
     const allTheseElements: TrackElementItem[] = [];
     exactCoordsUnderSegment.forEach((coords) => {
-        allTheseElements.push(...getSpecificTrackElements(segment.get().ride, { ...coords }));
+        allTheseElements.push(getSpecificTrackElement(segment.get().ride, { ...coords }));
     });
 
     return allTheseElements;
@@ -165,7 +165,7 @@ export const getAllSegmentTrackElements = (segment: Segment | null): TrackElemen
  * Get the TrackElementItem for a specific ride and given XYZD.
  * If there are multiple elements at the given coords, it will return all of them.
  */
-export const getSpecificTrackElements = (ride: number, coords: CoordsXYZD): TrackElementItem[] => {
+export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): TrackElementItem => {
     const trackELementsOnTile = getTrackElementsFromCoords({ x: coords.x, y: coords.y });
     const trackForThisRide = trackELementsOnTile.filter(e => e.element.ride === ride);
 
@@ -232,10 +232,11 @@ export const getSpecificTrackElements = (ride: number, coords: CoordsXYZD): Trac
                 return false;
             });
             chosenTrack = matchingAllCoords;
+            debug(`After comparison, there are ${chosenTrack.length} elements that match all coords. Returning only the first one.`);
         }
-        return chosenTrack;
+        return chosenTrack[0];
     }
-    return [trackForThisRide[0]];
+    return trackForThisRide[0];
 };
 
 /**
@@ -254,7 +255,7 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
     }
     // debug(`Getting TI at the track element of ride ${segment.get().ride} at (${segment.get().location.x}, ${segment.get().location.y}, ${segment.get().location.z}) dir ${segment.get().location.direction}`);
     // debug(`Looking for the indexOf the track element.`)
-    const thisSegmentIndex = getSpecificTrackElements(segment.get().ride, segment.get().location)[0].index; // needed for iterator
+    const thisSegmentIndex = getSpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator
     const newTI = map.getTrackIterator(<CoordsXY>segment.get().location, thisSegmentIndex); // set up TI
 
     if (newTI == null) {
@@ -269,7 +270,7 @@ export const getTrackColours = (newSeg: Segment | null): TrackColour => {
     // TrackElement. colour scheme => look up
     if (newSeg == null) return { main: -1, additional: -1, supports: -1 };
 
-    const thisSeg = getSpecificTrackElements(newSeg?.get().ride || 0, newSeg?.get().location)[0];
+    const thisSeg = getSpecificTrackElement(newSeg?.get().ride || 0, newSeg?.get().location)
     const thisColourScheme = thisSeg.element.colourScheme
     const theseTrackColours = map.getRide(newSeg.get().ride)?.colourSchemes[thisColourScheme || 0];
     return theseTrackColours;

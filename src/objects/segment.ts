@@ -65,7 +65,7 @@ export class Segment {
             const IsThereANextSegment = thisTI?.next(); // check if there's a next segment
             // debug(`Is there a next segment? ${IsThereANextSegment}`);
             if ((IsThereANextSegment)) {
-                const thisElement = finder.getSpecificTrackElements(this._ride, thisTI?.position!)[0];
+                const thisElement = finder.getSpecificTrackElement(this._ride, thisTI?.position!)
                 // debug(`The next element is ${JSON.stringify(thisElement, null, 2)}`);
                 return { exists: (thisElement.element.isGhost ? "ghost" : "real"), element: thisElement };
             }
@@ -74,7 +74,7 @@ export class Segment {
         if (direction === "previous") {
             const IsThereAPreviousSegment = thisTI?.previous(); // check if there's a next segment
             if ((IsThereAPreviousSegment)) {
-                const thisElement = finder.getSpecificTrackElements(this._ride, thisTI?.position!)[0];
+                const thisElement = finder.getSpecificTrackElement(this._ride, thisTI?.position!)
                 return { exists: (thisElement.element.isGhost ? "ghost" : "real"), element: thisElement };
             }
         }

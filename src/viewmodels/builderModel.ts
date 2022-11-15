@@ -8,6 +8,35 @@ import { getBuildableSegments } from '../services/segmentValidator';
 import * as finder from '../services/trackElementFinder';
 import { TrackElementType } from '../utilities/trackElementType';
 
+
+// replicate the functionality of removeTrackAtNextPosition
+export const removeTrackAtPreviousPosition = (selectedSegment: Segment | null, type: "real" | "ghost", normalizeZ: boolean, callback?: ((result: GameActionResult) => void) | undefined): void => {
+    // get the next position from selectedSegment
+    if (selectedSegment == null) {
+        debug("no selected segment");
+        return;
+    }
+    const previousLocation = selectedSegment.previousLocation();
+    if (previousLocation == null) {
+        debug(`Unable to remove track: no next location`);
+        return;
+    }
+    const elementToRemove = finder.getSpecificTrackElement(selectedSegment.get().ride, previousLocation)
+
+    debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
+
+    debug(`Trying to remove a ${type} segment at ${previousLocation.x}, ${previousLocation.y}. If it's pointing down, make sure it gets removed too.
+    The element to remove is has a startZ of ${elementToRemove.element.baseZ}.
+    ${elementToRemove.element.baseZ <= 0 ? "" : "It's pointing down"}`);
+
+    // debug(`compare nextLocation z with elementToRemove z: ${nextLocation.z} ${elementToRemove?.segment?.get().location.z}`);
+
+    buildOrRemove(elementToRemove, "remove", type, false, (result) => {
+        if (callback) callback(result);
+    });
+}
+
+
 export const removeTrackAtNextPosition = (selectedSegment: Segment | null, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)) => {
     // get the next position from selectedSegment
     if (selectedSegment == null) {
@@ -19,7 +48,7 @@ export const removeTrackAtNextPosition = (selectedSegment: Segment | null, type:
         debug(`Unable to remove track: no next location`);
         return;
     }
-    const elementToRemove = finder.getSpecificTrackElements(selectedSegment.get().ride, nextLocation)[0];
+    const elementToRemove = finder.getSpecificTrackElement(selectedSegment.get().ride, nextLocation)
 
     debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
 

@@ -20,7 +20,7 @@ export class SegmentElementPainter {
         // get the ride to repaint
         const thisRide = map.getRide(this._initialSegment.get().ride);
 
-        const thisElement = finder.getSpecificTrackElements(this._initialSegment.get().ride, this._initialSegment.get().location)[0];
+        const thisElement = finder.getSpecificTrackElement(this._initialSegment.get().ride, this._initialSegment.get().location)
         const elBaseZ = thisElement.element.baseZ;
 
         const { x, y, direction } = this._initialSegment.get().location;
@@ -53,7 +53,7 @@ export class SegmentElementPainter {
         // need to find the element to get the proper colour scheme and element.baseZ
         // unfortunately using the segment.location.z doesn't work for some complex pieces like helixes
         // but this does work
-        const thisElement = finder.getSpecificTrackElements(newSeg.get().ride, newSeg.get().location)[0];
+        const thisElement = finder.getSpecificTrackElement(newSeg.get().ride, newSeg.get().location)
         const elBaseZ = thisElement.element.baseZ;
 
         const { x, y, direction } = newSeg.get().location;

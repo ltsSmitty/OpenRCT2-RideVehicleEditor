@@ -49,7 +49,7 @@ export const highlightMapRangeUnderSegment = (segment: Segment | null, callback?
 
 export const highlightSelectedElements = (segment: Segment | null) => {
     if (segment == null) { return }
-    const selectedElement = finder.getSpecificTrackElements(segment.get().ride, segment.get().location)[0];
+    const selectedElement = finder.getSpecificTrackElement(segment.get().ride, segment.get().location)
     // for each event in selectElenents, highlight the tile
     // selectedElement.element.isHighlighted = true;
     // todo figure out a better way to highligth a segment since highlight is the same as ghost

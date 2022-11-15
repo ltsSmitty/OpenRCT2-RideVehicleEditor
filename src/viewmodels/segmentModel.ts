@@ -95,7 +95,7 @@ export class SegmentModel {
             // if the player is changing track types so they can add additional non-standard segments, we can't assume to know the track type they've used at the next coords.
             // debug(`in moveToNextSegment, direction is ${direction}. about to get the next TrackElementItem.
             // The TI says the ride should be found at (${tiAtSelectedSegment.position.x}, ${tiAtSelectedSegment.position.y}, ${tiAtSelectedSegment.position.z}, direction: ${tiAtSelectedSegment.position.direction})`);
-            const nextTrackElementItem = finder.getSpecificTrackElements(this.selectedSegment.get()?.get().ride || 0, tiAtSelectedSegment.position)[0];
+            const nextTrackElementItem = finder.getSpecificTrackElement(this.selectedSegment.get()?.get().ride || 0, tiAtSelectedSegment.position)
 
             // add to nextSegment to create a whole new segment object
             const nextSegment = new Segment({
