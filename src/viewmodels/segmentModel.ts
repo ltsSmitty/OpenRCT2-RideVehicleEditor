@@ -48,32 +48,29 @@ export class SegmentModel {
         // })
     }
 
-    cleanUpFromImproperClose() {
-        debug("cleaning up from improper close on pluginMount.");
+    /**
+     * @summary Called upon plugin mount. If the game was saved without closing the window, some artifacts will remain, including the preview track,
+     * the highlight under the preview track, and the yellow painting of the selected segment. This function will remove all of those artifacts.
+     */
+    cleanUpFromImproperClose(): void {
+        // debug("cleaning up from improper close on pluginMount.");
+
         // if threre is still a previewSegment, call close to clean up
-        const paintedSegmentDetails = storage.getPaintedSegmentDetails();
-        const previewSegmentInStorage = storage.getPreviewSegment();
-        if (previewSegmentInStorage || paintedSegmentDetails.segment) {
-            debug(`upon plugin mount, there was still a preview segment or painted segment in storage. Cleaning up.`);
-            this.previewSegment.set(previewSegmentInStorage);
+        const storedPaintedSegmentDetails = storage.getPaintedSegmentDetails();
+        const storedPreviewSegment = storage.getPreviewSegment();
+        if (storedPreviewSegment || storedPaintedSegmentDetails.segment) {
+            // debug(`Upon plugin mount, there was still a preview segment or painted segment in storage. Cleaning up.`);
+            this.previewSegment.set(storedPreviewSegment);
             this.close();
         }
     }
 
-    /**
-     * Call when the window is closed. Requirements include:
-     *  √ Remove the ghost track
-     *  √ Remove the highlighter
-     *  √ Set values to null
-     * * Able to clean up the window in case the park was force-closed
-     */
-    close() {
-        debug("closing segment model");
+    close(): void {
+        // debug("closing segment model");
         this.segmentPainter.restoreInitialColour();
         builder.removeTrackSegment(this.previewSegment.get());
         this.previewSegment.set(null);
         this.selectedSegment.set(null);
-        // storage.storePreviewSegment(null);
     }
 
     /**

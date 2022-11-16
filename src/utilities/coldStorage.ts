@@ -10,22 +10,42 @@ type storageKeys =
     "paintedColourScheme" |
     "paintedColourSchemeValue";
 
+/**
+* @summary Sets the preview segment in sharedStorage.
+* @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
+*/
 const storePreviewSegment = (segment: Segment | null): void => {
     context.sharedStorage.set(`${GlobalStorageKey}.previewSegment`, segment);
 }
 
+/**
+ * @summary Gets the preview segment from sharedStorage
+ * @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
+ */
 const getPreviewSegment = (): Segment | null => {
     return context.sharedStorage.get(`${GlobalStorageKey}.previewSegment`) || null;
 }
 
+/**
+ * @summary Sets the selected segment in sharedStorage
+ * @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
+ */
 const storeSelectedSegment = (segment: Segment | null): void => {
     context.sharedStorage.set(`${GlobalStorageKey}.selectedSegment`, segment);
 }
 
+/**
+ * @summary Gets the selected segment from sharedStorage
+ * @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
+ */
 const getSelectedSegment = (): Segment | null => {
     return context.sharedStorage.get(`${GlobalStorageKey}.selectedSegment`) || null;
 }
 
+/**
+ * @summary Returns the segment and paint details for the segment that was most recently highlighted (painted).
+ * @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
+ */
 const getPaintedSegmentDetails = (): { segment: Segment | null, colourScheme: ColourSchemeValue | null, colourSchemeValue: TrackColour | null } => {
     const segmentDescriptor = <SegmentDescriptor>context.sharedStorage.get(`${GlobalStorageKey}.segmentDescriptor`) || null;
     const paintedColourScheme = <ColourSchemeValue | null>context.sharedStorage.get(`${GlobalStorageKey}.paintedColourScheme`) || 0;
@@ -40,6 +60,10 @@ const getPaintedSegmentDetails = (): { segment: Segment | null, colourScheme: Co
     };
 };
 
+/**
+ * @summary Sets the segment and paint details for the segment that was most recently highlighted (painted).
+ * @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
+ */
 const setPaintedSegmentDetails = (segment: Segment | null, colourScheme: ColourSchemeValue | null, colourSchemeValue: TrackColour | null): void => {
     //store the segment.get().location and ride
     context.sharedStorage.set(`${GlobalStorageKey}.segmentDescriptor`, segment?.get());
