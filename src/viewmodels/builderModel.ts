@@ -8,75 +8,48 @@ import { getBuildableSegments } from '../services/segmentValidator';
 import * as finder from '../services/trackElementFinder';
 import { TrackElementType } from '../utilities/trackElementType';
 
-
-// replicate the functionality of removeTrackAtNextPosition
-export const removeTrackAtPreviousPosition = (selectedSegment: Segment | null, type: "real" | "ghost", normalizeZ: boolean, callback?: ((result: GameActionResult) => void) | undefined): void => {
+export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, direction: "next" | "previous", type: "real" | "ghost", callback?: ((result: GameActionResult) => void)): void => {
     // get the next position from selectedSegment
     if (selectedSegment == null) {
         debug("no selected segment");
         return;
     }
-    const previousLocation = selectedSegment.previousLocation();
-    if (previousLocation == null) {
-        debug(`Unable to remove track: no next location`);
+
+    let location: CoordsXYZD | null;
+    (direction == "next") ? location = selectedSegment.nextLocation() : location = selectedSegment.previousLocation();
+    if (location == null) {
+        debug(`Unable to remove track: no ${direction} location`);
         return;
     }
-    const elementToRemove = finder.getSpecificTrackElement(selectedSegment.get().ride, previousLocation)
+    const elementToRemove = finder.getSpecificTrackElement(selectedSegment.get().ride, location);
 
-    debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
-
-    debug(`Trying to remove a ${type} segment at ${previousLocation.x}, ${previousLocation.y}. If it's pointing down, make sure it gets removed too.
-    The element to remove is has a startZ of ${elementToRemove.element.baseZ}.
-    ${elementToRemove.element.baseZ <= 0 ? "" : "It's pointing down"}`);
-
-    // debug(`compare nextLocation z with elementToRemove z: ${nextLocation.z} ${elementToRemove?.segment?.get().location.z}`);
+    // debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
 
     buildOrRemove(elementToRemove, "remove", type, false, (result) => {
         if (callback) callback(result);
     });
-}
+};
 
+export const buildTrackAtFollowingPosition = (
+    selectedSegment: Segment | null,
+    direction: "next" | "previous",
+    trackToBuild: TrackElementType,
+    type: "real" | "ghost",
+    callback?: ((response: { result: GameActionResult, newlyBuiltSegment: Segment }) => void)): void => {
 
-export const removeTrackAtNextPosition = (selectedSegment: Segment | null, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)) => {
-    // get the next position from selectedSegment
     if (selectedSegment == null) {
         debug("no selected segment");
         return;
     }
-    const nextLocation = selectedSegment.nextLocation();
-    if (nextLocation == null) {
-        debug(`Unable to remove track: no next location`);
-        return;
-    }
-    const elementToRemove = finder.getSpecificTrackElement(selectedSegment.get().ride, nextLocation)
-
-    debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
-
-    debug(`Trying to remove a ${type} segment at ${nextLocation.x}, ${nextLocation.y}. If it's pointing down, make sure it gets removed too.
-    The element to remove is has a startZ of ${elementToRemove.element.baseZ}.
-    ${elementToRemove.element.baseZ <= 0 ? "" : "It's pointing down"}`);
-
-    // debug(`compare nextLocation z with elementToRemove z: ${nextLocation.z} ${elementToRemove?.segment?.get().location.z}`);
-
-    buildOrRemove(elementToRemove, "remove", type, false, (result) => {
-        if (callback) callback(result);
-    });
-}
-
-export const buildTrackAtNextPosition = (selectedSegment: Segment | null, trackToBuild: TrackElementType, type: "real" | "ghost",
-    callback?: ((response: { result: GameActionResult, newlyBuiltSegment: Segment }) => void)) => {
-    if (selectedSegment == null) {
-        debug("no selected segment");
-        return;
-    }
-    const nextLocation = selectedSegment.nextLocation();
-    if (nextLocation == null) {
-        debug(`Unable to build track: no next location`);
+    let location: CoordsXYZD | null;
+    (direction == "next") ? location = selectedSegment.nextLocation() : location = selectedSegment.previousLocation();
+    if (location == null) {
+        debug(`Unable to remove track: no ${direction} location`);
         return;
     }
 
     const segmentToBuild = new Segment({
-        location: nextLocation,
+        location: location,
         ride: selectedSegment.get().ride,
         trackType: trackToBuild,
         rideType: selectedSegment.get().rideType

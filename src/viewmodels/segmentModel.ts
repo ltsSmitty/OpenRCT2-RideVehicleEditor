@@ -69,10 +69,10 @@ export class SegmentModel {
             debug("no selected track type to build");
             return;
         }
-        builder.removeTrackAtNextPosition(this.selectedSegment.get(), "ghost", (result) => {
+        builder.removeTrackAtFollowingPosition(this.selectedSegment.get(), "next", "ghost", (result) => {
             debug(`Ghost removed from the next position of the selected segment. Result is ${JSON.stringify(result, null, 2)}`);
         });
-        builder.buildTrackAtNextPosition(this.selectedSegment.get(), segToBuild, "real", ({ result, newlyBuiltSegment }) => {
+        builder.buildTrackAtFollowingPosition(this.selectedSegment.get(), "next", segToBuild, "real", ({ result, newlyBuiltSegment }) => {
             // this.previewSegment.set(newlyBuiltSegment);
             if (result.error) {
                 debug(`Error building that piece. ${result?.errorMessage}`);
@@ -232,7 +232,7 @@ export class SegmentModel {
         // case: the next location is free~
         if (!trackAtNextBuildLocation.exists) {
             debug(`There was no track at the location of the selected build.Building it now.`);
-            builder.buildTrackAtNextPosition(segment, selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
+            builder.buildTrackAtFollowingPosition(segment, "next", selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
                 // debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
                 this.previewSegment.set(newlyBuiltSegment);
             });
@@ -250,12 +250,12 @@ export class SegmentModel {
                 return;
             }
 
-            builder.removeTrackAtNextPosition(segment, "ghost", (result) => {
+            builder.removeTrackAtFollowingPosition(segment, "next", "ghost", (result) => {
                 // debug(`Result of removing the ghost piece: ${JSON.stringify(result, null, 2)}`);
             });
 
             debug(`Ghost removed. Building the new piece now.\n\n\n`);
-            builder.buildTrackAtNextPosition(segment, selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
+            builder.buildTrackAtFollowingPosition(segment, "next", selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
                 // debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
                 if (newlyBuiltSegment) {
                     this.previewSegment.set(newlyBuiltSegment);
