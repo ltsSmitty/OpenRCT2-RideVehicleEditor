@@ -3,28 +3,27 @@ import { Segment } from './../objects/segment';
 import * as highlighter from '../services/highlightGround';
 import * as builder from './builderModel';
 import * as finder from '../services/trackElementFinder';
+import * as storage from '../utilities/coldStorage';
 
 import { compute, Store, store } from 'openrct2-flexui';
 import { getSuggestedNextSegment } from '../utilities/suggestedNextSegment';
 
 import { debug } from '../utilities/logger';
 import { TrackElementType } from '../utilities/trackElementType';
+import { combinedLabelSpinner } from '../ui/utilityControls';
 
 
 export class SegmentModel {
 
     readonly selectedSegment = store<Segment | null>(null);
-    readonly buildableTrackTypes = store<TrackElementType[]>([]);
     readonly selectedBuild = store<TrackElementType | null>(null);
     readonly previewSegment = store<Segment | null>(null);
+
+    readonly buildableTrackTypes = store<TrackElementType[]>([]);
     readonly buildDirection = store<"next" | "prev" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
 
     private segmentPainter = new SegmentElementPainter();
-
-    /**
-     *Used for looking up the possible segments that can be built next
-     */
 
     constructor() {
         this.selectedSegment.subscribe((seg) => this.onSegmentChange(seg));
@@ -49,15 +48,32 @@ export class SegmentModel {
         // })
     }
 
+    cleanUpFromImproperClose() {
+        debug("cleaning up from improper close on pluginMount.");
+        // if threre is still a previewSegment, call close to clean up
+        const paintedSegmentDetails = storage.getPaintedSegmentDetails();
+        const previewSegmentInStorage = storage.getPreviewSegment();
+        if (previewSegmentInStorage || paintedSegmentDetails.segment) {
+            debug(`upon plugin mount, there was still a preview segment or painted segment in storage. Cleaning up.`);
+            this.previewSegment.set(previewSegmentInStorage);
+            this.close();
+        }
+    }
+
     /**
      * Call when the window is closed. Requirements include:
-     * * Remove the ghost track
-     * * Remove the highlighter
-     * * Set values to null
+     *  √ Remove the ghost track
+     *  √ Remove the highlighter
+     *  √ Set values to null
      * * Able to clean up the window in case the park was force-closed
      */
     close() {
         debug("closing segment model");
+        this.segmentPainter.restoreInitialColour();
+        builder.removeTrackSegment(this.previewSegment.get());
+        this.previewSegment.set(null);
+        this.selectedSegment.set(null);
+        // storage.storePreviewSegment(null);
     }
 
     /**
@@ -118,6 +134,7 @@ export class SegmentModel {
     // TODO create a function the deletes the ghost track and the highlighter
 
     private onSegmentChange = (newSeg: Segment | null): void => {
+        storage.storeSelectedSegment(newSeg);
         if (newSeg == null) {
             debug("no segment selected");
             return;
@@ -264,10 +281,6 @@ export class SegmentModel {
             debug(`... and new piece built. seg nextLocation and thisselectedSegment nextLocation: ${JSON.stringify(segment?.nextLocation())}, ${JSON.stringify(this.selectedSegment.get()?.nextLocation())} `);
         }
 
-        // highlight the ground under the piece that's being built
-        // todo fix this
-        // highlighter.highlightMapRangeUnderSegment(trackAtNextBuildLocation.element?.segment || null);
-
         // case: the next location is occupied by a real track piece
         if (trackAtNextBuildLocation.exists === "real") {
             debug(`There is a real track piece at the location of the selected build.Cannot build a preview piece here.
@@ -287,6 +300,7 @@ export class SegmentModel {
     private onPreviewSegmentChange(newPreviewSegment: Segment | null): void {
         debug(`preview segment changed to ${JSON.stringify(newPreviewSegment?.get())} `);
         highlighter.highlightMapRangeUnderSegment(newPreviewSegment);
+        storage.storePreviewSegment(newPreviewSegment);
     }
 }
 

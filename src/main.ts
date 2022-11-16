@@ -1,13 +1,17 @@
+import { ElementWrapper } from './viewmodels/elementWrapper';
+import { SegmentModel } from './viewmodels/segmentModel';
 import * as Environment from "./environment";
 import { initActions } from "./services/actions";
 // import { mainWindow } from "./ui/mainWindow";
-import { trackIteratorWindow } from "./ui/trackIteratorWindow"
+import { trackIteratorWindow } from "./ui/trackIteratorWindow";
+import { WindowTemplate } from 'openrct2-flexui';
+import { debug } from './utilities/logger';
 
 
 /**
  * Opens the ride editor window.
  */
-function openEditorWindow(): void {
+function openEditorWindow(window: WindowTemplate): void {
 	// Check if game is up-to-date...
 	if (context.apiVersion < 59) {
 		// 59 => https://github.com/OpenRCT2/OpenRCT2/pull/17821
@@ -15,12 +19,11 @@ function openEditorWindow(): void {
 		const message = "The version of OpenRCT2 you are currently playing is too old for this plugin.";
 
 		ui.showError(title, message);
-		console.log(`[RideVehicleEditor] ${title} ${message}`);
+		console.log(`[TrackGenerator] ${title} ${message}`);
 		return;
 	}
 
-	// Show the current instance if one is active.
-	trackIteratorWindow.open();
+	window.open();
 }
 
 
@@ -34,5 +37,10 @@ export function main(): void {
 	}
 
 	initActions();
-	ui.registerMenuItem("Track Generator", () => openEditorWindow());
+
+	const segmentModel = new SegmentModel();
+	segmentModel.cleanUpFromImproperClose();
+	const elementWrapper = new ElementWrapper(segmentModel);
+	const window = trackIteratorWindow(segmentModel, elementWrapper);
+	ui.registerMenuItem("Track Generator", () => openEditorWindow(window));
 }

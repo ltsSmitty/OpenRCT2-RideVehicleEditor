@@ -8,6 +8,14 @@ import { getBuildableSegments } from '../services/segmentValidator';
 import * as finder from '../services/trackElementFinder';
 import { TrackElementType } from '../utilities/trackElementType';
 
+
+export const removeTrackSegment = (segmentToRemove: Segment | null, callback?: ((result: GameActionResult) => void) | undefined): void => {
+    debug(`attempting to remove track segment at coords XYZD ${segmentToRemove?.get().location.x}, ${segmentToRemove?.get().location.y}, ${segmentToRemove?.get().location.z}, ${segmentToRemove?.get().location.direction}`);
+
+
+    buildOrRemove(segmentToRemove, "remove", "ghost", true, callback);
+}
+
 export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, direction: "next" | "previous", type: "real" | "ghost", callback?: ((result: GameActionResult) => void)): void => {
     // get the next position from selectedSegment
     if (selectedSegment == null) {

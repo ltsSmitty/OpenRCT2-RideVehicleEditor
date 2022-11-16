@@ -2,19 +2,23 @@ import { TrackElementType } from './../utilities/trackElementType';
 import { TrackElementItem } from "../services/SegmentController";
 import { Segment } from "./segment";
 import * as finder from "../services/trackElementFinder";
+import * as storage from "../utilities/coldStorage";
 import ColourChange from "../utilities/colourChange";
 import { debug } from "../utilities/logger";
 
-type ColourSchemeValue = 0 | 1 | 2 | 3
+export type ColourSchemeValue = 0 | 1 | 2 | 3
 
 export class SegmentElementPainter {
     private _initialSegment: Segment | null = null;
     private _initialTrackColourScheme: 0 | 1 | 2 | 3 | null = null;
     private _initialColourSchemeValue: TrackColour | null = null;
 
-    private restoreInitialColour() {
+    restoreInitialColour(fromColdStorage = false) {
         if (!this._initialSegment || this._initialTrackColourScheme == null || !this._initialColourSchemeValue) {
-            debug(`Error: unable to restore colour scheme because either no initial segment, track colour scheme, or actual colours were saved.`);
+            debug(`Restoring initial colour. No segment/colourSchemes are available from this window session. Attempting to restore from cold storage.`);
+            if (!fromColdStorage) {
+                this.restoreColoursFromColdStorage();
+            }
             return;
         }
         // get the ride to repaint
@@ -27,13 +31,26 @@ export class SegmentElementPainter {
         const newCoordAttempt = { x, y, z: elBaseZ, direction };
 
         // restore the colour scheme
-        const { main, additional, supports } = this._initialColourSchemeValue;
+        const { main, additional, supports } = this._initialColourSchemeValue!;
         ColourChange.setRideColour(thisRide, main, additional, supports, -1, -1, -1, this._initialTrackColourScheme);
         ColourChange.setColourSchemeSegment(
             newCoordAttempt,
             this._initialSegment.get().trackType,
             this._initialTrackColourScheme)
         // (result) => { debug(`Restored the initial track segment colour: ${JSON.stringify(result)}`) });
+    }
+
+    restoreColoursFromColdStorage(): void {
+        const paintedSegmentDetails = storage.getPaintedSegmentDetails();
+        if (!paintedSegmentDetails) {
+            debug(`No painted segment details found in cold storage.`);
+            return;
+        }
+        const { segment, colourScheme, colourSchemeValue } = paintedSegmentDetails;
+        this._initialSegment = segment;
+        this._initialTrackColourScheme = colourScheme;
+        this._initialColourSchemeValue = colourSchemeValue;
+        this.restoreInitialColour(true);
     }
 
     /**
@@ -70,6 +87,8 @@ export class SegmentElementPainter {
         // this.startToggling();
         // debug(`In paintSelectedSegment:
         //      Painting complete`);
+        debug(`setting painted segment details: ${JSON.stringify(this._initialSegment)}`);
+        storage.setPaintedSegmentDetails(newSeg, thisColourScheme, thisRide.colourSchemes[thisColourScheme]);
         return true;
     }
 
