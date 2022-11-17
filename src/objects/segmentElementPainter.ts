@@ -9,6 +9,7 @@ import { debug } from "../utilities/logger";
 export type ColourSchemeValue = 0 | 1 | 2 | 3
 
 export class SegmentElementPainter {
+    private _isToggled = false;
     private _initialSegment: Segment | null = null;
     private _initialTrackColourScheme: 0 | 1 | 2 | 3 | null = null;
     private _initialColourSchemeValue: TrackColour | null = null;
@@ -65,42 +66,75 @@ export class SegmentElementPainter {
 
         // save the new selection
         this._initialSegment = newSeg;
+
+        // need to find the element to get the proper colour scheme
         const thisRide = map.getRide(newSeg.get().ride);
-
-        // need to find the element to get the proper colour scheme and element.baseZ
-        // unfortunately using the segment.location.z doesn't work for some complex pieces like helixes
-        // but this does work
         const thisElement = finder.getSpecificTrackElement(newSeg.get().ride, newSeg.get().location)
-        const elBaseZ = thisElement.element.baseZ;
-
-        const { x, y, direction } = newSeg.get().location;
-        const newCoordAttempt = { x, y, z: elBaseZ, direction };
 
         const thisColourScheme = <ColourSchemeValue>thisElement.element.colourScheme || 0;
         this._initialTrackColourScheme = thisColourScheme;
         this._initialColourSchemeValue = thisRide.colourSchemes[thisColourScheme];
 
-        ColourChange.setRideColour(thisRide, 17, 17, 17, -1, -1, -1, 3); // paint it yellow
-        ColourChange.setColourSchemeSegment(newCoordAttempt, newSeg.get().trackType, 3,
-            // (result) => { debug(`setColourSchemeSegment returned ${JSON.stringify(result, null, 2)}`); }
-        );
-        // this.startToggling();
-        // debug(`In paintSelectedSegment:
-        //      Painting complete`);
+        this.paintSegment(newSeg, 2, 2, 2, 3);
         debug(`setting painted segment details: ${JSON.stringify(this._initialSegment)}`);
         storage.setPaintedSegmentDetails(newSeg, thisColourScheme, thisRide.colourSchemes[thisColourScheme]);
         return true;
     }
 
-    private startToggling() {
-        // setTimeout(this.toggleToOtherScheme.bind(this), 500);
-        // context.setInterval(this.toggleToOtherScheme.bind(this), 1000);
+    private paintSegment(segment: Segment | null, baseColour: number, additionalColour: number, supportsColour: number, schemeNumber: 0 | 1 | 2 | 3): void {
+        if (segment == null) {
+            debug(`segment is null; cannot paint it.`);
+            return;
+        }
+
+        // need to find the element to get the proper element.baseZ
+        // unfortunately using the segment.location.z doesn't work for some complex pieces like helixes
+        // but this does work
+        const thisRide = map.getRide(segment.get().ride);
+        const thisElement = finder.getSpecificTrackElement(segment.get().ride, segment.get().location);
+        const elBaseZ = thisElement.element.baseZ;
+
+        const { x, y, direction } = segment.get().location;
+        const newCoordAttempt = { x, y, z: elBaseZ, direction };
+
+        ColourChange.setRideColour(thisRide, baseColour, additionalColour, supportsColour, -1, -1, -1, schemeNumber);
+        ColourChange.setColourSchemeSegment(newCoordAttempt, segment.get().trackType, schemeNumber,
+            // (result) => { debug(`setColourSchemeSegment returned ${JSON.stringify(result, null, 2)}`); }
+        );
+    }
+
+    togglePainting(isToggling: boolean): void {
+        if (isToggling) {
+            // context.setInterval(this.toggleToOtherScheme.bind(this), 250);
+        }
     }
 
     private toggleToOtherScheme() {
-        // debug(`toggling to other scheme. ${this._lastElements.length} elements.`);
-        // this._lastElements.forEach(element => {
-        //     element.element.element.colourScheme = (element.element.element.colourScheme === 3 ? 0 : 3);
-        // });
+
+        const paintSegmentArgs = {
+            segment: this._initialSegment,
+            baseColour: 2,
+            additionalColour: 2,
+            supportsColour: 2,
+            schemeNumber: <0 | 1 | 2 | 3>3
+        };
+        if (this._isToggled) {
+            this.paintSegment(
+                paintSegmentArgs.segment,
+                paintSegmentArgs.baseColour,
+                paintSegmentArgs.additionalColour,
+                paintSegmentArgs.supportsColour,
+                paintSegmentArgs.schemeNumber);
+            this._isToggled = false;
+            return;
+        }
+        this.paintSegment(
+            this._initialSegment,
+            this._initialColourSchemeValue?.main || 0,
+            this._initialColourSchemeValue?.additional || 0,
+            this._initialColourSchemeValue?.supports || 0,
+            this._initialTrackColourScheme || 0);
+        this._isToggled = true;
+        return;
     }
 }

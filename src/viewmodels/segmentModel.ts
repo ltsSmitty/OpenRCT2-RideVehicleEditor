@@ -20,7 +20,7 @@ export class SegmentModel {
     readonly previewSegment = store<Segment | null>(null);
 
     readonly buildableTrackTypes = store<TrackElementType[]>([]);
-    readonly buildDirection = store<"next" | "prev" | null>("next");
+    readonly buildDirection = store<"next" | "previous" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
 
     private segmentPainter = new SegmentElementPainter();
@@ -95,29 +95,32 @@ export class SegmentModel {
         });
     }
 
-    moveToNextSegment(direction: "next" | "prev") {
+    moveToNextSegment(direction: "next" | "previous"): boolean {
         const tiAtSelectedSegment = finder.getTIAtSegment(this.selectedSegment.get()); // use a trackIterator to find the proper coords
 
         if (tiAtSelectedSegment == null) {
             debug("no track iterator at selected segment");
-            return;
+            return false;
         }
 
-        const isThereANextSegment = tiAtSelectedSegment.next(); // moves the iterator to the next segment and returns true if it worked;
-        if (isThereANextSegment) {
+        const isThereAFollowingSegment = (direction == "next" ? tiAtSelectedSegment.next() : tiAtSelectedSegment.previous()) // moves the iterator to the next segment and returns true if it worked;
+        if (isThereAFollowingSegment) {
             // if the player is changing track types so they can add additional non-standard segments, we can't assume to know the track type they've used at the next coords.
             // debug(`in moveToNextSegment, direction is ${direction}. about to get the next TrackElementItem.
             // The TI says the ride should be found at (${tiAtSelectedSegment.position.x}, ${tiAtSelectedSegment.position.y}, ${tiAtSelectedSegment.position.z}, direction: ${tiAtSelectedSegment.position.direction})`);
-            const nextTrackElementItem = finder.getSpecificTrackElement(this.selectedSegment.get()?.get().ride || 0, tiAtSelectedSegment.position)
+            const followingTrackElementItem = finder.getSpecificTrackElement(this.selectedSegment.get()?.get().ride || 0, tiAtSelectedSegment.position)
 
             // add to nextSegment to create a whole new segment object
             const nextSegment = new Segment({
                 location: tiAtSelectedSegment.position,
-                ride: nextTrackElementItem.element.ride,
-                trackType: nextTrackElementItem.element.trackType,
-                rideType: nextTrackElementItem.element.rideType
+                ride: followingTrackElementItem.element.ride,
+                trackType: followingTrackElementItem.element.trackType,
+                rideType: followingTrackElementItem.element.rideType
             });
 
+            if (this.previewSegment.get() != null) {
+                builder.removeTrackSegment(this.previewSegment.get());
+            }
             this.selectedSegment.set(nextSegment);
             return true;
         }
@@ -125,28 +128,34 @@ export class SegmentModel {
     }
 
     debugButtonChange(action: any) {
-        debug(`button pressed: ${action}`);
+        debug(`button pressed: ${JSON.stringify(action, null, 2)}`);
     }
 
     // TODO create a function the deletes the ghost track and the highlighter
 
     private onSegmentChange = (newSeg: Segment | null): void => {
-        storage.storeSelectedSegment(newSeg);
+
+        storage.storeSelectedSegment(newSeg); // store in cold storage in case of crash
+
         if (newSeg == null) {
             debug("no segment selected");
             return;
         }
-
         if (!newSeg?.get().trackType == null) {
             debug("The selected segment has no track type");
         }
 
         debug(`Segment changed to ${TrackElementType[newSeg?.get().trackType]} at coords (${newSeg?.get().location.x}, ${newSeg?.get().location.y}, ${newSeg?.get().location.z}, direction: ${newSeg?.get().location.direction})`);
 
-
-
         // debug(`about to try repainting the selected segment `);
         const wasPaintOfSelectedSegmentSucessful = this.segmentPainter.paintSelectedSegment(newSeg);
+        // turn on the paint toggling
+        if (this.previewSegment.get() == null) {
+            this.segmentPainter.togglePainting(true);
+        } else {
+            this.segmentPainter.togglePainting(false);
+        }
+
 
         if (!wasPaintOfSelectedSegmentSucessful) {
             debug(`failed to paint the selected segment!!!!!!!`);
@@ -160,7 +169,7 @@ export class SegmentModel {
             this.buildableTrackTypes.set([...newBuildableOptions.next]);
             return;
         }
-        if (direction === "prev") {
+        if (direction === "previous") {
             debug(`There are ${newBuildableOptions.previous.length} buildable options for the previous segment`);
             this.buildableTrackTypes.set([...newBuildableOptions.next]);
             return;
@@ -172,12 +181,12 @@ export class SegmentModel {
     /**
      * Reset build options when the navigation mode is changed to/from forward & backward building modes.
      */
-    private onBuildDirectionChange = (newDirection: "next" | "prev" | null): void => {
+    private onBuildDirectionChange = (newDirection: "next" | "previous" | null): void => {
         if (!newDirection) {
             this.buildableTrackTypes.set([]);
             return;
         }
-        const buildableOptions = builder.getBuildOptionsForSegment(this.selectedSegment.get()); //this.ss.getBuildableSegmentOptions();
+        const buildableOptions = builder.getBuildOptionsForSegment(this.selectedSegment.get());
         if (newDirection === "next") {
             // todo make sure to set nextBuildPosition at the sme time
             this.buildableTrackTypes.set([...buildableOptions.next]);
@@ -295,7 +304,8 @@ export class SegmentModel {
     }
 
     private onPreviewSegmentChange(newPreviewSegment: Segment | null): void {
-        debug(`preview segment changed to ${JSON.stringify(newPreviewSegment?.get())} `);
+        debug(`preview segment changed to ${JSON.stringify(newPreviewSegment?.get())
+            } `);
         highlighter.highlightMapRangeUnderSegment(newPreviewSegment);
         storage.storePreviewSegment(newPreviewSegment);
     }
