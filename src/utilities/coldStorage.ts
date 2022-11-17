@@ -1,5 +1,6 @@
 import { ColourSchemeValue } from './../objects/segmentElementPainter';
 import { Segment, SegmentDescriptor } from "../objects/segment";
+import { debug } from './logger';
 
 const GlobalStorageKey = `AdvancedRideBuilder`;
 
@@ -14,7 +15,9 @@ type storageKeys =
 * @summary Sets the preview segment in sharedStorage.
 * @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
 */
-const storePreviewSegment = (segment: Segment | null): void => {
+const setPreviewSegment = (segment: Segment | null): void => {
+    // debug(`segment.get: ${segment?.get()}`);
+    // debug(`JSON.stringify(segment): ${JSON.stringify(segment?.get())}`);
     context.sharedStorage.set(`${GlobalStorageKey}.previewSegment`, segment);
 }
 
@@ -30,7 +33,7 @@ const getPreviewSegment = (): Segment | null => {
  * @summary Sets the selected segment in sharedStorage
  * @usage for restoring the colour of the segment if the user unsafely closes the window (e.g. game save while the window was open).
  */
-const storeSelectedSegment = (segment: Segment | null): void => {
+const setSelectedSegment = (segment: Segment | null): void => {
     context.sharedStorage.set(`${GlobalStorageKey}.selectedSegment`, segment);
 }
 
@@ -71,4 +74,4 @@ const setPaintedSegmentDetails = (segment: Segment | null, colourScheme: ColourS
     context.sharedStorage.set(`${GlobalStorageKey}.paintedColourSchemeValue`, colourSchemeValue);
 }
 
-export { storePreviewSegment, getPreviewSegment, storeSelectedSegment, getSelectedSegment, getPaintedSegmentDetails, setPaintedSegmentDetails };
+export { setPreviewSegment, getPreviewSegment, setSelectedSegment, getSelectedSegment, getPaintedSegmentDetails, setPaintedSegmentDetails };
