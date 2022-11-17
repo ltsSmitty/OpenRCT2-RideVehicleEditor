@@ -14,6 +14,9 @@ export class SegmentElementPainter {
     private _initialTrackColourScheme: 0 | 1 | 2 | 3 | null = null;
     private _initialColourSchemeValue: TrackColour | null = null;
 
+    // choose what colour you want to paint the currently selected track
+    // private _selectPaintColour: number = 17
+    private _selectPaintColour: number = Math.floor(Math.random() * 32);
 
     clearMemory() {
         debug(`clearing memory`);
@@ -87,8 +90,8 @@ export class SegmentElementPainter {
         this._initialTrackColourScheme = thisColourScheme;
         this._initialColourSchemeValue = thisRide.colourSchemes[thisColourScheme];
 
-        this.paintSegment(newSeg, 2, 2, 2, 3);
-        debug(`setting painted segment details: ${JSON.stringify(this._initialSegment)}`);
+        this.paintSegment(newSeg, this._selectPaintColour, this._selectPaintColour, this._selectPaintColour, 3);
+        // debug(`setting painted segment details: ${JSON.stringify(this._initialSegment)}`);
         storage.setPaintedSegmentDetails(newSeg, thisColourScheme, thisRide.colourSchemes[thisColourScheme]);
         return true;
     }
@@ -125,9 +128,9 @@ export class SegmentElementPainter {
 
         const paintSegmentArgs = {
             segment: this._initialSegment,
-            baseColour: 2,
-            additionalColour: 2,
-            supportsColour: 2,
+            baseColour: this._selectPaintColour,
+            additionalColour: this._selectPaintColour,
+            supportsColour: this._selectPaintColour,
             schemeNumber: <0 | 1 | 2 | 3>3
         };
         if (this._isToggled) {

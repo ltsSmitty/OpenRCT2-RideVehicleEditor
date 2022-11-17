@@ -16,19 +16,22 @@ export const removeTrackSegment = (segmentToRemove: Segment | null, callback?: (
     buildOrRemove(segmentToRemove, "remove", "ghost", true, callback);
 }
 
-export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, direction: "next" | "previous", type: "real" | "ghost", callback?: ((result: GameActionResult) => void)): void => {
+export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, direction: "next" | "previous" | null, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)): void => {
     // get the next position from selectedSegment
-    if (selectedSegment == null) {
-        debug("no selected segment");
+    if (selectedSegment == null || direction == null) {
+        debug("no selected segment or direction is null");
         return;
     }
 
     let location: CoordsXYZD | null;
+    debug(`direction: ${direction}`);
+    debug(`selctedSegment nextLocation and previousLocation: ${JSON.stringify(selectedSegment.nextLocation())}, ${JSON.stringify(selectedSegment.previousLocation())}`);
     (direction == "next") ? location = selectedSegment.nextLocation() : location = selectedSegment.previousLocation();
     if (location == null) {
         debug(`Unable to remove track: no ${direction} location`);
         return;
     }
+    debug(`location: ${location.x}, ${location.y}, ${location.z}, ${location.direction}`);
     const elementToRemove = finder.getSpecificTrackElement(selectedSegment.get().ride, location);
 
     // debug(`did it actually find an element to remove? ${JSON.stringify(elementToRemove, null, 2)}`);
@@ -55,6 +58,11 @@ export const buildTrackAtFollowingPosition = (
         debug(`Unable to remove track: no ${direction} location`);
         return;
     }
+    // if (direction == "previous") {
+    //     debug(`initial direction before rotating: ${location.direction}`);
+    //     // location.direction = 2
+    // }
+    debug(`location to build next piece: ${location.x}, ${location.y}, ${location.z}, ${location.direction}`);
 
     const segmentToBuild = new Segment({
         location: location,
@@ -72,11 +80,6 @@ export const buildTrackAtFollowingPosition = (
         if (callback) callback(response);
     });
 }
-
-// export const remove = (segmentToBuild: Segment | TrackElementItem, type: "real" | "ghost", normalizeZ: boolean, callback?: ((result: GameActionResult) => void) | undefined): void => {
-
-//     buildOrRemove(segmentToBuild, "remove", type, normalizeZ, callback);
-// };
 
 const buildOrRemove = (segmentToBuild: Segment | TrackElementItem | null, action: "build" | "remove", type: "real" | "ghost", normalizeZ: boolean, callback?: ((result: GameActionResult) => void) | undefined): void => {
     if (segmentToBuild == null) {
@@ -112,7 +115,7 @@ export const getBuildOptionsForSegment = (segment: Segment | null): { next: Trac
     const nextLocation = segment.nextLocation(); // for some reason needing to create a copy of it so that location won't suspect a potential null value
 
     if (nextLocation !== null) {
-        const buildableTrackTypes = getBuildableSegments(seg.trackType);
+        const buildableTrackTypes = getBuildableSegments(seg.trackType, "next");
         next = buildableTrackTypes;
     }
 
@@ -121,10 +124,8 @@ export const getBuildOptionsForSegment = (segment: Segment | null): { next: Trac
     const backLocation = segment.previousLocation();
 
     if (backLocation !== null) {
-        // const buildableTrackTypes = getBuildableSegments(seg.trackType);
-        // previous = buildableTrackTypes;
-        // todo reenable and fix this
-        previous = [];
+        const buildableTrackTypes = getBuildableSegments(seg.trackType, "previous");
+        previous = buildableTrackTypes;
     }
 
     return { next, previous };

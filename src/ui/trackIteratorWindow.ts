@@ -401,10 +401,10 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 
 			}),
 			button({
-				text: "Build at next position",
+				text: "Build",
 				onClick: () => {
-					model.buildSelectedNextPiece();
-					model.moveToNextSegment("next");
+					model.buildSelectedFollowingPiece();
+					model.moveToFollowingSegment(model.buildDirection.get());
 					// buildFollowingSegment(thisSegmentInfo, segmentToBuild.get(), "real");
 					// 		// buildTrackElement({
 					// 		// 	buildLocation: nextCoords,
@@ -417,13 +417,6 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 					// 		// show next tiles that can be build
 					// 		iterateToNextSelectedTrack()
 					// 	}
-				}
-			}),
-			button({
-				text: "Build at previous position",
-				onClick: () => {
-					debug(JSON.stringify(context.getTrackSegment(10)?.beginAngle))
-
 				}
 			}),
 			// button({

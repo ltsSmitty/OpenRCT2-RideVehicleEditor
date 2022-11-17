@@ -16,12 +16,12 @@ export const buttonToggleChanged = (options: {
 
     switch (options.buttonType) {
         case "iterateNext": {
-            modelResponse = model.moveToNextSegment("next");
+            modelResponse = model.moveToFollowingSegment("next");
             model.buildDirection.set("next");
             break;
         }
         case "iteratePrevious": {
-            modelResponse = model.moveToNextSegment("previous");
+            modelResponse = model.moveToFollowingSegment("previous");
             model.buildDirection.set("previous");
             break;
         }

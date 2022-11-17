@@ -1,3 +1,4 @@
+import { debug } from "../utilities/logger";
 import { TrackElementType } from "../utilities/trackElementType";
 
 const endsFlat: TrackElementType[] = [
@@ -82,13 +83,27 @@ const endsDown60: TrackElementType[] = [
 
 
 
-export const getBuildableSegments = (el: TrackElementType): TrackElementType[] => {
+export const getBuildableSegments = (el: TrackElementType, direction: "next" | "previous"): TrackElementType[] => {
+    debug(`getting buildable segments for ${el} in direction ${direction}`);
     // figure out how el ends
-    if (endsFlat.indexOf(el) >= 0) { return startsFlat; }
-    if (endsDown25.indexOf(el) >= 0) { return startsDown25; }
-    if (endsDown60.indexOf(el) >= 0) { return startsDown60; }
-    if (endsUp25.indexOf(el) >= 0) { return startsUp25; }
-    if (endsUp60.indexOf(el) >= 0) { return startsUp60; }
+    switch (direction) {
+        case "next": {
+            if (endsFlat.indexOf(el) >= 0) { return startsFlat; }
+            if (endsDown25.indexOf(el) >= 0) { return startsDown25; }
+            if (endsDown60.indexOf(el) >= 0) { return startsDown60; }
+            if (endsUp25.indexOf(el) >= 0) { return startsUp25; }
+            if (endsUp60.indexOf(el) >= 0) { return startsUp60; }
+            break;
+        }
+        case "previous": {
+            if (startsFlat.indexOf(el) >= 0) { return endsFlat; }
+            if (startsDown25.indexOf(el) >= 0) { return endsDown25; }
+            if (startsDown60.indexOf(el) >= 0) { return endsDown60; }
+            if (startsUp25.indexOf(el) >= 0) { return endsUp25; }
+            if (startsUp60.indexOf(el) >= 0) { return endsUp60; }
+            break;
+        }
+    }
 
 
     return [TrackElementType.Flat];

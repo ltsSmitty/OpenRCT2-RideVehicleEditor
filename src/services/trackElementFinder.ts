@@ -254,7 +254,6 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
         return null;
     }
 
-    debug(`In getTIATSegment: what is the segment? ${JSON.stringify(segment)}`);
     // debug(`Getting TI at the track element of ride ${segment.get().ride} at (${segment.get().location.x}, ${segment.get().location.y}, ${segment.get().location.z}) dir ${segment.get().location.direction}`);
     // debug(`Looking for the indexOf the track element.`)
     const thisSegmentIndex = getSpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator

@@ -66,7 +66,7 @@ export class SegmentModel {
             // if (!storedPreviewSegment?.get || !storedPaintedSegmentDetails?.segment?.get) {
             //     // debug(`the stored data is bugged. clearing it.`);
             //     this.previewSegment.set(null);
-            //     this.segmentPainter.clearMemory();
+            this.segmentPainter.clearMemory();
             //     this.close();
             //     return;
             // }
@@ -89,16 +89,16 @@ export class SegmentModel {
     /**
      * Main function called by the Ui to construct the selected segment.
      */
-    buildSelectedNextPiece() {
+    buildSelectedFollowingPiece() {
         const segToBuild = this.selectedBuild.get();
         if (segToBuild == null) {
             debug("no selected track type to build");
             return;
         }
-        builder.removeTrackAtFollowingPosition(this.selectedSegment.get(), "next", "ghost", (result) => {
+        builder.removeTrackAtFollowingPosition(this.selectedSegment.get(), this.buildDirection.get(), "ghost", (result) => {
             debug(`Ghost removed from the next position of the selected segment. Result is ${JSON.stringify(result, null, 2)}`);
         });
-        builder.buildTrackAtFollowingPosition(this.selectedSegment.get(), "next", segToBuild, "real", ({ result, newlyBuiltSegment }) => {
+        builder.buildTrackAtFollowingPosition(this.selectedSegment.get(), this.buildDirection.get(), segToBuild, "real", ({ result, newlyBuiltSegment }) => {
             // this.previewSegment.set(newlyBuiltSegment);
             if (result.error) {
                 debug(`Error building that piece. ${result?.errorMessage}`);
@@ -108,7 +108,12 @@ export class SegmentModel {
         });
     }
 
-    moveToNextSegment(direction: "next" | "previous"): boolean {
+    moveToFollowingSegment(direction: "next" | "previous" | null): boolean {
+        if (direction == null) {
+            "no direction set; not moving to next segment";
+            return false;
+        }
+        debug(`moving to ${direction} segment`);
         const tiAtSelectedSegment = finder.getTIAtSegment(this.selectedSegment.get()); // use a trackIterator to find the proper coords
 
         if (tiAtSelectedSegment == null) {
@@ -116,7 +121,7 @@ export class SegmentModel {
             return false;
         }
 
-        const isThereAFollowingSegment = (direction == "next" ? tiAtSelectedSegment.next() : tiAtSelectedSegment.previous()) // moves the iterator to the next segment and returns true if it worked;
+        const isThereAFollowingSegment = (direction == "next" ? tiAtSelectedSegment.next() : tiAtSelectedSegment.previous()); // moves the iterator to the next segment and returns true if it worked;
         if (isThereAFollowingSegment) {
             // if the player is changing track types so they can add additional non-standard segments, we can't assume to know the track type they've used at the next coords.
             // debug(`in moveToNextSegment, direction is ${direction}. about to get the next TrackElementItem.
@@ -131,6 +136,7 @@ export class SegmentModel {
                 rideType: followingTrackElementItem.element.rideType
             });
 
+            // check if there's a preview segment to delete.
             if (this.previewSegment.get() != null) {
                 builder.removeTrackSegment(this.previewSegment.get());
             }
@@ -143,8 +149,6 @@ export class SegmentModel {
     debugButtonChange(action: any) {
         debug(`button pressed: ${JSON.stringify(action, null, 2)}`);
     }
-
-    // TODO create a function the deletes the ghost track and the highlighter
 
     private onSegmentChange = (newSeg: Segment | null): void => {
 
@@ -177,6 +181,7 @@ export class SegmentModel {
         const newBuildableOptions = builder.getBuildOptionsForSegment(newSeg);
         debug(`After segment change, assessing new buildable options.`);
         const direction = this.buildDirection.get();
+
         if (direction === "next") {
             debug(`There are ${newBuildableOptions.next.length} buildable options for the next segment`);
             this.buildableTrackTypes.set([...newBuildableOptions.next]);
@@ -184,7 +189,7 @@ export class SegmentModel {
         }
         if (direction === "previous") {
             debug(`There are ${newBuildableOptions.previous.length} buildable options for the previous segment`);
-            this.buildableTrackTypes.set([...newBuildableOptions.next]);
+            this.buildableTrackTypes.set([...newBuildableOptions.previous]);
             return;
         }
         debug(`No direction was set for the buildable segments.This should not happen.`);
@@ -195,6 +200,7 @@ export class SegmentModel {
      * Reset build options when the navigation mode is changed to/from forward & backward building modes.
      */
     private onBuildDirectionChange = (newDirection: "next" | "previous" | null): void => {
+        debug(`Build direction changed to ${newDirection}`);
         if (!newDirection) {
             this.buildableTrackTypes.set([]);
             return;
@@ -241,8 +247,8 @@ export class SegmentModel {
     };
 
     private onSelectedBuildChange = (selectedTrackType: TrackElementType | null): void => {
-        debug(`onSelectedBuildChange`);
         if (selectedTrackType == null) {
+            debug(`Selected build changed to null`);
             highlighter.highlightMapRangeUnderSegment(null);
             return;
         }
@@ -255,19 +261,23 @@ export class SegmentModel {
             return;
         }
         const buildDirection = this.buildDirection.get();
-        // check if there's a next track segment.
-        // can use the TI.nextLocation() method to get the next location, but this fails if there's only a ghost piece
-        // so the first method uses the TI strategy, and if that fails then it uses a fallback method.
-        let trackAtNextBuildLocation = segment.isThereANextSegment(buildDirection);
-        // debug(`Looking for a track at the next build location. Found: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
-        if (trackAtNextBuildLocation.exists == false) {
-            debug(`! ! ! ! ! ! ! There is no real track at the next build location. Check if there's a ghost segment.`);
-            trackAtNextBuildLocation = finder.doesSegmentHaveNextSegment(segment, selectedTrackType, buildDirection);
+
+        if (buildDirection == null) {
+            debug(`selectedBuild changed, but buildDirection is null. Unable to build a ghost segment.`);
+            return;
         }
 
-        debug(`trackAtNextBuildLocation: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
+
+        let trackAtFollowingBuildLocation = segment.isThereAFollowingSegment(buildDirection);
+        // debug(`Looking for a track at the next build location. Found: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
+        if (trackAtFollowingBuildLocation.exists == false) {
+            debug(`! ! ! ! ! ! ! There is no real track at the ${buildDirection} build location. Check if there's a ghost segment.`);
+            trackAtFollowingBuildLocation = finder.doesSegmentHaveNextSegment(segment, selectedTrackType, buildDirection);
+        }
+
+        debug(`trackAtNextBuildLocation: ${JSON.stringify(trackAtFollowingBuildLocation, null, 2)}`);
         // case: the next location is free~
-        if (!trackAtNextBuildLocation.exists) {
+        if (!trackAtFollowingBuildLocation.exists) {
             debug(`There was no track at the location of the selected build.Building it now.`);
             builder.buildTrackAtFollowingPosition(segment, buildDirection, selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
                 debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
@@ -278,22 +288,22 @@ export class SegmentModel {
 
 
         // case: the next location is occupied by a ghost
-        if (trackAtNextBuildLocation.exists === "ghost") {
+        if (trackAtFollowingBuildLocation.exists === "ghost") {
             debug(`There was a ghost at the location of the selected build.Removing it now.`);
             // remove
-            const preExistingSegment = trackAtNextBuildLocation.element?.segment;
+            const preExistingSegment = trackAtFollowingBuildLocation.element?.segment;
             if (!preExistingSegment) {
                 debug(`Error: There was a ghost at the location of the selected build, but it could not be found.`);
                 return;
             }
 
-            builder.removeTrackAtFollowingPosition(segment, "next", "ghost", (result) => {
-                // debug(`Result of removing the ghost piece: ${JSON.stringify(result, null, 2)}`);
+            builder.removeTrackAtFollowingPosition(segment, buildDirection, "ghost", (result) => {
+                debug(`Result of removing the ghost piece: ${JSON.stringify(result, null, 2)}`);
             });
 
             debug(`Ghost removed. Building the new piece now.\n\n\n`);
-            builder.buildTrackAtFollowingPosition(segment, "next", selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
-                // debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
+            builder.buildTrackAtFollowingPosition(segment, buildDirection, selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
+                debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
                 if (newlyBuiltSegment) {
                     this.previewSegment.set(newlyBuiltSegment);
                 }
@@ -302,9 +312,9 @@ export class SegmentModel {
         }
 
         // case: the next location is occupied by a real track piece
-        if (trackAtNextBuildLocation.exists === "real") {
+        if (trackAtFollowingBuildLocation.exists === "real") {
             debug(`There is a real track piece at the location of the selected build.Cannot build a preview piece here.
-            \nExisting segment: ${JSON.stringify(trackAtNextBuildLocation.element?.segment?.get())} `);
+            \nExisting segment: ${JSON.stringify(trackAtFollowingBuildLocation.element?.segment?.get())} `);
             this.selectedBuild.set(null);
             return;
         }

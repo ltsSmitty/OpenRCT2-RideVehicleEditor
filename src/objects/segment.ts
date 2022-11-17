@@ -57,7 +57,7 @@ export class Segment {
         return this._previousLocation;
     };
 
-    public isThereANextSegment = (direction: "next" | "previous" | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
+    public isThereAFollowingSegment = (direction: "next" | "previous" | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
         const thisTI = finder.getTIAtSegment(this);
 
         if (direction === "next") {
