@@ -53,20 +53,33 @@ export class SegmentModel {
      * the highlight under the preview track, and the yellow painting of the selected segment. This function will remove all of those artifacts.
      */
     cleanUpFromImproperClose(): void {
-        // debug("cleaning up from improper close on pluginMount.");
+        debug("cleaning up from improper close on pluginMount.");
 
         // if threre is still a previewSegment, call close to clean up
         const storedPaintedSegmentDetails = storage.getPaintedSegmentDetails();
         const storedPreviewSegment = storage.getPreviewSegment();
         if (storedPreviewSegment || storedPaintedSegmentDetails.segment) {
-            // debug(`Upon plugin mount, there was still a preview segment or painted segment in storage. Cleaning up.`);
+
+            debug(`there is a stored preview segment or a stored painted segment. Cleaning up.`);
+            debug(`stored preview segment: ${JSON.stringify(storedPreviewSegment || storedPaintedSegmentDetails.segment)}`);
+            //          // if something goes wrong during testing, this will catch it and make sure the plugin doesn't crash
+            // if (!storedPreviewSegment?.get || !storedPaintedSegmentDetails?.segment?.get) {
+            //     // debug(`the stored data is bugged. clearing it.`);
+            //     this.previewSegment.set(null);
+            //     this.segmentPainter.clearMemory();
+            //     this.close();
+            //     return;
+            // }
+
             this.previewSegment.set(storedPreviewSegment);
+            // this.segmentPainter.clearMemory();
+            debug(`cleaning up from improper close. preview segment is ${JSON.stringify(storedPreviewSegment?.get())}`);
             this.close();
         }
     }
 
     close(): void {
-        // debug("closing segment model");
+        debug("closing segment model");
         this.segmentPainter.restoreInitialColour();
         builder.removeTrackSegment(this.previewSegment.get());
         this.previewSegment.set(null);
@@ -135,7 +148,7 @@ export class SegmentModel {
 
     private onSegmentChange = (newSeg: Segment | null): void => {
 
-        storage.storeSelectedSegment(newSeg); // store in cold storage in case of crash
+        storage.setSelectedSegment(newSeg); // store in cold storage in case of crash
 
         if (newSeg == null) {
             debug("no segment selected");
@@ -241,22 +254,23 @@ export class SegmentModel {
             debug(`selectedBuild changed, but selectedSegment is null. Unable to build a ghost segment.`);
             return;
         }
-
+        const buildDirection = this.buildDirection.get();
         // check if there's a next track segment.
         // can use the TI.nextLocation() method to get the next location, but this fails if there's only a ghost piece
         // so the first method uses the TI strategy, and if that fails then it uses a fallback method.
-        let trackAtNextBuildLocation = segment.isThereANextSegment("next");
+        let trackAtNextBuildLocation = segment.isThereANextSegment(buildDirection);
         // debug(`Looking for a track at the next build location. Found: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
         if (trackAtNextBuildLocation.exists == false) {
             debug(`! ! ! ! ! ! ! There is no real track at the next build location. Check if there's a ghost segment.`);
-            trackAtNextBuildLocation = finder.doesSegmentHaveNextSegment(segment, selectedTrackType);
+            trackAtNextBuildLocation = finder.doesSegmentHaveNextSegment(segment, selectedTrackType, buildDirection);
         }
 
+        debug(`trackAtNextBuildLocation: ${JSON.stringify(trackAtNextBuildLocation, null, 2)}`);
         // case: the next location is free~
         if (!trackAtNextBuildLocation.exists) {
             debug(`There was no track at the location of the selected build.Building it now.`);
-            builder.buildTrackAtFollowingPosition(segment, "next", selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
-                // debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
+            builder.buildTrackAtFollowingPosition(segment, buildDirection, selectedTrackType, "ghost", ({ result, newlyBuiltSegment }) => {
+                debug(`Result of building the ghost piece: ${JSON.stringify(result, null, 2)}`);
                 this.previewSegment.set(newlyBuiltSegment);
             });
         }
@@ -304,10 +318,11 @@ export class SegmentModel {
     }
 
     private onPreviewSegmentChange(newPreviewSegment: Segment | null): void {
-        debug(`preview segment changed to ${JSON.stringify(newPreviewSegment?.get())
-            } `);
+        // debug(`preview segment changed to ${JSON.stringify(newPreviewSegment?.get())
+        //     } `);
+        debug(`preview segment changed to ${JSON.stringify(newPreviewSegment)}`)
         highlighter.highlightMapRangeUnderSegment(newPreviewSegment);
-        storage.storePreviewSegment(newPreviewSegment);
+        storage.setPreviewSegment(newPreviewSegment);
     }
 }
 

@@ -14,6 +14,18 @@ export class SegmentElementPainter {
     private _initialTrackColourScheme: 0 | 1 | 2 | 3 | null = null;
     private _initialColourSchemeValue: TrackColour | null = null;
 
+
+    clearMemory() {
+        debug(`clearing memory`);
+        this._initialSegment = null;
+        this._initialTrackColourScheme = null;
+        this._initialColourSchemeValue = null;
+        storage.setPaintedSegmentDetails(null, null, null);
+        storage.setPreviewSegment(null);
+        storage.setSelectedSegment(null);
+    }
+
+
     restoreInitialColour(fromColdStorage = false) {
         if (!this._initialSegment || this._initialTrackColourScheme == null || !this._initialColourSchemeValue) {
             debug(`Restoring initial colour. No segment/colourSchemes are available from this window session. Attempting to restore from cold storage.`);
