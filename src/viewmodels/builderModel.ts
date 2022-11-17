@@ -9,11 +9,11 @@ import * as finder from '../services/trackElementFinder';
 import { TrackElementType } from '../utilities/trackElementType';
 
 
-export const removeTrackSegment = (segmentToRemove: Segment | null, callback?: ((result: GameActionResult) => void) | undefined): void => {
+export const removeTrackSegment = (segmentToRemove: Segment | null, direction: "next" | "previous" | null, callback?: ((result: GameActionResult) => void) | undefined): void => {
     debug(`attempting to remove track segment at coords XYZD ${segmentToRemove?.get().location.x}, ${segmentToRemove?.get().location.y}, ${segmentToRemove?.get().location.z}, ${segmentToRemove?.get().location.direction}`);
 
 
-    buildOrRemove(segmentToRemove, "remove", "ghost", true, callback);
+    buildOrRemove(segmentToRemove, "remove", "ghost", direction || "next", callback);
 }
 
 export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, direction: "next" | "previous" | null, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)): void => {
@@ -72,16 +72,16 @@ export const buildTrackAtFollowingPosition = (
     });
     // todo need to pass in this because it might be different than the selectedSegment's rideType
 
-    buildOrRemove(segmentToBuild, "build", type, true, (result) => {
+    buildOrRemove(segmentToBuild, "build", type, direction, (result) => {
         const response = {
             result,
             newlyBuiltSegment: segmentToBuild
-        }
+        };
         if (callback) callback(response);
     });
 }
 
-const buildOrRemove = (segmentToBuild: Segment | TrackElementItem | null, action: "build" | "remove", type: "real" | "ghost", normalizeZ: boolean, callback?: ((result: GameActionResult) => void) | undefined): void => {
+const buildOrRemove = (segmentToBuild: Segment | TrackElementItem | null, action: "build" | "remove", type: "real" | "ghost", normalizeZ: "next" | "previous" | false, callback?: ((result: GameActionResult) => void) | undefined): void => {
     if (segmentToBuild == null) {
         debug(`Unable to ${action}: no segment specified`);
         return;

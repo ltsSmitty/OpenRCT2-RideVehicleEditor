@@ -81,7 +81,7 @@ export class SegmentModel {
     close(): void {
         debug("closing segment model");
         this.segmentPainter.restoreInitialColour();
-        builder.removeTrackSegment(this.previewSegment.get());
+        builder.removeTrackSegment(this.previewSegment.get(), this.buildDirection.get());
         this.previewSegment.set(null);
         this.selectedSegment.set(null);
     }
@@ -138,7 +138,7 @@ export class SegmentModel {
 
             // check if there's a preview segment to delete.
             if (this.previewSegment.get() != null) {
-                builder.removeTrackSegment(this.previewSegment.get());
+                builder.removeTrackSegment(this.previewSegment.get(), this.buildDirection.get());
             }
             this.selectedSegment.set(nextSegment);
             return true;

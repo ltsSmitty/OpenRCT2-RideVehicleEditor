@@ -1,8 +1,6 @@
-import { Flags } from './../utilities/Flags';
 import { TrackElementType } from "../utilities/trackElementType";
 import { RideType } from "../utilities/rideType";
 import { debug } from "../utilities/logger";
-import * as Selector from "../objects/segmentSelector";
 
 export type TrackElementProps = {
 
@@ -18,14 +16,7 @@ export type TrackElementProps = {
     flags?: number
 };
 
-type ConstructionProps = {
-    referenceSegment: Selector.SegmentInfo,
-    typeSegmentToBuild: TrackElementType | null,
-    placement: "real" | "preview"
-}
-
-export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action: "build" | "remove", normalizeZ: boolean, callback?: (result: GameActionResult) => void): void => {
-    // debug(`TrackElementProps.location.z:  \n[     ${trackProps.location.z}      ]\n`)
+export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action: "build" | "remove", normalizeZ: "next" | "previous" | false, callback?: (result: GameActionResult) => void): void => {
     const gameActionEvent = (action === "build" ? "trackplace" : "trackremove");
     toggleRideBuildingCheats(true);
 
@@ -46,8 +37,11 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
     // This function will change it to make it  0 and -16
     const newBuildLocation: CoordsXYZD = { ...buildLocation };
     if (normalizeZ) {
-        const zModifier = normalizeBeginAndEndZValues(trackType);
+        debug(`normalizeZ is ${normalizeZ}`);
+        const zModifier = normalizeBeginAndEndValues(trackType, normalizeZ);
+        debug(`buildLocation.z is ${buildLocation.z}`);
         newBuildLocation.z = buildLocation.z + zModifier.beginZ;
+        debug(`newBuildLocation.z:  \n[     ${newBuildLocation.z}      ]\n`)
     }
 
     const gameActionParams = {
@@ -91,21 +85,47 @@ const getSegmentBeginAndEndZ = (segmentType: TrackElementType | number) => {
     }
 }
 
+const getSegmentBeginAndEndXAndY = (segmentType: TrackElementType | number) => {
+    const thisSegment = context.getTrackSegment(segmentType);
+    if (!thisSegment) return { beginX: 0, beginY: 0, endX: 0, endY: 0 };
+    return {
+        beginX: 0,
+        beginY: 0,
+        endX: thisSegment.endX,
+        endY: thisSegment.endY,
+    }
+}
+
+
+
 // if the ride is has a negative slope (e.g. Down25),
 // then it actually is stored with startZ of 16 and endZ of 0.
 // This function will change it to make it start at  0 and end at -16.
 // Necessary for proper build placement.
-const normalizeBeginAndEndZValues = (segmentType: TrackElementType): { beginZ: number, endZ: number } => {
+const normalizeBeginAndEndValues = (segmentType: TrackElementType, direction: "next" | "previous"): { beginZ: number, endZ: number } => {
     const thisSegment = getSegmentBeginAndEndZ(segmentType);
 
-    if (thisSegment.beginZ > 0) {
-        debug(`This ride is probably pointing down; beginZ is ${thisSegment.beginZ}`);
+    // debug(`thisSegment ${TrackElementType[segmentType]}begin and end Z: ${thisSegment.beginZ}, ${thisSegment.endZ}`);
+
+    if (direction === "next" && thisSegment.beginZ > 0) {
+        // debug(`Normalizing z values from the "next" direction.`)
+        // debug(`This ride is probably pointing down; beginZ is ${thisSegment.beginZ}`);
         return {
             beginZ: 0 - thisSegment.beginZ,
             endZ: 0
         };
     }
-    else {
-        return thisSegment;
+    if (direction === "previous" && thisSegment.endZ > 0) {
+        // debug(`Normalizing z values from the "previous" direction.`)
+        // debug(`thisSegment begin and end z: ${thisSegment.beginZ}, ${thisSegment.endZ}`);
+        return {
+            beginZ: 0 - thisSegment.endZ,
+            endZ: 0
+        };
     }
+    return {
+        beginZ: 0,
+        endZ: 0
+    };
+
 };
