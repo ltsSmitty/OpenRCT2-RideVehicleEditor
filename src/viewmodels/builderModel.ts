@@ -40,13 +40,13 @@ export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, 
 
 export const buildTrackAtFollowingPosition = (
     selectedSegment: Segment | null,
-    direction: "next" | "previous",
+    direction: "next" | "previous" | null,
     trackToBuild: TrackElementType,
     type: "real" | "ghost",
     callback?: ((response: { result: GameActionResult, newlyBuiltSegment: Segment }) => void)): void => {
 
-    if (selectedSegment == null) {
-        debug("no selected segment");
+    if (selectedSegment == null || direction == null) {
+        debug("no selected segment or direction is null");
         return;
     }
     let location: CoordsXYZD | null;

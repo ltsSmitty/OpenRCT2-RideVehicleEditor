@@ -253,6 +253,8 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
         debug(`segment was null`);
         return null;
     }
+
+    debug(`In getTIATSegment: what is the segment? ${JSON.stringify(segment)}`);
     // debug(`Getting TI at the track element of ride ${segment.get().ride} at (${segment.get().location.x}, ${segment.get().location.y}, ${segment.get().location.z}) dir ${segment.get().location.direction}`);
     // debug(`Looking for the indexOf the track element.`)
     const thisSegmentIndex = getSpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator
@@ -279,10 +281,18 @@ export const getTrackColours = (newSeg: Segment | null): TrackColour => {
 /**
  * For a given segment, return whether or not a next segment exists and if so, what it is.
  */
-export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, selectedBuild: TrackElementType): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
+export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, selectedBuild: TrackElementType, buildDirection: "next" | "previous" | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
 
     if (selectedSegment == null || selectedSegment.nextLocation() == null) {
         debug(`${selectedSegment == null ? "selectedSegment is null" : "selectedSegment.nextLocation() is null"}`);
+        return { exists: false, element: null };
+    }
+    if (buildDirection == null) {
+        debug(`buildDirection is null`);
+        return { exists: false, element: null };
+    }
+    if (selectedBuild == null) {
+        debug(`selectedBuild is null`);
         return { exists: false, element: null };
     }
 
@@ -290,7 +300,7 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, sele
 
     // todo maybe this could be wrong, but probably not. maybe if a new track was build above an old one the index could get messed up?
 
-    const { x, y, z, direction } = selectedSegment.nextLocation()!; // location of next track element
+    const { x, y, z, direction } = (buildDirection == "next" ? selectedSegment.nextLocation()! : selectedSegment.previousLocation()!) // location of next track element
     const trackELementsOnNextTile = getTrackElementsFromCoords({ x, y });
 
     if (trackELementsOnNextTile.length === 0) {
@@ -315,18 +325,6 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, sele
         return (t.element.direction === direction && (t.element.baseZ + selectedSegmentBaseZ === z || t.element.baseZ - selectedSegmentBaseZ === z || t.element.baseZ === z));
     });
 
-    // const isThereActuallyASegmentToDelete = (selectedSegment: Segment | null, existingConflictingSegment: Segment | null) => {
-
-    //     if (selectedSegment == null || existingConflictingSegment == null) return false;
-
-    //     const nextLocation = selectedSegment.get().location;
-    //     const { x, y, z, direction } = nextLocation;
-    //     // get the z modifier that we need to check for.
-    //     // for example, if there's a track from the same ride with the same direction but the z is off by 25, is that a conflict?
-    //     // this checks for that. the most likely beginZ differences are with Down25, Down60 and the big DownToFlat on hypercoasters, etc.
-    //     const selectedBuildBeginZ = (context.getTrackSegment(selectedBuild)?.beginZ || 0);
-    //     debug(`Attempting to place ${TrackElementType[selectedBuild]} at z ${z} direction ${direction}. This element has a beginZ of ${selectedBuildBeginZ}`);
-    // }
 
     let thisTrack: TrackElementItem;
 
