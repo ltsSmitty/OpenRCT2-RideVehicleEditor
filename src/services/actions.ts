@@ -16,7 +16,7 @@ export type Action<T> = (args: T, player: number) => void;
 /**
  * Callback to invoke the specific action.
  */
- export type ExecuteAction<T> = (args: T) => void;
+export type ExecuteAction<T> = (args: T) => void;
 
 
 const noop = (): GameActionResult => ({});
@@ -27,8 +27,7 @@ const registeredActions: Record<string, Action<never>> = {};
  * Register a new custom action that can be executed and synchronized in multiplayer contexts.
  * @returns A callback to execute the specific action.
  */
-export function register<T>(name: string, action: Action<T>): ExecuteAction<T>
-{
+export function register<T>(name: string, action: Action<T>): ExecuteAction<T> {
 	registeredActions[name] = action;
 	return (args: T): void => context.executeAction(name, <never>args, noop);
 }
@@ -37,19 +36,15 @@ export function register<T>(name: string, action: Action<T>): ExecuteAction<T>
 /**
  * Register all actions by registering them with the OpenRCT2 context.
  */
-export function initActions(): void
-{
-	for (const action in registeredActions)
-	{
+export function initActions(): void {
+	for (const action in registeredActions) {
 		context.registerAction(action, noop, noop);
 	}
 
-	context.subscribe("action.execute", (event: GameActionEventArgs) =>
-	{
+	context.subscribe("action.execute", (event: GameActionEventArgs) => {
 		const { type, action, args, player } = event;
 
-		if (type === 80 && action in registeredActions)
-		{
+		if (type === 80 && action in registeredActions) {
 			registeredActions[action](<never>args, player);
 		}
 	});
@@ -59,17 +54,27 @@ export function initActions(): void
 /**
  * Check if the player has the correct permissions, if in a multiplayer server.
  */
-export function hasPermissions(playerId: number, permission: PermissionType): boolean
-{
-	if (network.mode !== "none")
-	{
+export function hasPermissions(playerId: number, permission: PermissionType): boolean {
+	if (network.mode !== "none") {
 		const player = network.getPlayer(playerId);
 		const group = network.getGroup(player.group);
-		if (group.permissions.indexOf(permission) < 0)
-		{
+		if (group.permissions.indexOf(permission) < 0) {
 			Log.debug(`Cannot apply update from player ${playerId}: lacking '${permission}' permission.`);
 			return false;
 		}
 	}
 	return true;
+}
+
+export const beginSimulation = (ride: number) => {
+	// use context.executeAction to call ridesetstatus with a type of 4, this ride, status of 3 and flags of 0
+	const simulationArgs = {
+		type: 8,
+		ride,
+		status: 3,
+		flags: 0
+	}
+	context.executeAction("ridesetstatus", simulationArgs, () => {
+		Log.debug(`Simulation started for ride ${ride}`);
+	})
 }
