@@ -91,6 +91,13 @@ const getRelativeElementCoordsUnderSegment = (segment: Segment): TrackSegmentEle
     return segmentElements;
 };
 
+export const getRelativeElementCoordsForTrackSegment = (trackType: TrackElementType): TrackSegmentElement[] | null => {
+    // get the element index of this segment in order to
+    const thisSegmentType = context.getTrackSegment(trackType);
+    return thisSegmentType?.elements || null
+};
+
+
 /**
  * @summary Get all TrackElementItems for a given segment. Use to get all elements of a multi-element segment (e.g. LeftQuarterTurn3Tiles, LeftQuarterTurn5Tiles, etc.). Useful for painting each element of the segment.
  * @description E.g. for a large left turn, there are 7 elements  with relatively spaced coords (for the seven tiles it covers) that go from (0,0) to (+/-64,+/-64) depending on how the segment is rotated. Convert those coords to absolute positioning.

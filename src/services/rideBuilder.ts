@@ -1,6 +1,10 @@
+import { TrackElementItem } from './SegmentController';
 import { TrackElementType } from "../utilities/trackElementType";
 import { RideType } from "../utilities/rideType";
 import { debug } from "../utilities/logger";
+import { Segment } from "../objects/segment";
+import * as finder from './trackElementFinder';
+
 
 export type TrackElementProps = {
 
@@ -16,7 +20,7 @@ export type TrackElementProps = {
     flags?: number
 };
 
-export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action: "build" | "remove", normalizeZ: "next" | "previous" | false, callback?: (result: GameActionResult) => void): void => {
+export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action: "build" | "remove", normalizeZ: "next" | "previous" | false, callback?: (result: { result: GameActionResult, actualBuildLocation: CoordsXYZD }) => void): void => {
     const gameActionEvent = (action === "build" ? "trackplace" : "trackremove");
     toggleRideBuildingCheats(true);
 
@@ -37,12 +41,23 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
     // This function will change it to make it  0 and -16
     const newBuildLocation: CoordsXYZD = { ...buildLocation };
     if (normalizeZ) {
-        debug(`normalizeZ is ${normalizeZ}`);
         const zModifier = normalizeBeginAndEndValues(trackType, normalizeZ);
-        debug(`buildLocation.z is ${buildLocation.z}`);
         newBuildLocation.z = buildLocation.z + zModifier.beginZ;
-        debug(`newBuildLocation.z:  \n[     ${newBuildLocation.z}      ]\n`)
+
+        if (normalizeZ == "previous") {
+            const xyModifier = modifyXYCoords(buildLocation, trackType, normalizeZ);
+            newBuildLocation.x = (xyModifier?.x || 0);
+            newBuildLocation.y = (xyModifier?.y || 0);
+            newBuildLocation.direction = (xyModifier?.direction || 0);
+            // newBuildLocation.direction = 3
+            // if (normalizeZ == "previous") newBuildLocation.direction = <Direction>((buildLocation.direction + 2) % 4);
+        }
     }
+
+    debug(`compare the original buildLocation to the newBuildLocation: ${JSON.stringify(buildLocation)} vs ${JSON.stringify(newBuildLocation)}`);
+    debug(`about to try building ${TrackElementType[trackType]} at ${newBuildLocation.x}, ${newBuildLocation.y}, ${newBuildLocation.z}, ${newBuildLocation.direction}`);
+
+
 
     const gameActionParams = {
         ...mainProps,
@@ -59,7 +74,7 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
     context.executeAction(gameActionEvent, gameActionParams, (result) => {
         // debug(`Build result: ${JSON.stringify(result)}`);
         toggleRideBuildingCheats(false);
-        if (callback) return callback(result);
+        if (callback) return callback({ result, actualBuildLocation: newBuildLocation });
     });
 
     toggleRideBuildingCheats(false);
@@ -85,16 +100,14 @@ const getSegmentBeginAndEndZ = (segmentType: TrackElementType | number) => {
     }
 }
 
-const getSegmentBeginAndEndXAndY = (segmentType: TrackElementType | number) => {
+const getSegmentEndXAndY = (segmentType: TrackElementType | number): { endX: number, endY: number } => {
     const thisSegment = context.getTrackSegment(segmentType);
-    if (!thisSegment) return { beginX: 0, beginY: 0, endX: 0, endY: 0 };
+    if (!thisSegment) return { endX: 0, endY: 0 };
     return {
-        beginX: 0,
-        beginY: 0,
         endX: thisSegment.endX,
         endY: thisSegment.endY,
-    }
-}
+    };
+};
 
 
 
@@ -105,10 +118,10 @@ const getSegmentBeginAndEndXAndY = (segmentType: TrackElementType | number) => {
 const normalizeBeginAndEndValues = (segmentType: TrackElementType, direction: "next" | "previous"): { beginZ: number, endZ: number } => {
     const thisSegment = getSegmentBeginAndEndZ(segmentType);
 
-    // debug(`thisSegment ${TrackElementType[segmentType]}begin and end Z: ${thisSegment.beginZ}, ${thisSegment.endZ}`);
+    debug(`thisSegment ${TrackElementType[segmentType]}begin and end Z: ${thisSegment.beginZ}, ${thisSegment.endZ}`);
 
     if (direction === "next" && thisSegment.beginZ > 0) {
-        // debug(`Normalizing z values from the "next" direction.`)
+        debug(`Normalizing z values from the "next" direction.`)
         // debug(`This ride is probably pointing down; beginZ is ${thisSegment.beginZ}`);
         return {
             beginZ: 0 - thisSegment.beginZ,
@@ -116,7 +129,7 @@ const normalizeBeginAndEndValues = (segmentType: TrackElementType, direction: "n
         };
     }
     if (direction === "previous" && thisSegment.endZ > 0) {
-        // debug(`Normalizing z values from the "previous" direction.`)
+        debug(`Normalizing z values from the "previous" direction.`)
         // debug(`thisSegment begin and end z: ${thisSegment.beginZ}, ${thisSegment.endZ}`);
         return {
             beginZ: 0 - thisSegment.endZ,
@@ -129,3 +142,71 @@ const normalizeBeginAndEndValues = (segmentType: TrackElementType, direction: "n
     };
 
 };
+
+const modifyXYCoords = (initialLocation: CoordsXYZD, trackType: TrackElementType, normalizeZ: "next" | "previous" | false): CoordsXYZD | null => {
+
+    const relativeCoords = finder.getRelativeElementCoordsForTrackSegment(trackType);
+
+    if (!relativeCoords) {
+        debug(`Error: Segment #${trackType} has no elements. Is it a real track type?`);
+        return null;
+    }
+
+    const thisTrackType = context.getTrackSegment(trackType);
+    debug(`begin and end directions for this track type ${TrackElementType[trackType]}: ${thisTrackType?.beginDirection}, ${thisTrackType?.endDirection}`);
+
+    const xyModifier = getSegmentEndXAndY(trackType);
+    debug(`xyModifier: ${xyModifier.endX}, ${xyModifier.endY}`);
+    const { endX, endY } = xyModifier;
+
+    const coords = { ...initialLocation };
+    const x1 = coords.x;
+    const y1 = coords.y;
+
+    let direction1 = coords.direction;
+    if (thisTrackType?.beginDirection != thisTrackType?.endDirection) {
+        direction1 = <Direction>((coords.direction - (thisTrackType?.endDirection || 0) + 4) % 4);
+    }
+
+    // get the proper position based on the direction of the segment and the element
+    // const translatedCoords =
+    let translatedX, translatedY
+
+    switch (direction1) {
+        case 0: {
+            {
+                translatedX = x1 - endX;
+                translatedY = y1 - endY;
+                break;
+            }
+        }
+        case 1: {
+            {
+                translatedX = x1 - endY;
+                translatedY = y1 + endX;
+                break;
+            }
+        }
+        case 2: {
+            {
+                translatedX = x1 + endX;
+                translatedY = y1 + endY;
+                break;
+            }
+        }
+        case 3: {
+            {
+                translatedX = x1 + endY;
+                translatedY = y1 - endX;
+                break;
+            }
+        }
+    }
+    return {
+        x: translatedX,
+        y: translatedY,
+        z: -1,
+        direction: <Direction>direction1
+    }
+
+}

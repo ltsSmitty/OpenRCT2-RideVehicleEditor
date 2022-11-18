@@ -33,19 +33,19 @@ export class SegmentModel {
         this.selectedBuild.subscribe((newSelectedBuild) => this.onSelectedBuildChange(newSelectedBuild));
         this.previewSegment.subscribe((newPreviewSegment) => this.onPreviewSegmentChange(newPreviewSegment));
 
-        // context.subscribe("action.execute", (event: GameActionEventArgs) => {
-        //     const action = event.action as ActionType;
-        //     switch (action) {
-        //         case "ridesetappearance":
-        //         case "ridesetcolourscheme": {
-        //             debug(`<${action}>\n\t- type: ${event.type}
-        // \t- args: ${JSON.stringify(
-        //                 event.args, null, 2
-        //             )}\n\t- result: ${JSON.stringify(event.result)}`);
-        //             break;
-        //         }
-        //     }
-        // })
+        context.subscribe("action.execute", (event: GameActionEventArgs) => {
+            const action = event.action as ActionType;
+            switch (action) {
+                case "ridesetappearance":
+                case "ridesetcolourscheme": {
+                    debug(`<${action}>\n\t- type: ${event.type}
+        \t- args: ${JSON.stringify(
+                        event.args, null, 2
+                    )}\n\t- result: ${JSON.stringify(event.result)}`);
+                    break;
+                }
+            }
+        })
     }
 
     /**
@@ -95,6 +95,7 @@ export class SegmentModel {
             debug("no selected track type to build");
             return;
         }
+        // todo not working with previous inversions
         builder.removeTrackAtFollowingPosition(this.selectedSegment.get(), this.buildDirection.get(), "ghost", (result) => {
             debug(`Ghost removed from the next position of the selected segment. Result is ${JSON.stringify(result, null, 2)}`);
         });

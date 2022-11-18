@@ -9,14 +9,14 @@ import * as finder from '../services/trackElementFinder';
 import { TrackElementType } from '../utilities/trackElementType';
 
 
-export const removeTrackSegment = (segmentToRemove: Segment | null, direction: "next" | "previous" | null, callback?: ((result: GameActionResult) => void) | undefined): void => {
+export const removeTrackSegment = (segmentToRemove: Segment | null, direction: "next" | "previous" | null, callback?: (result: { result: GameActionResult, actualBuildLocation: CoordsXYZD }) => void | undefined): void => {
     debug(`attempting to remove track segment at coords XYZD ${segmentToRemove?.get().location.x}, ${segmentToRemove?.get().location.y}, ${segmentToRemove?.get().location.z}, ${segmentToRemove?.get().location.direction}`);
 
 
     buildOrRemove(segmentToRemove, "remove", "ghost", direction || "next", callback);
 }
 
-export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, direction: "next" | "previous" | null, type: "real" | "ghost", callback?: ((result: GameActionResult) => void)): void => {
+export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, direction: "next" | "previous" | null, type: "real" | "ghost", callback?: (result: { result: GameActionResult, actualBuildLocation: CoordsXYZD }) => void): void => {
     // get the next position from selectedSegment
     if (selectedSegment == null || direction == null) {
         debug("no selected segment or direction is null");
@@ -26,6 +26,7 @@ export const removeTrackAtFollowingPosition = (selectedSegment: Segment | null, 
     let location: CoordsXYZD | null;
     debug(`direction: ${direction}`);
     debug(`selctedSegment nextLocation and previousLocation: ${JSON.stringify(selectedSegment.nextLocation())}, ${JSON.stringify(selectedSegment.previousLocation())}`);
+
     (direction == "next") ? location = selectedSegment.nextLocation() : location = selectedSegment.previousLocation();
     if (location == null) {
         debug(`Unable to remove track: no ${direction} location`);
@@ -58,12 +59,13 @@ export const buildTrackAtFollowingPosition = (
         debug(`Unable to remove track: no ${direction} location`);
         return;
     }
-    // if (direction == "previous") {
-    //     debug(`initial direction before rotating: ${location.direction}`);
-    //     // location.direction = 2
-    // }
+    if (direction == "previous") {
+        debug(`initial direction before rotating: ${location.direction}`);
+        location.direction = selectedSegment.get().location.direction;
+    }
     debug(`location to build next piece: ${location.x}, ${location.y}, ${location.z}, ${location.direction}`);
 
+    //todo do the modifications to the location here before returning this newly built segment so it's right.
     const segmentToBuild = new Segment({
         location: location,
         ride: selectedSegment.get().ride,
@@ -73,15 +75,21 @@ export const buildTrackAtFollowingPosition = (
     // todo need to pass in this because it might be different than the selectedSegment's rideType
 
     buildOrRemove(segmentToBuild, "build", type, direction, (result) => {
+
         const response = {
-            result,
-            newlyBuiltSegment: segmentToBuild
-        };
+            result: result.result,
+            newlyBuiltSegment: new Segment({
+                location: result.actualBuildLocation,
+                ride: selectedSegment.get().ride,
+                trackType: trackToBuild,
+                rideType: selectedSegment.get().rideType
+            })
+        }
         if (callback) callback(response);
     });
 }
 
-const buildOrRemove = (segmentToBuild: Segment | TrackElementItem | null, action: "build" | "remove", type: "real" | "ghost", normalizeZ: "next" | "previous" | false, callback?: ((result: GameActionResult) => void) | undefined): void => {
+const buildOrRemove = (segmentToBuild: Segment | TrackElementItem | null, action: "build" | "remove", type: "real" | "ghost", normalizeZ: "next" | "previous" | false, callback?: (result: { result: GameActionResult, actualBuildLocation: CoordsXYZD }) => void | undefined): void => {
     if (segmentToBuild == null) {
         debug(`Unable to ${action}: no segment specified`);
         return;
