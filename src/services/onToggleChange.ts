@@ -1,7 +1,10 @@
 import { SegmentModel } from './../viewmodels/segmentModel';
 import { ArrayStore } from "openrct2-flexui";
-import { TrackElementType } from '../utilities/trackElementType';
-import * as actions from '../services/actions';
+
+import iterateSelection from './buttonActions/iterateSelection';
+import simulateRide from './buttonActions/simulateRide';
+import selectSegment from './buttonActions/selectSegment';
+import { debug } from '../utilities/logger';
 
 export type SelectionButton =
     // direction buttons
@@ -12,15 +15,18 @@ export type SelectionButton =
     "right1Tile" |
     "right3Tile" |
     "right5Tile" |
+
     // large turns and s-bends
     "sBendLeft" |
     "sBendRight" |
     "leftLargeTurn" |
     "rightLargeTurn" |
+
     // banking
     "bankLeft" |
     "bankRight" |
     "noBank" |
+
     // steepness
     "down90" |
     "down60" |
@@ -29,14 +35,17 @@ export type SelectionButton =
     "up25" |
     "up60" |
     "up90" |
+
     // special
     "special" |
+
     // details
     "chainLift" |
     "boosters" |
     "camera" |
     "brakes" |
     "blockBrakes" |
+
     // building & selection
     "demolish" |
     "iterateNext" |
@@ -69,20 +78,47 @@ export const buttonToggleChanged = (options: {
 
     const { buttonType, isPressed, segmentModel: model, buttonsPressed } = options;
     // do something
-    buttonsPressed.push(buttonType);
+    // if isPressed, add buttonType to buttonsPressed, otherwise remove it.
+    if (isPressed) {
+        debug(`${buttonType} pressed`);
+        buttonsPressed.push(buttonType);
+    } else {
+        debug(`${buttonType} released`);
+        const thisIndex = buttonsPressed.get().indexOf(buttonType);
+        buttonsPressed.splice(thisIndex, 1);
+    }
+
+
+
+
     let modelResponse;
 
     switch (buttonType) {
-        case "iterateNext": {
-            modelResponse = model.moveToFollowingSegment("next");
-            model.buildDirection.set("next");
-            break;
-        }
+        // action: iterate track along selected direction
+        case "iterateNext":
         case "iteratePrevious": {
-            modelResponse = model.moveToFollowingSegment("previous");
-            model.buildDirection.set("previous");
+            const direction = buttonType === "iterateNext" ? "next" : "previous";
+            modelResponse = iterateSelection(direction, model);
             break;
         }
+
+        // action: start simulation
+        case "simulate": {
+            debug(`isPressed: ${isPressed}`);
+            modelResponse = simulateRide(model, isPressed);
+            break;
+        }
+
+        // action: select segment
+        case "select": {
+            modelResponse = selectSegment(model, isPressed, buttonsPressed);
+            break;
+        }
+        // action: change selected build
+        // action: destroy segment
+        // action: build selectedBuild
+        // action: place entrance/exit
+        // action
         case "left1Tile": {
             modelResponse = model.selectedBuild.set(50); //"LeftQuarterTurn1Tile" = 50,
             break;
@@ -112,16 +148,9 @@ export const buttonToggleChanged = (options: {
             modelResponse = model.selectedBuild.set(51); // "RightQuarterTurn1Tile" = 51,
             break;
         }
-        case "simulate": {
-            const thisRide = model.selectedSegment.get()?.get().ride
-            modelResponse = actions.beginSimulation(thisRide || 0);
-        }
+
 
     }
     model.debugButtonChange({ buttonType, isPressed, modelResponse });
 
 };
-
-// const removeAllTurnsExcept()
-
-
