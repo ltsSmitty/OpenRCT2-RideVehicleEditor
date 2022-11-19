@@ -9,6 +9,8 @@ import { TrackElementType } from "../utilities/trackElementType";
 import { debug } from "../utilities/logger";
 import { TrackElementItem } from '../services/SegmentController';
 import { SegmentModel } from '../viewmodels/segmentModel';
+import selectSegment from '../services/buttonActions/selectSegment';
+import { customImageFor } from '../objects/customButtonSprites';
 
 const buttonSize = 15;
 const directionButtonHeight = 25;
@@ -23,9 +25,7 @@ const windowWidth = 220;
 // const controlsSpinnerWidth = 146; // controlsWidth - (controlsLabelWidth + 4 + 12); // include spacing
 // const clampThenWrapMode: SpinnerWrapMode = "clampThenWrap";
 // const buttonModel = new ButtonSelectorModel(model);
-const isPicking = store<boolean>(false);
-
-const trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
+// const isPicking = store<boolean>(false);
 // // const sC = new SegmentController();
 
 // const onNext = (result: boolean) => {
@@ -50,11 +50,11 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 
 	const processTileSelected = (coords: CoordsXY): void => {
 		const elementsOnCoords = getTrackElementsFromCoords(coords);
-		trackElementsOnSelectedTile.set(elementsOnCoords);
+		model.trackElementsOnSelectedTile.set(elementsOnCoords);
 
 		// update model selectedSegment to 0th val to display in ListView
 		// otherwise the Listview will be blank until one is selected from the dropdown
-		if (trackElementsOnSelectedTile.get().length > 0) {
+		if (model.trackElementsOnSelectedTile.get().length > 0) {
 			model.selectedSegment.set(elementsOnCoords[0].segment);
 		}
 	};
@@ -73,16 +73,10 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 			// clean up potential issues in case the window crashed or something
 			// model.open()
 			// if there's nothing already, selected, open the picker tool
-			debug(`Window opened. Is picking: ${isPicking}`);
 			if (model.selectedSegment.get() == null) {
-				isPicking.set(true)
-				toggleXYZPicker(true,
-					(coords) => processTileSelected(coords),
-					() => {
-						isPicking.set(false);
-					})
+				// todo actually just force toggle the select toggle
+				selectSegment(model, true, model.buttonsPressed);
 			}
-
 		},
 		// onUpdate: () => model.update(),
 		onClose: () => model.close(),
@@ -112,7 +106,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								buttonType: "left3Tile",
 								width: buttonWidthSmall,
 								height: directionButtonHeight,
-								image: 5140 // 3 tile left turn
+								image: customImageFor("mediumLeftTurn") // 3 tile left turn
 							}),
 							element.toggle({
 								buttonType: "left5Tile",
@@ -136,7 +130,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								buttonType: "right3Tile",
 								width: buttonWidthSmall,
 								height: directionButtonHeight,
-								image: 5141 // 3 tile right turn
+								image: customImageFor("mediumRightTurn") // 3 tile right turn
 							}),
 							element.toggle({
 								buttonType: "right1Tile",
@@ -155,7 +149,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								buttonType: "sBendLeft",
 								width: directionButtonWidth,
 								height: directionButtonHeight,
-								image: 5142, // todo replace with an s-bend image
+								image: customImageFor("sBendLeft"),
 							}),
 							element.toggle({
 								buttonType: "leftLargeTurn",
@@ -173,7 +167,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								buttonType: "sBendRight",
 								width: directionButtonWidth,
 								height: directionButtonHeight,
-								image: 5143 // todo replace with an s-bend image
+								image: customImageFor("sBendRight")
 							}),
 						]
 					}),
@@ -319,16 +313,11 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 							// segment tile selector tool
 							element.toggle({
 								buttonType: "select",
-								width: buttonSize, height: buttonSize,
+								width: directionButtonWidth,
+								height: directionButtonHeight,
 								tooltip: "Use the picker to select a track segment by clicking it",
+								isPressed: compute(model.isPicking, (isPicking) => isPicking),
 								image: 29467, // SPR_G2_EYEDROPPER
-								isPressed: isPicking,
-								// disabled: model.isEditDisabled,
-								onChange: p => toggleXYZPicker(p,
-									(coords) => processTileSelected(coords),
-									() => {
-										isPicking.set(false);
-									})
 							}),
 							element.button({
 								buttonType: "iterateNext",
@@ -347,17 +336,12 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 
 				],
 			}),
-			button({
-				text: `${TrackElementType[model.selectedBuild.get() || 0]}`, // todo make this more friendly
-				// height: 50
-			}),
-
 			// choose which segment from the selected tile
 			dropdown({
-				items: compute(trackElementsOnSelectedTile, (elements) => elements.map(e => `Ride: ${e.element.ride}, height: ${e.element.baseHeight}, i: ${TrackElementType[e.segment?.get().trackType || 0]}`)),
-				onChange: (selectedIndex) => { model.selectedSegment.set(trackElementsOnSelectedTile.get()[selectedIndex].segment); },
+				items: compute(model.trackElementsOnSelectedTile, (elements) => elements.map(e => `Ride: ${e.element.ride}, height: ${e.element.baseHeight}, i: ${TrackElementType[e.segment?.get().trackType || 0]}`)),
+				onChange: (selectedIndex) => { model.selectedSegment.set(model.trackElementsOnSelectedTile.get()[selectedIndex].segment); },
 				selectedIndex: compute(model.selectedSegment, segment => {
-					const potentialIndexOf = trackElementsOnSelectedTile.get().map(tei => tei.segment).indexOf(segment);
+					const potentialIndexOf = model.trackElementsOnSelectedTile.get().map(tei => tei.segment).indexOf(segment);
 					return (potentialIndexOf === -1 ? 0 : potentialIndexOf);
 				})
 			}),
@@ -400,31 +384,10 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 				})
 
 			}),
-			button({
+			element.button({
 				text: "Build",
-				onClick: () => {
-					model.buildSelectedFollowingPiece();
-					model.moveToFollowingSegment(model.buildDirection.get());
-					// buildFollowingSegment(thisSegmentInfo, segmentToBuild.get(), "real");
-					// 		// buildTrackElement({
-					// 		// 	buildLocation: nextCoords,
-					// 		// 	ride: thisRide,
-					// 		// 	trackType: segmentToBuild.get() || 0,
-					// 		// 	rideType: map.getRide(thisRide)?.type,
-					// 		// });
-
-					// 		// move TI to next space
-					// 		// show next tiles that can be build
-					// 		iterateToNextSelectedTrack()
-					// 	}
-				}
+				buttonType: "build"
 			}),
-			// button({
-			// 	text: "Iterate over whole track",
-			// 	disabled: compute(selectedIterator, ti => ti ? false : true),
-			// 	onClick: () => createSegmentMap(selectedIterator.get())
-			// })
-
 		]
 	});
 

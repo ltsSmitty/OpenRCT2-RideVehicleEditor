@@ -6,6 +6,7 @@ import { initActions } from "./services/actions";
 import { trackIteratorWindow } from "./ui/trackIteratorWindow";
 import { WindowTemplate } from 'openrct2-flexui';
 import { debug } from './utilities/logger';
+import { initCustomSprites } from './objects/customButtonSprites';
 
 
 /**
@@ -37,6 +38,7 @@ export function main(): void {
 	}
 
 	initActions();
+	initCustomSprites();
 
 	const segmentModel = new SegmentModel();
 	segmentModel.cleanUpFromImproperClose();

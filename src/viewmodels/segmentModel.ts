@@ -5,12 +5,14 @@ import * as builder from './builderModel';
 import * as finder from '../services/trackElementFinder';
 import * as storage from '../utilities/coldStorage';
 
-import { compute, Store, store } from 'openrct2-flexui';
+import { arrayStore, compute, Store, store } from 'openrct2-flexui';
 import { getSuggestedNextSegment } from '../utilities/suggestedNextSegment';
 
 import { debug } from '../utilities/logger';
 import { TrackElementType } from '../utilities/trackElementType';
 import { combinedLabelSpinner } from '../ui/utilityControls';
+import { TrackElementItem } from '../services/SegmentController';
+import { SelectionButton } from '../services/onToggleChange';
 
 
 export class SegmentModel {
@@ -22,6 +24,9 @@ export class SegmentModel {
     readonly buildableTrackTypes = store<TrackElementType[]>([]);
     readonly buildDirection = store<"next" | "previous" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
+    readonly isPicking = store<boolean>(false);
+    readonly trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
+    readonly buttonsPressed = arrayStore<SelectionButton>([]);
 
     private segmentPainter = new SegmentElementPainter();
 
@@ -33,19 +38,19 @@ export class SegmentModel {
         this.selectedBuild.subscribe((newSelectedBuild) => this.onSelectedBuildChange(newSelectedBuild));
         this.previewSegment.subscribe((newPreviewSegment) => this.onPreviewSegmentChange(newPreviewSegment));
 
-        context.subscribe("action.execute", (event: GameActionEventArgs) => {
-            const action = event.action as ActionType;
-            switch (action) {
-                case "ridesetappearance":
-                case "ridesetcolourscheme": {
-                    debug(`<${action}>\n\t- type: ${event.type}
-        \t- args: ${JSON.stringify(
-                        event.args, null, 2
-                    )}\n\t- result: ${JSON.stringify(event.result)}`);
-                    break;
-                }
-            }
-        })
+        // context.subscribe("action.execute", (event: GameActionEventArgs) => {
+        //     const action = event.action as ActionType;
+        //     switch (action) {
+        //         case "ridesetappearance":
+        //         case "ridesetcolourscheme": {
+        //             debug(`<${action}>\n\t- type: ${event.type}
+        // \t- args: ${JSON.stringify(
+        //                 event.args, null, 2
+        //             )}\n\t- result: ${JSON.stringify(event.result)}`);
+        //             break;
+        //         }
+        //     }
+        // })
     }
 
     /**
@@ -248,6 +253,8 @@ export class SegmentModel {
     };
 
     private onSelectedBuildChange = (selectedTrackType: TrackElementType | null): void => {
+        debug(`assessing selectedTrackType: ${selectedTrackType}`);
+
         if (selectedTrackType == null) {
             debug(`Selected build changed to null`);
             highlighter.highlightMapRangeUnderSegment(null);

@@ -84,7 +84,7 @@ const endsDown60: TrackElementType[] = [
 
 
 export const getBuildableSegments = (el: TrackElementType, direction: "next" | "previous"): TrackElementType[] => {
-    debug(`getting buildable segments for ${el} in direction ${direction}`);
+    debug(`getting buildable segments for ${TrackElementType[el || 0]} in direction ${direction}`);
     // figure out how el ends
     switch (direction) {
         case "next": {

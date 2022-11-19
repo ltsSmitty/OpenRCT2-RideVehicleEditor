@@ -5,6 +5,7 @@ import iterateSelection from './buttonActions/iterateSelection';
 import simulateRide from './buttonActions/simulateRide';
 import selectSegment from './buttonActions/selectSegment';
 import { debug } from '../utilities/logger';
+import buildSegment from './buttonActions/buildSegment';
 
 export type SelectionButton =
     // direction buttons
@@ -117,6 +118,10 @@ export const buttonToggleChanged = (options: {
         // action: change selected build
         // action: destroy segment
         // action: build selectedBuild
+        case "build": {
+            modelResponse = buildSegment(model);
+            break;
+        }
         // action: place entrance/exit
         // action
         case "left1Tile": {
@@ -148,8 +153,6 @@ export const buttonToggleChanged = (options: {
             modelResponse = model.selectedBuild.set(51); // "RightQuarterTurn1Tile" = 51,
             break;
         }
-
-
     }
     model.debugButtonChange({ buttonType, isPressed, modelResponse });
 
