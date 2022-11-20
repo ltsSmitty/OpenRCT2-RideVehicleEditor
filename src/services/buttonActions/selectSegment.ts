@@ -2,11 +2,11 @@ import { ArrayStore } from "openrct2-flexui";
 import { Segment } from "../../objects/segment";
 import { debug } from "../../utilities/logger";
 import { SegmentModel } from "../../viewmodels/segmentModel";
-import { SelectionButton } from "../onToggleChange";
+import { BuildWindowButton } from "../services/buttonActions/buttonTypes";
 import { toggleXYZPicker } from "../segmentPicker";
 import * as finder from "../trackElementFinder";
 
-const selectSegment = (model: SegmentModel, isPressed: boolean, buttonsPressed: ArrayStore<SelectionButton>): Segment | null => {
+const selectSegment = (model: SegmentModel, isPressed: boolean, buttonsPressed: ArrayStore<BuildWindowButton>): Segment | null => {
     if (isPressed) { // don't go through this when the toggle turns off.
         model.isPicking.set(isPressed);
         toggleXYZPicker(isPressed,

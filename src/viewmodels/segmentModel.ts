@@ -1,3 +1,4 @@
+import { BuildWindowButton } from './../services/buttonActions/buttonTypes';
 import { SegmentElementPainter } from './../objects/segmentElementPainter';
 import { Segment } from './../objects/segment';
 import * as highlighter from '../services/highlightGround';
@@ -12,7 +13,6 @@ import { debug } from '../utilities/logger';
 import { TrackElementType } from '../utilities/trackElementType';
 import { combinedLabelSpinner } from '../ui/utilityControls';
 import { TrackElementItem } from '../services/SegmentController';
-import { SelectionButton } from '../services/onToggleChange';
 
 
 export class SegmentModel {
@@ -24,9 +24,10 @@ export class SegmentModel {
     readonly buildableTrackTypes = store<TrackElementType[]>([]);
     readonly buildDirection = store<"next" | "previous" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
-    readonly isPicking = store<boolean>(false);
+
     readonly trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
-    readonly buttonsPressed = arrayStore<SelectionButton>([]);
+    // readonly buttonsPressed = arrayStore<BuildWindowButton>([]);
+
 
     private segmentPainter = new SegmentElementPainter();
 

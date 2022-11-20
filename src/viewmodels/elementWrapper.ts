@@ -4,27 +4,30 @@ import { SegmentModel } from './segmentModel';
 import { ToggleParams, FlexiblePosition, WidgetCreator, compute } from "openrct2-flexui";
 import { shouldThisBeDisabled } from "../services/disableToggle";
 import { buttonToggleChanged } from "../services/onToggleChange";
-import { SelectionButton } from "../services/onToggleChange";
+import { BuildWindowButton } from "../services/buttonActions/buttonTypes";
 import { debug } from '../utilities/logger';
+import { ButtonSelectorModel } from './buttonSelectorModel';
 // import * as selector from "../utilities/globalButtonSelection";
 
 
 type ExtendedToggleParams = ToggleParams & {
-    buttonType: SelectionButton,
+    buttonType: BuildWindowButton,
 }
 
 type ExtendedButtonParams = ButtonParams & {
-    buttonType: SelectionButton,
+    buttonType: BuildWindowButton,
 }
 
 export class ElementWrapper {
 
 
     private segmentModel: SegmentModel;
+    private buttonSelectorModel: ButtonSelectorModel;
 
 
-    constructor(segmentModel: SegmentModel) {
+    constructor(segmentModel: SegmentModel, buttonSelectorModel: ButtonSelectorModel) {
         this.segmentModel = segmentModel;
+        this.buttonSelectorModel = buttonSelectorModel;
     }
 
     public button(params: ExtendedButtonParams & FlexiblePosition): WidgetCreator<FlexiblePosition> {
@@ -47,11 +50,11 @@ export class ElementWrapper {
 
         return toggle({
             // disabled: shouldThisBeDisabled(buttonType, model),
-            disabled: shouldThisBeDisabled(),
+            disabled: shouldThisBeDisabled({ buttonType, isPressed, segmentModel: this.segmentModel, buttonSelectorModel: this.buttonSelectorModel }),
             onChange: (isPressed?) => {
                 if (onChange) return onChange(isPressed); //override default behaviour
 
-                return buttonToggleChanged({ buttonType, isPressed, segmentModel: this.segmentModel, buttonsPressed: this.segmentModel.buttonsPressed });
+                return buttonToggleChanged({ buttonType, isPressed, segmentModel: this.segmentModel, buttonSelectorModel: this.buttonSelectorModel });
 
             },
             isPressed: isPressed || compute(this.segmentModel.buttonsPressed, buttons => {

@@ -1,13 +1,10 @@
-import { getTrackElementsFromCoords } from './../services/trackElementFinder';
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { arrayStore, button, compute, dropdown, groupbox, horizontal, listview, SpinnerWrapMode, toggle, store, window } from "openrct2-flexui";
-// import { rideBuildToggle } from '../objects/rideToggle';
+import { getTrackElementsFromCoords } from './../services/trackElementFinder';
+import { compute, dropdown, groupbox, horizontal, listview, window } from "openrct2-flexui";
 import { ElementWrapper } from '../viewmodels/elementWrapper';
-import { toggleXYZPicker } from "../services/segmentPicker";
 import { isDevelopment, pluginVersion } from "../environment";
 import { TrackElementType } from "../utilities/trackElementType";
 import { debug } from "../utilities/logger";
-import { TrackElementItem } from '../services/SegmentController';
 import { SegmentModel } from '../viewmodels/segmentModel';
 import selectSegment from '../services/buttonActions/selectSegment';
 import { customImageFor } from '../objects/customButtonSprites';
@@ -24,20 +21,6 @@ const windowWidth = 220;
 // const controlsLabelWidth = 82;
 // const controlsSpinnerWidth = 146; // controlsWidth - (controlsLabelWidth + 4 + 12); // include spacing
 // const clampThenWrapMode: SpinnerWrapMode = "clampThenWrap";
-// const buttonModel = new ButtonSelectorModel(model);
-// const isPicking = store<boolean>(false);
-// // const sC = new SegmentController();
-
-// const onNext = (result: boolean) => {
-// 	debug(`Iterated to next segment:`)
-// 	debug(`${segment.getSegmentInfo()?.position}`)
-// };
-// const onPrevious = (result: boolean) => {
-// 	debug(`onPrevious callback: ${result}`);
-// };
-
-
-
 
 let title = `Advanced Build Menu v${pluginVersion}`;
 if (isDevelopment) {
@@ -47,17 +30,6 @@ if (isDevelopment) {
 export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: ElementWrapper) => {
 	const model = segmentModel;
 	const element = elementWrapper;
-
-	const processTileSelected = (coords: CoordsXY): void => {
-		const elementsOnCoords = getTrackElementsFromCoords(coords);
-		model.trackElementsOnSelectedTile.set(elementsOnCoords);
-
-		// update model selectedSegment to 0th val to display in ListView
-		// otherwise the Listview will be blank until one is selected from the dropdown
-		if (model.trackElementsOnSelectedTile.get().length > 0) {
-			model.selectedSegment.set(elementsOnCoords[0].segment);
-		}
-	};
 
 	const getTrackElementTypeName = (val: number): string => {
 		return (TrackElementType)[val];
@@ -115,7 +87,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								image: 5133 // 5 tile left turn
 							}),
 							element.toggle({
-								buttonType: "straightTrack",
+								buttonType: "noCurve",
 								width: directionButtonWidth,
 								height: directionButtonHeight,
 								image: 5137 // straight
@@ -218,7 +190,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								image: 5145 // down25
 							}),
 							element.toggle({
-								buttonType: "flat",
+								buttonType: "noPitch",
 								width: directionButtonWidth,
 								height: directionButtonHeight,
 								image: 5146 // flat

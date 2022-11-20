@@ -1,10 +1,10 @@
+/* eslint-disable prefer-const */
 /**
  * Checks if the index is a valid index for this array.
  * @param array The array to check.
  * @param index The index to check.
  */
-export function isValidIndex<T>(array: T[] | null, index: number | null): boolean
-{
+export function isValidIndex<T>(array: T[] | null, index: number | null): boolean {
 	return (array != null && index != null && index >= 0 && index < array.length);
 }
 
@@ -14,8 +14,7 @@ export function isValidIndex<T>(array: T[] | null, index: number | null): boolea
  * @param array The array to check.
  * @param index The index to check.
  */
-export function getAtIndex<T>(array: T[] | null, index: number | null): T | null
-{
+export function getAtIndex<T>(array: T[] | null, index: number | null): T | null {
 	return (array != null && index != null && index >= 0 && index < array.length) ? array[index] : null;
 }
 
@@ -25,12 +24,9 @@ export function getAtIndex<T>(array: T[] | null, index: number | null): T | null
  * @param array The array to check.
  * @param predicate The function to match the items against.
  */
-export function findIndex<T>(array: T[], predicate: (item: T) => boolean): number | null
-{
-	for (let i = 0; i < array.length; i++)
-	{
-		if (predicate(array[i]))
-		{
+export function findIndex<T>(array: T[], predicate: (item: T) => boolean): number | null {
+	for (let i = 0; i < array.length; i++) {
+		if (predicate(array[i])) {
 			return i;
 		}
 	}
@@ -43,8 +39,7 @@ export function findIndex<T>(array: T[], predicate: (item: T) => boolean): numbe
  * @param array The array to check.
  * @param predicate The function to match the items against.
  */
-export function find<T>(array: T[], predicate: (item: T) => boolean): T | null
-{
+export function find<T>(array: T[], predicate: (item: T) => boolean): T | null {
 	const idx = findIndex(array, predicate);
 	return (idx === null) ? null : array[idx];
 }
@@ -54,7 +49,17 @@ export function find<T>(array: T[], predicate: (item: T) => boolean): T | null
  * Gets the first item of the array, or null if it has no items.
  * @param array The array to check.
  */
-export function firstOrNull<T>(array: T[]): T | null
-{
+export function firstOrNull<T>(array: T[]): T | null {
 	return (array.length > 0) ? array[0] : null;
 }
+
+if (!Object.entries)
+	Object.entries = function (obj: any) {
+		let ownProps = Object.keys(obj),
+			i = ownProps.length,
+			resArray = new Array(i); // preallocate the Array
+		while (i--)
+			resArray[i] = [ownProps[i], obj[ownProps[i]]];
+
+		return resArray;
+	};

@@ -1,84 +1,24 @@
+import { ButtonSelectorModel } from './../viewmodels/buttonSelectorModel';
 import { SegmentModel } from './../viewmodels/segmentModel';
-import { ArrayStore } from "openrct2-flexui";
 
 import iterateSelection from './buttonActions/iterateSelection';
 import simulateRide from './buttonActions/simulateRide';
 import selectSegment from './buttonActions/selectSegment';
 import { debug } from '../utilities/logger';
 import buildSegment from './buttonActions/buildSegment';
-
-export type SelectionButton =
-    // direction buttons
-    "left1Tile" |
-    "left3Tile" |
-    "left5Tile" |
-    "straightTrack" |
-    "right1Tile" |
-    "right3Tile" |
-    "right5Tile" |
-
-    // large turns and s-bends
-    "sBendLeft" |
-    "sBendRight" |
-    "leftLargeTurn" |
-    "rightLargeTurn" |
-
-    // banking
-    "bankLeft" |
-    "bankRight" |
-    "noBank" |
-
-    // steepness
-    "down90" |
-    "down60" |
-    "down25" |
-    "flat" |
-    "up25" |
-    "up60" |
-    "up90" |
-
-    // special
-    "special" |
-
-    // details
-    "chainLift" |
-    "boosters" |
-    "camera" |
-    "brakes" |
-    "blockBrakes" |
-
-    // building & selection
-    "demolish" |
-    "iterateNext" |
-    "select" |
-    "iteratePrevious" |
-    "simulate" |
-    "build" |
-    "entrance" |
-    "exit";
-
-type TurnButton = "left1Tile" | "left3Tile" | "left5Tile" | "straightTrack" | "right1Tile" | "right3Tile" | "right5Tile" | "sBendLeft" | "sBendRight" | "leftLargeTurn" | "rightLargeTurn";
-
-type BankingButton = "bankLeft" | "bankRight" | "noBank";
-
-type SteepnessButton = "down90" | "down60" | "down25" | "flat" | "up25" | "up60" | "up90";
-
-type SpecialButton = "special";
-
-type DetailButton = "chainLift" | "boosters" | "camera" | "brakes" | "blockBrakes";
-
-type BuildingButton = "demolish" | "iterateNext" | "select" | "iteratePrevious" | "simulate" | "build" | "entrance" | "exit";
+import * as buttonMap from './buttonToTrackElementMap';
+import { BuildWindowButton } from './buttonActions/buttonTypes';
 
 
 export const buttonToggleChanged = (options: {
-    buttonType: SelectionButton,
+    buttonType: BuildWindowButton,
     isPressed: boolean,
     segmentModel: SegmentModel,
-    buttonsPressed: ArrayStore<SelectionButton>
+    buttonSelectorModel: ButtonSelectorModel
 }): void => {
+    const { buttonType, isPressed, segmentModel: model, buttonSelectorModel: buttonModel } = options;
+    const buttonsPressed = buttonModel.allSelectedButtons;
 
-    const { buttonType, isPressed, segmentModel: model, buttonsPressed } = options;
-    // do something
     // if isPressed, add buttonType to buttonsPressed, otherwise remove it.
     if (isPressed) {
         debug(`${buttonType} pressed`);
@@ -90,6 +30,7 @@ export const buttonToggleChanged = (options: {
     }
 
 
+    // todo changing any of bank or slope or direction refreshes all of the buttons.
 
 
     let modelResponse;
@@ -115,45 +56,113 @@ export const buttonToggleChanged = (options: {
             modelResponse = selectSegment(model, isPressed, buttonsPressed);
             break;
         }
-        // action: change selected build
-        // action: destroy segment
+
         // action: build selectedBuild
         case "build": {
             modelResponse = buildSegment(model);
             break;
         }
+
+        // action: destroy segment
         // action: place entrance/exit
-        // action
-        case "left1Tile": {
-            modelResponse = model.selectedBuild.set(50); //"LeftQuarterTurn1Tile" = 50,
+
+
+        // action: change selected build
+        // direction:
+        case "left1Tile":
+        case "left3Tile":
+        case "left5Tile":
+        case "noCurve":
+        case "right1Tile":
+        case "right3Tile":
+        case "right5Tile":
+        case "sBendLeft":
+        case "sBendRight":
+        case "leftLargeTurn": //diagonal
+        case "rightLargeTurn":  //diagonal
+            {
+                // update the buttonSelectorModel curve with this
+                // untoggle all the other buttons than this one
+                break;
+            }
+
+        // case "left1Tile": {
+        //     modelResponse = model.selectedBuild.set(50); //"LeftQuarterTurn1Tile" = 50,
+        //     break;
+        // }
+        // case "left3Tile": {
+        //     modelResponse = model.selectedBuild.set(42); //"LeftQuarterTurn3Tiles" = 42,
+        //     break;
+        // }
+        // case "left5Tile": {
+        //     modelResponse = model.selectedBuild.set(16); //    "LeftQuarterTurn5Tiles" = 16,
+        //     break;
+        // }
+        // case "noCurve": {
+        //     modelResponse = model.selectedBuild.set(0); // "Flat" = 0
+        //     // clear all other buttons
+        //     break;
+        // }
+        // case "right5Tile": {
+        //     modelResponse = model.selectedBuild.set(17); // "RightQuarterTurn5Tiles" = 17,
+        //     break;
+        // }
+        // case "right3Tile": {
+        //     modelResponse = model.selectedBuild.set(43); // "RightQuarterTurn3Tiles" = 43,
+        //     break;
+        // }
+        // case "right1Tile": {
+        //     modelResponse = model.selectedBuild.set(51); // "RightQuarterTurn1Tile" = 51,
+        //     break;
+        // }
+        // case "leftLargeTurn": {
+        //     // check if it's already diagonal;
+        //     // starting straight uses     "LeftEighthToDiag" = 133,
+        //     // starting diagonal uses     "LeftEighthToOrthogonal" = 135,
+
+        //     // change if banked
+        //     break;
+        // }
+        // case "rightLargeTurn": {
+        //     // check if it's already diagonal;
+        //     // starting straight uses     "RightEighthToDiag" = 134,
+        //     // starting diagonal uses     "RightEighthToOrthogonal" = 136,
+        //     break;
+        // }
+        // case "sBendLeft": {
+        //     modelResponse = model.selectedBuild.set(38); //   "SBendLeft" = 38,
+        //     break;
+        // }
+        // case "sBendRight": {
+        //     modelResponse = model.selectedBuild.set(39); //  "SBendRight" = 39,
+        //     break;
+        // }
+
+        // details
+        case "chainLift": {
+            // loop through all the elements of this segment and set "hasChainLift" to true
             break;
         }
-        case "left3Tile": {
-            modelResponse = model.selectedBuild.set(42); //"LeftQuarterTurn3Tiles" = 42,
+        case "boosters": {
+            modelResponse = model.selectedBuild.set(100); //     "Booster" = 100,
             break;
         }
-        case "left5Tile": {
-            modelResponse = model.selectedBuild.set(16); //    "LeftQuarterTurn5Tiles" = 16,
+        case "camera": {
+            modelResponse = model.selectedBuild.set(114); //  "OnRidePhoto" = 114,
             break;
         }
-        case "straightTrack": {
-            modelResponse = model.selectedBuild.set(0); // "Flat" = 0
-            // clear all other buttons
+        case "brakes": {
+            modelResponse = model.selectedBuild.set(99); //      "Brakes" = 99,
             break;
         }
-        case "right5Tile": {
-            modelResponse = model.selectedBuild.set(17); // "RightQuarterTurn5Tiles" = 17,
-            break;
-        }
-        case "right3Tile": {
-            modelResponse = model.selectedBuild.set(43); // "RightQuarterTurn3Tiles" = 43,
-            break;
-        }
-        case "right1Tile": {
-            modelResponse = model.selectedBuild.set(51); // "RightQuarterTurn1Tile" = 51,
+        case "blockBrakes": {
+            modelResponse = model.selectedBuild.set(216); //   "BlockBrakes" = 216,
             break;
         }
     }
+    debug(`What pieces could be built given the currently pressed buttons?`)
+    buttonMap.getElementsFromGivenButtons(buttonsPressed.get());
+
     model.debugButtonChange({ buttonType, isPressed, modelResponse });
 
 };
