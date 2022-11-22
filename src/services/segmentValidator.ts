@@ -1,110 +1,33 @@
 import { debug } from "../utilities/logger";
 import { TrackElementType } from "../utilities/trackElementType";
 
-const endsFlat: TrackElementType[] = [
-    TrackElementType.Flat,
-    TrackElementType.EndStation,
-    TrackElementType.BeginStation,
-    TrackElementType.Up25ToFlat,
-    TrackElementType.Down25ToFlat,
-    TrackElementType.LeftQuarterTurn3Tiles,
-    TrackElementType.LeftQuarterTurn5Tiles,
-    TrackElementType.RightQuarterTurn3Tiles,
-    TrackElementType.RightQuarterTurn5Tiles,
-    TrackElementType.SBendLeft,
-    TrackElementType.SBendRight,
-    TrackElementType.Brakes,
-    // TrackElementType.Booster,
-    TrackElementType.OnRidePhoto,
-];
+/**
+ * Use to compare a first and second TrackElementTypeto see if they are compatible.
+ * To go in the previous direction, just swap which is first and which is second.
+ */
+const areSegmentsCompatible = (initialTrackElement: TrackElementType, finalTrackElement: TrackElementType): boolean => {
+    const initial = context.getTrackSegment(initialTrackElement);
+    const final = context.getTrackSegment(finalTrackElement);
+    const slopesMatch = initial?.endSlope == final?.beginSlope;
+    const banksMatch = initial?.endBank == final?.beginBank;
+    const turnsMatch = initial?.turnDirection == final?.turnDirection;
 
-const startsFlat: TrackElementType[] = [
-    TrackElementType.Flat,
-    TrackElementType.EndStation,
-    TrackElementType.BeginStation,
-    TrackElementType.FlatToDown25,
-    TrackElementType.FlatToUp25,
-    TrackElementType.LeftQuarterTurn3Tiles,
-    TrackElementType.LeftQuarterTurn5Tiles,
-    TrackElementType.RightQuarterTurn3Tiles,
-    TrackElementType.RightQuarterTurn5Tiles,
-    TrackElementType.SBendLeft,
-    TrackElementType.SBendRight,
-    TrackElementType.Brakes,
-]
+    return (slopesMatch && banksMatch && turnsMatch);
+};
 
-const startsUp25: TrackElementType[] = [
-    TrackElementType.Up25,
-    TrackElementType.Up25ToFlat,
-    TrackElementType.LeftVerticalLoop,
-    TrackElementType.RightVerticalLoop,
-    TrackElementType.Up25ToUp60
-]
+export const getBuildableSegments = (initialTrackELement: TrackElementType, direction: "next" | "previous", allElementsAvailableForRide?: TrackElementType[]): TrackElementType[] => {
+    const elements = allElementsAvailableForRide || context.getAllTrackSegments().map(x => x.type);
 
-const endsUp25: TrackElementType[] = [
-    TrackElementType.FlatToUp25,
-    TrackElementType.Up60ToUp25,
-    TrackElementType.Up25
-]
-
-const startsDown25: TrackElementType[] = [
-    TrackElementType.Down25,
-    TrackElementType.Down25ToDown60,
-    TrackElementType.Down25ToFlat
-]
-
-const endsDown25: TrackElementType[] = [
-    TrackElementType.Down25,
-    TrackElementType.LeftVerticalLoop,
-    TrackElementType.RightVerticalLoop,
-    TrackElementType.FlatToDown25,
-    TrackElementType.Down60ToDown25
-]
-
-const startsUp60: TrackElementType[] = [
-    TrackElementType.Up60,
-    TrackElementType.Up60ToUp25
-]
-
-const endsUp60: TrackElementType[] = [
-    TrackElementType.Up60,
-    TrackElementType.Up25ToUp60
-]
-
-const startsDown60: TrackElementType[] = [
-    TrackElementType.Down60,
-    TrackElementType.Down60ToDown25
-]
-
-const endsDown60: TrackElementType[] = [
-    TrackElementType.Down60,
-    TrackElementType.Down25ToDown60
-]
-
-
-
-export const getBuildableSegments = (el: TrackElementType, direction: "next" | "previous"): TrackElementType[] => {
-    debug(`getting buildable segments for ${TrackElementType[el || 0]} in direction ${direction}`);
-    // figure out how el ends
-    switch (direction) {
-        case "next": {
-            if (endsFlat.indexOf(el) >= 0) { return startsFlat; }
-            if (endsDown25.indexOf(el) >= 0) { return startsDown25; }
-            if (endsDown60.indexOf(el) >= 0) { return startsDown60; }
-            if (endsUp25.indexOf(el) >= 0) { return startsUp25; }
-            if (endsUp60.indexOf(el) >= 0) { return startsUp60; }
-            break;
-        }
-        case "previous": {
-            if (startsFlat.indexOf(el) >= 0) { return endsFlat; }
-            if (startsDown25.indexOf(el) >= 0) { return endsDown25; }
-            if (startsDown60.indexOf(el) >= 0) { return endsDown60; }
-            if (startsUp25.indexOf(el) >= 0) { return endsUp25; }
-            if (startsUp60.indexOf(el) >= 0) { return endsUp60; }
-            break;
-        }
+    debug(`getting buildable segments for ${TrackElementType[initialTrackELement || 0]} in direction ${direction}`);
+    if (direction == "next") {
+        const buildableSegments = elements.filter(el =>
+            areSegmentsCompatible(initialTrackELement, el));
+        return buildableSegments;
     }
-
-
-    return [TrackElementType.Flat];
+    if (direction == "previous") {
+        const buildableSegments = elements.filter(el =>
+            areSegmentsCompatible(el, initialTrackELement));
+        return buildableSegments;
+    }
+    return [];
 }

@@ -8,6 +8,7 @@ import { debug } from "../utilities/logger";
 import { SegmentModel } from '../viewmodels/segmentModel';
 import selectSegment from '../services/buttonActions/selectSegment';
 import { customImageFor } from '../objects/customButtonSprites';
+import { ButtonSelectorModel } from '../viewmodels/buttonSelectorModel';
 
 const buttonSize = 15;
 const directionButtonHeight = 25;
@@ -27,7 +28,7 @@ if (isDevelopment) {
 	title += " [DEBUG]";
 }
 
-export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: ElementWrapper) => {
+export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: ElementWrapper, buttonModel: ButtonSelectorModel) => {
 	const model = segmentModel;
 	const element = elementWrapper;
 
@@ -47,7 +48,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 			// if there's nothing already, selected, open the picker tool
 			if (model.selectedSegment.get() == null) {
 				// todo actually just force toggle the select toggle
-				selectSegment(model, true, model.buttonsPressed);
+				selectSegment(model, buttonModel, true);
 			}
 		},
 		// onUpdate: () => model.update(),
@@ -288,7 +289,8 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								width: directionButtonWidth,
 								height: directionButtonHeight,
 								tooltip: "Use the picker to select a track segment by clicking it",
-								isPressed: compute(model.isPicking, (isPicking) => isPicking),
+								isPressed: compute(buttonModel
+									.isPicking, (isPicking) => isPicking),
 								image: 29467, // SPR_G2_EYEDROPPER
 							}),
 							element.button({
@@ -320,19 +322,26 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 			// display stats for the selected segment
 			listview({
 				height: 100,
-				items: compute(model.selectedSegment, (segment) => {
-					if (!segment) return ["No segment selected"];
+				items: compute(buttonModel.selectedCurve, buttonModel.selectedBank, buttonModel.selectedPitch, (curve, bank, pitch) => {
 
-					const segInfo = segment.get();
 					return [
-						`Ride: ${segInfo.ride}`,
-						`Ride type: ${segInfo.rideType}`,
-						`Track element type:  ${getTrackElementTypeName(segInfo.trackType)}`,
-						`Location: ${segInfo.location.x}, ${segInfo.location.y}, ${segInfo.location.z}; ${segInfo.location.direction}`,
-						``,
-						`Next: ${segment.nextLocation()?.x}, ${segment.nextLocation()?.y}, ${segment.nextLocation()?.z}; ${segment.nextLocation()?.direction}`,
-						`Previous: ${segment.previousLocation()?.x}, ${segment.previousLocation()?.y}, ${segment.previousLocation()?.z}; ${segment.previousLocation()?.direction}`,
-					];
+						`Curve: ${curve}`,
+						`Bank: ${bank}`,
+						`Pitch: ${pitch}`,
+					]
+
+					// if (!segment) return ["No segment selected"];
+
+					// const segInfo = segment.get();
+					// return [
+					// 	`Ride: ${segInfo.ride}`,
+					// 	`Ride type: ${segInfo.rideType}`,
+					// 	`Track element type:  ${getTrackElementTypeName(segInfo.trackType)}`,
+					// 	`Location: ${segInfo.location.x}, ${segInfo.location.y}, ${segInfo.location.z}; ${segInfo.location.direction}`,
+					// 	``,
+					// 	`Next: ${segment.nextLocation()?.x}, ${segment.nextLocation()?.y}, ${segment.nextLocation()?.z}; ${segment.nextLocation()?.direction}`,
+					// 	`Previous: ${segment.previousLocation()?.x}, ${segment.previousLocation()?.y}, ${segment.previousLocation()?.z}; ${segment.previousLocation()?.direction}`,
+					// ];
 				})
 			}),
 			// choose a new buildable segment

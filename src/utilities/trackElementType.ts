@@ -261,6 +261,8 @@ export enum TrackElementType {
     "MultiDimFlatToDown90QuarterLoop" = 254,
     "MultiDimInvertedUp90ToFlatQuarterLoop" = 255,
     "RotationControlToggle" = 256,
+
+    // openRCT additions
     "LeftLargeCorkscrewUp" = 267,
     "RightLargeCorkscrewUp" = 268,
     "LeftLargeCorkscrewDown" = 269,

@@ -8,7 +8,8 @@ type ButtonPressOptions =
     [CurveButton, PitchButton, BankButton, DetailButton] | // standard map + covered/chains
     [CurveButton, PitchButton, BankButton, DetailButton, DetailButton] | // standard map + covered & chains
     [SpecialButton] | // special elements
-    [MiscButton];  // booster, camera, brakes, block brakes
+    [MiscButton] |  // sbends, booster, camera, brakes, block brakes
+    [MiscButton, DetailButton]; // covered sBend
 
 type ButtonToElementMap = Partial<Record<TrackElementType, ButtonPressOptions>>;
 
@@ -16,21 +17,32 @@ export const getButtonsForElement = (element: TrackElementType): SelectionButton
     return trackElementToButtonMap[element] || [];
 };
 
+
+
+export const getValidButtonSetForRideType = (rideType: number): SelectionButton[] => {
+    const filteredTEBM = createFilteredButtonMapForRideType(rideType);
+    const buttonSet = Object.values(filteredTEBM).reduce((acc, val) => {
+        acc.push(...val);
+        return acc;
+    }, [] as SelectionButton[]);
+    return buttonSet;
+}
+
 // todo actually write this out
 const getTrackELementTypesByRideType = (rideType: number): TrackElementType[] => {
     return [];
 }
 
 // Copilot wrote this one. not sure if it actually works
-const createFilteredTEBMForRideType = (rideType: number): ButtonToElementMap => {
+const createFilteredButtonMapForRideType = (rideType: number): ButtonToElementMap => {
     const availableTrackElementTypes = getTrackELementTypesByRideType(rideType);
-    const filteredTEBM = Object.keys(trackElementToButtonMap).reduce((acc, key) => {
+    const filteredBM = Object.keys(trackElementToButtonMap).reduce((acc, key) => {
         if (availableTrackElementTypes.includes(key as unknown as TrackElementType)) {
             acc[key as unknown as TrackElementType] = trackElementToButtonMap[key as unknown as TrackElementType];
         }
         return acc;
     }, {} as ButtonToElementMap);
-    return filteredTEBM;
+    return filteredBM;
 };
 
 /**
@@ -136,9 +148,9 @@ const trackElementToButtonMap: ButtonToElementMap = {
     [TrackElementType.RightQuarterTurn5TilesDown25]: // 37
         ["right5Tile", "down25", "noBank"],
     [TrackElementType.SBendLeft]: // 38
-        ["sBendLeft", "noPitch", "noBank"],
+        ["sBendLeft"],
     [TrackElementType.SBendRight]: // 39
-        ["sBendRight", "noPitch", "noBank"],
+        ["sBendRight"],
     [TrackElementType.LeftVerticalLoop]: // 40
         ["special"],
     [TrackElementType.RightVerticalLoop]: // 41
@@ -221,9 +233,9 @@ const trackElementToButtonMap: ButtonToElementMap = {
     [TrackElementType.RightQuarterTurn5TilesCovered]: // 82
         ["right5Tile", "noPitch", "noBank", "covered"],
     [TrackElementType.SBendLeftCovered]: // 83
-        ["sBendLeft", "noPitch", "noBank", "covered"],
+        ["sBendLeft", "covered"],
     [TrackElementType.SBendRightCovered]: // 84
-        ["sBendRight", "noPitch", "noBank", "covered"],
+        ["sBendRight", "covered"],
     [TrackElementType.LeftQuarterTurn3TilesCovered]: // 85
         ["left3Tile", "noPitch", "noBank", "covered"],
     [TrackElementType.RightQuarterTurn3TilesCovered]: // 86
@@ -562,7 +574,61 @@ const trackElementToButtonMap: ButtonToElementMap = {
     [TrackElementType.MultiDimFlatToDown90QuarterLoop]: // 255
         ["special"],
     [TrackElementType.MultiDimInvertedUp90ToFlatQuarterLoop]: // 256
-        ["special"]
+        ["special"],
     // [TrackElementType.RotationControlToggle]: // 257
+
+    // New OpenRCT2 track elements
+    [TrackElementType.LeftLargeCorkscrewUp]: // 267
+        ["special"],
+    [TrackElementType.RightLargeCorkscrewUp]: // 268
+        ["special"],
+    [TrackElementType.LeftLargeCorkscrewDown]: // 269
+        ["special"],
+    [TrackElementType.RightLargeCorkscrewDown]: // 270
+        ["special"],
+    [TrackElementType.LeftMediumHalfLoopUp]: // 271
+        ["special"],
+    [TrackElementType.RightMediumHalfLoopUp]: // 272
+        ["special"],
+    [TrackElementType.LeftMediumHalfLoopDown]: // 273
+        ["special"],
+    [TrackElementType.RightMediumHalfLoopDown]: // 274
+        ["special"],
+    [TrackElementType.LeftZeroGRollUp]: // 275
+        ["special"],
+    [TrackElementType.RightZeroGRollUp]: // 276
+        ["special"],
+    [TrackElementType.LeftZeroGRollDown]: // 277
+        ["special"],
+    [TrackElementType.RightZeroGRollDown]: // 278
+        ["special"],
+    [TrackElementType.LeftLargeZeroGRollUp]: // 279
+        ["special"],
+    [TrackElementType.RightLargeZeroGRollUp]: // 280
+        ["special"],
+    [TrackElementType.LeftLargeZeroGRollDown]: // 281
+        ["special"],
+    [TrackElementType.RightLargeZeroGRollDown]: // 282
+        ["special"],
+    [TrackElementType.LeftFlyerLargeHalfLoopUninvertedUp]: // 283
+        ["special"],
+    [TrackElementType.RightFlyerLargeHalfLoopUninvertedUp]: // 284
+        ["special"],
+    [TrackElementType.RightFlyerLargeHalfLoopInvertedDown]: // 285
+        ["special"],
+    [TrackElementType.LeftFlyerLargeHalfLoopInvertedDown]: // 286
+        ["special"],
+    [TrackElementType.LeftFlyerLargeHalfLoopInvertedUp]: // 287
+        ["special"],
+    [TrackElementType.RightFlyerLargeHalfLoopInvertedUp]: // 288
+        ["special"],
+    [TrackElementType.RightFlyerLargeHalfLoopUninvertedDown]: // 289
+        ["special"],
+    [TrackElementType.LeftFlyerLargeHalfLoopUninvertedDown]: // 290
+        ["special"],
+    [TrackElementType.FlyerHalfLoopInvertedUp]: // 291
+        ["special"],
+    [TrackElementType.FlyerHalfLoopUninvertedDown]: // 292
+        ["special"],
 }
 

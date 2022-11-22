@@ -7,8 +7,6 @@ export type CurveButton =
     "right1Tile" |
     "right3Tile" |
     "right5Tile" |
-    "sBendLeft" |
-    "sBendRight" |
     "leftLargeTurn" | //diagonal
     "rightLargeTurn";  //diagonal
 
@@ -32,6 +30,8 @@ export type DetailButton =
     "covered";
 
 export type MiscButton =
+    "sBendLeft" |
+    "sBendRight" |
     "boosters" |
     "camera" |
     "brakes" |

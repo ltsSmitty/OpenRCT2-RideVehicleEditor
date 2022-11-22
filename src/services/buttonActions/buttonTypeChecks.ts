@@ -10,8 +10,6 @@ export const isCurveButton = (button: BuildWindowButton): button is CurveButton 
         button === "right1Tile" ||
         button === "right3Tile" ||
         button === "right5Tile" ||
-        button === "sBendLeft" ||
-        button === "sBendRight" ||
         button === "leftLargeTurn" ||
         button === "rightLargeTurn";
 };
@@ -43,7 +41,9 @@ export const isMiscButton = (button: BuildWindowButton): button is MiscButton =>
         button === "brakes" ||
         button === "blockBrakes" ||
         button === "entrance" ||
-        button === "exit";
+        button === "exit" ||
+        button === "sBendLeft" ||
+        button === "sBendRight"
 };
 
 export const isSpecialButton = (button: BuildWindowButton): button is SpecialButton => {

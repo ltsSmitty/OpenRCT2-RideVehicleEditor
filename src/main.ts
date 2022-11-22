@@ -2,7 +2,7 @@ import { ElementWrapper } from './viewmodels/elementWrapper';
 import { SegmentModel } from './viewmodels/segmentModel';
 import * as Environment from "./environment";
 import { initActions } from "./services/actions";
-// import { mainWindow } from "./ui/mainWindow";
+import { ButtonSelectorModel } from './viewmodels/buttonSelectorModel';
 import { trackIteratorWindow } from "./ui/trackIteratorWindow";
 import { WindowTemplate } from 'openrct2-flexui';
 import { debug } from './utilities/logger';
@@ -42,7 +42,8 @@ export function main(): void {
 
 	const segmentModel = new SegmentModel();
 	segmentModel.cleanUpFromImproperClose();
-	const elementWrapper = new ElementWrapper(segmentModel);
-	const window = trackIteratorWindow(segmentModel, elementWrapper);
+	const buttonModel = new ButtonSelectorModel(segmentModel);
+	const elementWrapper = new ElementWrapper(segmentModel, buttonModel);
+	const window = trackIteratorWindow(segmentModel, elementWrapper, buttonModel);
 	ui.registerMenuItem("Track Generator", () => openEditorWindow(window));
 }
