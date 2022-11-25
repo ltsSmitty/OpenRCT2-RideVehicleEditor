@@ -6,9 +6,9 @@ import { SegmentModel } from './segmentModel';
 
 export class ButtonSelectorModel {
 
-    readonly selectedCurve = store<CurveButton | null>(null);
-    readonly selectedBank = store<BankButton | null>(null);
-    readonly selectedPitch = store<PitchButton | null>(null);
+    readonly selectedCurve = store<CurveButton | null>("noCurve");
+    readonly selectedBank = store<BankButton | null>("noBank");
+    readonly selectedPitch = store<PitchButton | null>("noPitch");
     readonly selectedDetail = store<DetailButton | null>(null);
     readonly selectedMisc = store<MiscButton | null>(null);
     readonly selectedSpecial = store<SpecialButton | null>(null);

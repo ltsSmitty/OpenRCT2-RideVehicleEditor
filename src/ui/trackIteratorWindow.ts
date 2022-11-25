@@ -196,7 +196,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								buttonType: "noPitch",
 								width: directionButtonWidth,
 								height: directionButtonHeight,
-								image: 5146 // flat
+								image: 5146, // flat
 							}),
 							element.toggle({
 								buttonType: "up25",
