@@ -85,7 +85,7 @@ const getSegmentFromTrackElement = (e: TileElementItem<TrackElement>): Segment |
  */
 const getRelativeElementCoordsUnderSegment = (segment: Segment): TrackSegmentElement[] | null => {
     // get the element index of this segment in order to
-    const thisTI = getTIAtSegment(segment)
+    const thisTI = getTIAtSegment(segment);
     const segmentElements = thisTI?.segment?.elements;
     if (!segmentElements) return null;
     return segmentElements;
@@ -94,7 +94,7 @@ const getRelativeElementCoordsUnderSegment = (segment: Segment): TrackSegmentEle
 export const getRelativeElementCoordsForTrackSegment = (trackType: TrackElementType): TrackSegmentElement[] | null => {
     // get the element index of this segment in order to
     const thisSegmentType = context.getTrackSegment(trackType);
-    return thisSegmentType?.elements || null
+    return thisSegmentType?.elements || null;
 };
 
 
@@ -166,7 +166,7 @@ export const getAllSegmentTrackElements = (segment: Segment | null): TrackElemen
     });
 
     return allTheseElements;
-}
+};
 
 /**
  * Get the TrackElementItem for a specific ride and given XYZD.
@@ -271,15 +271,15 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
         return null;
     }
     return newTI;
-}
+};
 
 export const getTrackColours = (newSeg: Segment | null): TrackColour => {
     // ride.colourSchemes is one option, but i wonder if you can do better
     // TrackElement. colour scheme => look up
     if (newSeg == null) return { main: -1, additional: -1, supports: -1 };
 
-    const thisSeg = getSpecificTrackElement(newSeg?.get().ride || 0, newSeg?.get().location)
-    const thisColourScheme = thisSeg.element.colourScheme
+    const thisSeg = getSpecificTrackElement(newSeg?.get().ride || 0, newSeg?.get().location);
+    const thisColourScheme = thisSeg.element.colourScheme;
     const theseTrackColours = map.getRide(newSeg.get().ride)?.colourSchemes[thisColourScheme || 0];
     return theseTrackColours;
 };
@@ -302,11 +302,9 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, sele
         return { exists: false, element: null };
     }
 
-    const thisTI = getTIAtSegment(selectedSegment);
-
     // todo maybe this could be wrong, but probably not. maybe if a new track was build above an old one the index could get messed up?
 
-    const { x, y, z, direction } = (buildDirection == "next" ? selectedSegment.nextLocation()! : selectedSegment.previousLocation()!) // location of next track element
+    const { x, y, z, direction } = (buildDirection == "next" ? selectedSegment.nextLocation()! : selectedSegment.previousLocation()!); // location of next track element
     const trackELementsOnNextTile = getTrackElementsFromCoords({ x, y });
 
     if (trackELementsOnNextTile.length === 0) {

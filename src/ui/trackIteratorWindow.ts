@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { getTrackElementsFromCoords } from './../services/trackElementFinder';
+
 import { compute, dropdown, groupbox, horizontal, listview, window } from "openrct2-flexui";
 import { ElementWrapper } from '../viewmodels/elementWrapper';
 import { isDevelopment, pluginVersion } from "../environment";
 import { TrackElementType } from "../utilities/trackElementType";
 import { debug } from "../utilities/logger";
 import { SegmentModel } from '../viewmodels/segmentModel';
+import { ButtonSelectorModel } from '../viewmodels/buttonSelectorModel';
 import selectSegment from '../services/buttonActions/selectSegment';
 import { customImageFor } from '../objects/customButtonSprites';
-import { ButtonSelectorModel } from '../viewmodels/buttonSelectorModel';
+
 
 const buttonSize = 15;
 const directionButtonHeight = 25;
@@ -18,6 +19,7 @@ const buttonWidthMedium = 25
 const directionButtonWidth = 25;
 const buttonRowHeight = 30;
 const windowWidth = 220;
+const windowHeight = 500;
 // const controlsWidth = 244;
 // const controlsLabelWidth = 82;
 // const controlsSpinnerWidth = 146; // controlsWidth - (controlsLabelWidth + 4 + 12); // include spacing
@@ -40,7 +42,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 	return window({
 		title,
 		width: windowWidth,
-		height: 500,
+		height: windowHeight,
 		spacing: 5,
 		onOpen: () => {
 			// clean up potential issues in case the window crashed or something
@@ -244,7 +246,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								buttonType: "camera",
 								width: directionButtonWidth,
 								height: directionButtonHeight,
-								image: 5089 // camera
+								image: 23496 // camera
 							}),
 						]
 					}),
@@ -291,7 +293,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								tooltip: "Use the picker to select a track segment by clicking it",
 								isPressed: compute(buttonModel
 									.isPicking, (isPicking) => isPicking),
-								image: 29467, // SPR_G2_EYEDROPPER
+								image: 29402, // SPR_G2_EYEDROPPER
 							}),
 							element.button({
 								buttonType: "iterateNext",
@@ -303,7 +305,7 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								buttonType: "simulate",
 								width: directionButtonWidth,
 								height: directionButtonHeight,
-								image: 29481 // start trial run
+								image: 29416 // start trial run
 							}),
 						]
 					})
@@ -344,27 +346,34 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 					// ];
 				})
 			}),
-			// choose a new buildable segment
-			dropdown({
-				disabled: compute(model.buildableTrackTypes, trackTypes => { return trackTypes.length > 0 ? false : true; }),
-				items: compute(model.buildableTrackTypes, trackTypes => {
-					const allSegments = trackTypes.map(trackType => TrackElementType[trackType]);
-					return allSegments;
-				}),
-				onChange: (index) => {
-					// todo make sure this functionality isn't exclusive because this doesn't fire upon initial segment selection
-					debug(`Segment selection dropdown changed to index ${index}`);
-					const newTrackType = model.buildableTrackTypes.get()[index];
-					if (newTrackType !== null) {
-						model.selectedBuild.set(newTrackType);
-					}
-				},
-				selectedIndex: compute(model.selectedBuild, (selectedBuild) => {
-					const potentialIndexOf = model.buildableTrackTypes.get().indexOf(selectedBuild || 0);
-					return (potentialIndexOf === -1 ? 0 : potentialIndexOf);
-				})
+			// // choose a new buildable segment
+			// dropdown({
+			// 	disabled: compute(model.buildableTrackTypes, trackTypes => { return trackTypes.length > 0 ? false : true; }),
+			// 	items: compute(model.buildableTrackTypes, trackTypes => {
+			// 		debug(`looking for track types: ${trackTypes}`);
+			// 		const allSegments = trackTypes.map(trackType => TrackElementType[trackType]);
+			// 		debug(`computing dropdown items: ${allSegments}`);
+			// 		return allSegments;
+			// 	}),
+			// 	onChange: (index) => {
+			// 		// todo make sure this functionality isn't exclusive because this doesn't fire upon initial segment selection
+			// 		debug(`Segment selection dropdown changed to index ${index}`);
 
-			}),
+			// 		const newTrackType = model.buildableTrackTypes.get()[index];
+			// 		debug(`New track type: ${newTrackType}`);
+			// 		if (newTrackType !== null) {
+			// 			model.selectedBuild.set(newTrackType);
+			// 		}
+			// 	},
+			// 	selectedIndex: compute(model.selectedBuild, (selectedBuild) => {
+			// 		debug(`computing selected index for dropdown`);
+			// 		debug(`selectedBuild: ${selectedBuild}`);
+			// 		const potentialIndexOf = model.buildableTrackTypes.get().indexOf(selectedBuild || 0);
+			// 		debug(`potentialIndexOf: ${potentialIndexOf}`);
+			// 		return (potentialIndexOf === -1 ? 0 : potentialIndexOf);
+			// 	})
+
+			// }),
 			element.button({
 				text: "Build",
 				buttonType: "build"
