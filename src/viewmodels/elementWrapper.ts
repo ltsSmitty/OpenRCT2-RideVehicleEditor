@@ -29,7 +29,7 @@ export class ElementWrapper {
     }
 
     public button(params: ExtendedButtonParams & FlexiblePosition): WidgetCreator<FlexiblePosition> {
-        const { buttonType, onClick, isPressed, ...rest } = params;
+        const { buttonType, onClick, ...rest } = params;
         return button({
             // disabled: shouldThisBeDisabled(buttonType, model),
             disabled: shouldThisBeDisabled({ buttonType, segmentModel: this.segmentModel, buttonSelectorModel: this.buttonSelectorModel }),
@@ -44,7 +44,7 @@ export class ElementWrapper {
     }
 
     public toggle(params: ExtendedToggleParams & FlexiblePosition): WidgetCreator<FlexiblePosition> {
-        const { buttonType, onChange, isPressed, ...rest } = params;
+        const { buttonType, onChange, ...rest } = params;
 
         return toggle({
             disabled: shouldThisBeDisabled({ buttonType, segmentModel: this.segmentModel, buttonSelectorModel: this.buttonSelectorModel }),

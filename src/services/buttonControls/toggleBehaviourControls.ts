@@ -18,59 +18,25 @@ export const buttonToggleChanged = (options: {
     buttonSelectorModel: ButtonSelectorModel
 }): void => {
     const { buttonType, isPressed, segmentModel: model, buttonSelectorModel: buttonModel } = options;
-    const buttonsPressed = buttonModel.allSelectedButtons;
-
-    // if isPressed, add buttonType to buttonsPressed, otherwise remove it.
-    if (isPressed) {
-        debug(`${buttonType} pressed`);
-        buttonsPressed.push(buttonType);
-    } else {
-        debug(`${buttonType} released`);
-        const thisIndex = buttonsPressed.get().indexOf(buttonType);
-        buttonsPressed.splice(thisIndex, 1);
-        // todo maybe return?
-    }
-
-
-    // todo changing any of bank or slope or direction refreshes all of the buttons.
-
 
     let modelResponse;
 
     // If curve button was updated
     if (button.isCurveButton(buttonType)) {
+        buttonModel.selectedCurve.set(null);
         modelResponse = buttonModel.selectedCurve.set(buttonType);
-
-        // find previous curve in buttonsPressed and remove it
-        // const previousCurve = buttonModel.selectedCurve.get();
-        // if (previousCurve) {
-        //     const previousCurveIndex = buttonsPressed.get().indexOf(previousCurve);
-        //     buttonsPressed.splice(previousCurveIndex, 1);
-        // }
     }
 
     // If bank button was updated
     if (button.isBankButton(buttonType)) {
+        buttonModel.selectedBank.set(null);
         modelResponse = buttonModel.selectedBank.set(buttonType);
-
-        // find previous bank in buttonsPressed and remove it
-        // const previousBank = buttonModel.selectedBank.get();
-        // if (previousBank) {
-        //     const previousBankIndex = buttonsPressed.get().indexOf(previousBank);
-        //     buttonsPressed.splice(previousBankIndex, 1);
-        // }
     }
 
     // If slope button was updated
     if (button.isPitchButton(buttonType)) {
+        buttonModel.selectedPitch.set(null);
         modelResponse = buttonModel.selectedPitch.set(buttonType);
-
-        // find previous pitch in buttonsPressed and remove it
-        // const previousPitch = buttonModel.selectedPitch.get();
-        // if (previousPitch) {
-        //     const previousPitchIndex = buttonsPressed.get().indexOf(previousPitch);
-        //     buttonsPressed.splice(previousPitchIndex, 1);
-        // }
     }
 
     switch (buttonType) {
@@ -183,7 +149,24 @@ export const buttonToggleChanged = (options: {
         }
     }
     debug(`What pieces could be built given the currently pressed buttons?`)
-    buttonMap.getElementsFromGivenButtons(buttonsPressed.get());
+
+    const selectedElements = [
+        buttonModel.selectedBank.get(),
+        buttonModel.selectedCurve.get(),
+        buttonModel.selectedPitch.get(),
+        buttonModel.selectedDetail.get(),
+        buttonModel.selectedMisc.get(),
+        buttonModel.selectedControl.get(),
+        buttonModel.selectedSpecial.get()
+    ];
+
+    // only get the non-null elements from selectedElements
+    // for some reason TS doesn't get that they won't be null values.
+    // gonna have to force a non-null assertion downstream
+    const filteredElements = selectedElements.filter(element => element !== null);
+    const newBuildableTrackTypes = buttonMap.getElementsFromGivenButtons(filteredElements);
+
+    model.buildableTrackTypes.set(newBuildableTrackTypes);
 
     model.debugButtonChange({ buttonType, isPressed, modelResponse });
 

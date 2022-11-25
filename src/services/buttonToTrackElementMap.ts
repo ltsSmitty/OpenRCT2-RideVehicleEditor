@@ -62,7 +62,7 @@ if (!Object.entries)
  * @param buttons Given the buttons that are pressed, return the track elements that are possible to build. Filtering this response with the direction (next/previous), piece end details, and the current segment (e.g. diagonal, inverted, covered or not), this should narrow down the possible track elements to build to one single piece.
  * @returns
  */
-export const getElementsFromGivenButtons = (buttons: BuildWindowButton[], availableTrackElementTypes?: TrackElementType[]): TrackElementType[] => {
+export const getElementsFromGivenButtons = (buttons: (BuildWindowButton | null)[], availableTrackElementTypes?: TrackElementType[]): TrackElementType[] => {
     const elements: TrackElementType[] = [];
     // debug(`Searching for TrackElements that can be built with buttons: ${buttons}`);
 
@@ -72,12 +72,13 @@ export const getElementsFromGivenButtons = (buttons: BuildWindowButton[], availa
         // debug(`is this an intersection? `);
 
         // casting to string[] because the typescript compiler doesn't know that the buttonArray is a string[]
-        if (buttons.every((button) => (<string[]>buttonsRequiredToBuildElement).indexOf(button) > -1) && buttonsRequiredToBuildElement.length === buttons.length) {
+        // yes this is ugly.
+        if (buttons.every((button) => (<string[]>buttonsRequiredToBuildElement).indexOf(button!) > -1) && buttonsRequiredToBuildElement.length === buttons.length) {
             // debug(`pushing ${element} to elements`);
             elements.push(element as unknown as TrackElementType);
         }
     }
-    debug(`There are ${elements.length} elements which can built with the given buttons ${buttons}: ${JSON.stringify(elements, null, 2)}`);
+    debug(`There are ${elements.length} elements which can built with the given buttons ${buttons}: ${JSON.stringify(elements.map(e => TrackElementType[e]), null, 2)}`);
     return elements;
 };
 

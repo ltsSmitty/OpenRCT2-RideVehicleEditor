@@ -3,13 +3,14 @@ import { SegmentModel } from "../../viewmodels/segmentModel"
 import { BuildWindowButton } from "../buttonActions/buttonTypes";
 import * as button from '../buttonActions/buttonTypeChecks';
 import { compute } from "openrct2-flexui";
+import { debug } from "../../utilities/logger";
 
 export const shouldThisBePressed =
     (buttonType: BuildWindowButton, segmentModel: SegmentModel, buttonSelectorModel: ButtonSelectorModel) => {
 
-        //if it is a bankButton, return compute of the buttonSelectorModel.allBankButtonsPressed if it's pressed return false
         if (button.isBankButton(buttonType)) {
             return compute(buttonSelectorModel.selectedBank, (b) => {
+                debug(`shouldThisBePressed: bank button ${buttonType} is ${b === buttonType}`);
                 if (b === buttonType) {
                     return true;
                 } else {
@@ -20,6 +21,7 @@ export const shouldThisBePressed =
         // do the same with curve and pitch
         if (button.isCurveButton(buttonType)) {
             return compute(buttonSelectorModel.selectedCurve, (b) => {
+                debug(`shouldThisBePressed: curve button ${buttonType} is ${b === buttonType}`);
                 if (b === buttonType) {
                     return true;
                 } else {
@@ -30,6 +32,7 @@ export const shouldThisBePressed =
 
         if (button.isPitchButton(buttonType)) {
             return compute(buttonSelectorModel.selectedPitch, (b) => {
+                debug(`shouldThisBePressed: pitch button ${buttonType} is ${b === buttonType}`);
                 if (b === buttonType) {
                     return true;
                 } else {
