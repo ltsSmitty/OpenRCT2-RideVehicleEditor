@@ -1,5 +1,6 @@
 import { debug } from "../utilities/logger";
 import { TrackElementType } from "../utilities/trackElementType";
+import { RideType } from "../utilities/rideType";
 
 /**
  * Use to compare a first and second TrackElementTypeto see if they are compatible.
@@ -15,10 +16,17 @@ const areSegmentsCompatible = (initialTrackElement: TrackElementType, finalTrack
     return (slopesMatch && banksMatch && turnsMatch);
 };
 
-export const getBuildableSegments = (initialTrackELement: TrackElementType, direction: "next" | "previous", allElementsAvailableForRide?: TrackElementType[]): TrackElementType[] => {
-    const elements = allElementsAvailableForRide || context.getAllTrackSegments().map(x => x.type);
+export const getBuildableSegments = (
+    initialTrackELement: TrackElementType,
+    rideType: RideType,
+    direction: "next" | "previous"): TrackElementType[] => {
 
-    debug(`getting buildable segments for ${TrackElementType[initialTrackELement || 0]} in direction ${direction}`);
+    // //todo actually use the ridetype to return something useful
+    // const allElementsAvailableForRide = context.getTrackElementsForRide(rideType); // finish this stub
+    const elements = context.getAllTrackSegments().map(x => x.type); // in the meantime just making all tracksegments available
+
+
+    debug(`getting buildable segments for ${TrackElementType[initialTrackELement]} in direction ${direction}`);
     if (direction == "next") {
         const buildableSegments = elements.filter(el =>
             areSegmentsCompatible(initialTrackELement, el));
@@ -30,4 +38,4 @@ export const getBuildableSegments = (initialTrackELement: TrackElementType, dire
         return buildableSegments;
     }
     return [];
-}
+};
