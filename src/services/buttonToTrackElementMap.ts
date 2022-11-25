@@ -29,13 +29,13 @@ export const getValidButtonSetForRideType = (rideType: number): SelectionButton[
 }
 
 // todo actually write this out
-const getTrackELementTypesByRideType = (rideType: number): TrackElementType[] => {
+const getTrackElementTypesByRideType = (rideType: number): TrackElementType[] => {
     return [];
 }
 
 // Copilot wrote this one. not sure if it actually works
 const createFilteredButtonMapForRideType = (rideType: number): ButtonToElementMap => {
-    const availableTrackElementTypes = getTrackELementTypesByRideType(rideType);
+    const availableTrackElementTypes = getTrackElementTypesByRideType(rideType);
     const filteredBM = Object.keys(trackElementToButtonMap).reduce((acc, key) => {
         if (availableTrackElementTypes.includes(key as unknown as TrackElementType)) {
             acc[key as unknown as TrackElementType] = trackElementToButtonMap[key as unknown as TrackElementType];
@@ -44,6 +44,18 @@ const createFilteredButtonMapForRideType = (rideType: number): ButtonToElementMa
     }, {} as ButtonToElementMap);
     return filteredBM;
 };
+
+
+if (!Object.entries)
+    Object.entries = function (obj: any) {
+        let ownProps = Object.keys(obj),
+            i = ownProps.length,
+            resArray = new Array(i); // preallocate the Array
+        while (i--)
+            resArray[i] = [ownProps[i], obj[ownProps[i]]];
+
+        return resArray;
+    };
 
 /**
  *

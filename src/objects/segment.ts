@@ -1,20 +1,20 @@
-import { TrackElementItem } from './../services/SegmentController';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+import { TrackElementItem } from './../services/SegmentController';
 import { TrackElementType } from '../utilities/trackElementType';
 import { RideType } from '../utilities/rideType';
 import * as finder from "../services/trackElementFinder";
-import { debug } from '../utilities/logger';
 
 export type SegmentDescriptor = {
     location: CoordsXYZD;
-    ride: number; // will log an error if you specify a ride # that doesn't exist
+    ride: number; //
     trackType: TrackElementType; // e.g. TrackElementType.LeftBankedDown25ToDown25
     rideType: RideType;
 };
 
 export class Segment {
     private _location: CoordsXYZD;
-    private _ride: number; // will log an error if you specify a ride # that doesn't exist
+    private _ride: number; //
     private _trackType: TrackElementType; // e.g. TrackElementType.LeftBankedDown25ToDown25
     private _rideType: RideType;
     private _nextLocation: CoordsXYZD | null = null;
@@ -41,6 +41,7 @@ export class Segment {
         if (this._nextLocation) {
             return this._nextLocation;
         }
+        // it's important to not initialize this._nextLocation/this._previousLocation because??
         const thisTI = finder.getTIAtSegment(this);
         this._nextLocation = thisTI?.nextPosition || null;
         this._previousLocation = thisTI?.previousPosition || null;
@@ -64,7 +65,7 @@ export class Segment {
             const IsThereANextSegment = thisTI?.next(); // check if there's a next segment
             // debug(`Is there a next segment? ${IsThereANextSegment}`);
             if ((IsThereANextSegment)) {
-                const thisElement = finder.getSpecificTrackElement(this._ride, thisTI?.position!)
+                const thisElement = finder.getSpecificTrackElement(this._ride, thisTI?.position!);
                 // debug(`The next element is ${JSON.stringify(thisElement, null, 2)}`);
                 return { exists: (thisElement.element.isGhost ? "ghost" : "real"), element: thisElement };
             }
@@ -73,7 +74,7 @@ export class Segment {
         if (direction === "previous") {
             const IsThereAPreviousSegment = thisTI?.previous(); // check if there's a next segment
             if ((IsThereAPreviousSegment)) {
-                const thisElement = finder.getSpecificTrackElement(this._ride, thisTI?.position!)
+                const thisElement = finder.getSpecificTrackElement(this._ride, thisTI?.position!);
                 return { exists: (thisElement.element.isGhost ? "ghost" : "real"), element: thisElement };
             }
         }

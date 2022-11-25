@@ -1,4 +1,4 @@
-import { BuildWindowButton } from './../services/buttonActions/buttonTypes';
+
 import { SegmentElementPainter } from './../objects/segmentElementPainter';
 import { Segment } from './../objects/segment';
 import * as highlighter from '../services/highlightGround';
@@ -21,12 +21,17 @@ export class SegmentModel {
     readonly selectedBuild = store<TrackElementType | null>(null);
     readonly previewSegment = store<Segment | null>(null);
 
+    readonly selectedRideType = store<number | null>(15); // for testing use the SteelRollerCoaster as the ride until I add in the rideTypePickers
+    readonly buildableTrackTypesByRideType = store<TrackElementType[]>([]);
+    // todo use selectedRideType to influence the buildableTrackTypes
     readonly buildableTrackTypes = store<TrackElementType[]>([]);
     readonly buildDirection = store<"next" | "previous" | null>("next");
     readonly buildRotation = store<Direction | null>(null);
 
     readonly trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
-    // readonly buttonsPressed = arrayStore<BuildWindowButton>([]);
+
+
+
 
 
     private segmentPainter = new SegmentElementPainter();
@@ -87,7 +92,9 @@ export class SegmentModel {
     close(): void {
         debug("closing segment model");
         this.segmentPainter.restoreInitialColour();
-        builder.removeTrackSegment(this.previewSegment.get(), this.buildDirection.get());
+        if (this.previewSegment.get() !== null) {
+            builder.removeThisGhostSegment(this.previewSegment.get()!, this.buildDirection.get());
+        }
         this.previewSegment.set(null);
         this.selectedSegment.set(null);
     }
@@ -101,11 +108,16 @@ export class SegmentModel {
             debug("no selected track type to build");
             return;
         }
+        const thisSeg = this.selectedSegment.get();
+        if (thisSeg == null) {
+            debug(`no selected segment to build ${segToBuild} after`);
+            return;
+        }
         // todo not working with previous inversions
-        builder.removeTrackAtFollowingPosition(this.selectedSegment.get(), this.buildDirection.get(), "ghost", (result) => {
+        builder.removeTrackAtFollowingPosition(thisSeg, this.buildDirection.get() || "next", "ghost", (result) => {
             debug(`Ghost removed from the next position of the selected segment. Result is ${JSON.stringify(result, null, 2)}`);
         });
-        builder.buildTrackAtFollowingPosition(this.selectedSegment.get(), this.buildDirection.get(), segToBuild, "real", ({ result, newlyBuiltSegment }) => {
+        builder.buildTrackAtFollowingPosition(thisSeg, this.buildDirection.get() || "next", segToBuild, "real", ({ result, newlyBuiltSegment }) => {
             // this.previewSegment.set(newlyBuiltSegment);
             if (result.error) {
                 debug(`Error building that piece. ${result?.errorMessage}`);
@@ -145,7 +157,7 @@ export class SegmentModel {
 
             // check if there's a preview segment to delete.
             if (this.previewSegment.get() != null) {
-                builder.removeTrackSegment(this.previewSegment.get(), this.buildDirection.get());
+                builder.removeThisGhostSegment(this.previewSegment.get()!, this.buildDirection.get());
             }
             this.selectedSegment.set(nextSegment);
             return true;
@@ -185,12 +197,19 @@ export class SegmentModel {
             debug(`failed to paint the selected segment!!!!!!!`);
         }
 
-        const newBuildableOptions = builder.getBuildOptionsForSegment(newSeg);
+        const thisRideType = this.selectedRideType.get()
+        if (thisRideType == null) {
+            debug(`no ride type selected`);
+            return;
+        }
+
+        const newBuildableOptions = builder.getBuildOptionsForSegment(newSeg, thisRideType);
         debug(`After segment change, assessing new buildable options.`);
         const direction = this.buildDirection.get();
 
         if (direction === "next") {
-            debug(`There are ${newBuildableOptions.next.length} buildable options for the next segment`);
+            debug(`There are ${newBuildableOptions.next.length} buildable options for the next segment: $`);
+            debug(newBuildableOptions.next.map((seg) => TrackElementType[seg]).join(", "));
             this.buildableTrackTypes.set([...newBuildableOptions.next]);
             return;
         }
@@ -212,7 +231,16 @@ export class SegmentModel {
             this.buildableTrackTypes.set([]);
             return;
         }
-        const buildableOptions = builder.getBuildOptionsForSegment(this.selectedSegment.get());
+        let thisRideType = this.selectedRideType.get();
+        if (thisRideType == null) {
+            debug(`Error in buildDirectionChange: no ride type selected. Setting it to 15 (SteelLoopingCoaster) to fail gracefully.`);
+            thisRideType = 15
+        }
+        if (this.selectedSegment.get() == null) {
+            debug(`Error in buildDirectionChange: no segment selected. Not setting buildable options.`);
+            return;
+        }
+        const buildableOptions = builder.getBuildOptionsForSegment(this.selectedSegment.get()!, thisRideType);
         if (newDirection === "next") {
             // todo make sure to set nextBuildPosition at the sme time
             this.buildableTrackTypes.set([...buildableOptions.next]);
@@ -249,7 +277,8 @@ export class SegmentModel {
         debug(`The default selected segment is ${TrackElementType[recommendedSegment]}`);
 
         // try setting to null and then resetting just in case
-        this.selectedBuild.set(null);
+        // this.selectedBuild.set(null);
+        //i think this is causing issues now. lets see if it works without it.
         this.selectedBuild.set(recommendedSegment);
     };
 
