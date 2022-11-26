@@ -11,8 +11,11 @@ import { getSuggestedNextSegment } from '../utilities/suggestedNextSegment';
 
 import { debug } from '../utilities/logger';
 import { TrackElementType } from '../utilities/trackElementType';
-import { combinedLabelSpinner } from '../ui/utilityControls';
 import { TrackElementItem } from '../services/SegmentController';
+import { RideType } from '../utilities/rideType';
+
+const startingRideType: RideType = 15;
+const startingDirection = "next";
 
 
 export class SegmentModel {
@@ -21,22 +24,22 @@ export class SegmentModel {
     readonly selectedBuild = store<TrackElementType | null>(null);
     readonly previewSegment = store<Segment | null>(null);
 
-    readonly selectedRideType = store<number | null>(15); // for testing use the SteelRollerCoaster as the ride until I add in the rideTypePickers
-    readonly buildableTrackTypesByRideType = store<TrackElementType[]>([]);
-    // todo use selectedRideType to influence the buildableTrackTypes
     readonly buildableTrackTypes = store<TrackElementType[]>([]);
-    readonly buildDirection = store<"next" | "previous" | null>("next");
+    readonly selectedRideType = store<RideType | null>(null);
+
+    readonly buildDirection = store<"next" | "previous" | null>(null);
     readonly buildRotation = store<Direction | null>(null);
 
     readonly trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
 
-
-
-
-
     private segmentPainter = new SegmentElementPainter();
 
     constructor() {
+        // initialize values
+        this.selectedRideType.set(startingRideType);
+        this.buildDirection.set(startingDirection);
+
+        // initialize event listeners
         this.selectedSegment.subscribe((seg) => this.onSegmentChange(seg));
         this.buildDirection.subscribe((dir) => this.onBuildDirectionChange(dir));
         this.buildRotation.subscribe((rotation) => this.onRotationChange(rotation));
@@ -118,7 +121,6 @@ export class SegmentModel {
             debug(`Ghost removed from the next position of the selected segment. Result is ${JSON.stringify(result, null, 2)}`);
         });
         builder.buildTrackAtFollowingPosition(thisSeg, this.buildDirection.get() || "next", segToBuild, "real", ({ result, newlyBuiltSegment }) => {
-            // this.previewSegment.set(newlyBuiltSegment);
             if (result.error) {
                 debug(`Error building that piece. ${result?.errorMessage}`);
                 return;
@@ -169,6 +171,7 @@ export class SegmentModel {
         debug(`button pressed: ${JSON.stringify(action, null, 2)}`);
     }
 
+
     private onSegmentChange = (newSeg: Segment | null): void => {
 
         storage.setSelectedSegment(newSeg); // store in cold storage in case of crash
@@ -183,21 +186,18 @@ export class SegmentModel {
 
         debug(`Segment changed to ${TrackElementType[newSeg?.get().trackType]} at coords (${newSeg?.get().location.x}, ${newSeg?.get().location.y}, ${newSeg?.get().location.z}, direction: ${newSeg?.get().location.direction})`);
 
-        // debug(`about to try repainting the selected segment `);
+        // paint the selected segment
         const wasPaintOfSelectedSegmentSucessful = this.segmentPainter.paintSelectedSegment(newSeg);
-        // turn on the paint toggling
         if (this.previewSegment.get() == null) {
             this.segmentPainter.togglePainting(true);
         } else {
             this.segmentPainter.togglePainting(false);
         }
-
-
         if (!wasPaintOfSelectedSegmentSucessful) {
             debug(`failed to paint the selected segment!!!!!!!`);
         }
 
-        const thisRideType = this.selectedRideType.get()
+        const thisRideType = this.selectedRideType.get();
         if (thisRideType == null) {
             debug(`no ride type selected`);
             return;
