@@ -123,28 +123,30 @@ const buildOrRemove = (
     });
 };
 
-
-
-export const getBuildOptionsForSegment = (segment: Segment, rideType: number): { next: TrackElementType[], previous: TrackElementType[] } => {
+/**
+ * Get the TrackElementTypes that are valid to build before/after the given segment.
+ * @param segment the segment to build before/after
+ * @param allPossibleOptions all the possible TrackElementTypes to filter through
+ * @returns an object with TrackElementTypes for the next and previous directions
+ */
+export const getBuildOptionsForSegment = (segment: Segment, allPossibleOptions: TrackElementType[]): { next: TrackElementType[], previous: TrackElementType[] } => {
     let next: TrackElementType[] = [];
     let previous: TrackElementType[] = [];
 
     const seg = segment.get();
-    debug(`Getting build options for segment at ${JSON.stringify(seg.location)}.`);
+    debug(`Getting build options for segment ${TrackElementType[seg.trackType]} at ${JSON.stringify(seg.location)}.`);
 
     // get forward potential builds
     const nextLocation = segment.nextLocation(); // for some reason needing to create a copy of it so that location won't suspect a potential null value
-
     if (nextLocation !== null) {
-        const buildableTrackTypes = getBuildableSegments(seg.trackType, seg.rideType, "next");
+        const buildableTrackTypes = getBuildableSegments(seg.trackType, allPossibleOptions, "next");
         next = buildableTrackTypes;
     }
 
     // get backward potential builds.
     const backLocation = segment.previousLocation();
-
     if (backLocation !== null) {
-        const buildableTrackTypes = getBuildableSegments(seg.trackType, seg.rideType, "previous");
+        const buildableTrackTypes = getBuildableSegments(seg.trackType, allPossibleOptions, "previous");
         previous = buildableTrackTypes;
     }
 

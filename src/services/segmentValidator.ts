@@ -16,24 +16,52 @@ const areSegmentsCompatible = (initialTrackElement: TrackElementType, finalTrack
     return (slopesMatch && banksMatch && turnsMatch);
 };
 
+/**
+* The lists of {@link TrackSegment} types which a ride is able to build.
+Includes standard segments, extras (which are technically drawable for the track type), and covered versions.
+*/
+export type AvailableTrackSegmentTypes = {
+    /**
+     * Segments that are drawable and appropriate for the ride type, (e.g. Monorail can build the Flat track segment).
+     */
+    enabled: TrackElementType[],
+    /**
+     * Segments that this ride type _can_ draw, but which are disabled because their vehicles lack the relevant sprites,
+     * or because they are not realistic for the ride type (e.g. LIM boosters in Mini Roller Coasters).
+     */
+    extra: TrackElementType[],
+    /**
+     * Segments that are covered variants of standard segments.
+     */
+    covered: TrackElementType[],
+};
+
+export const getAvailableTrackSegmentsForRideType = (rideType: RideType): AvailableTrackSegmentTypes => {
+    // todo actually implement this
+    // const buildableSegments = context.getBuildableSegmentsForRideType(rideType); // sadly this doesn't exist
+    const buildableSegments = context.getAllTrackSegments().map(x => x.type);
+    return {
+        enabled: buildableSegments,
+        extra: [],
+        covered: [],
+    };
+};
+
 export const getBuildableSegments = (
     initialTrackELement: TrackElementType,
-    rideType: RideType,
+    trackElementOptions: TrackElementType[],
     direction: "next" | "previous"): TrackElementType[] => {
 
-    // //todo actually use the ridetype to return something useful
-    // const allElementsAvailableForRide = context.getTrackElementsForRide(rideType); // finish this stub
-    const elements = context.getAllTrackSegments().map(x => x.type); // in the meantime just making all tracksegments available
-
-
     debug(`getting buildable segments for ${TrackElementType[initialTrackELement]} in direction ${direction}`);
+
+    // swap the order of elements depending on next vs previous
     if (direction == "next") {
-        const buildableSegments = elements.filter(el =>
+        const buildableSegments = trackElementOptions.filter(el =>
             areSegmentsCompatible(initialTrackELement, el));
         return buildableSegments;
     }
     if (direction == "previous") {
-        const buildableSegments = elements.filter(el =>
+        const buildableSegments = trackElementOptions.filter(el =>
             areSegmentsCompatible(el, initialTrackELement));
         return buildableSegments;
     }
