@@ -1,4 +1,4 @@
-export const enum RideType {
+export enum RideType {
     "Spiral Roller Coaster", // 0
     "Stand Up Roller Coaster",
     "Suspended Swinging Coaster",
@@ -96,5 +96,7 @@ export const enum RideType {
     "Spinning Wild Mouse",
     "Classic Mini Roller Coaster",
     "Hybrid Coaster",
-    "Single Rail Roller Coaster"
+    "Single Rail Roller Coaster",
+    "Alpine Coaster",
+    "Classic Wooden Roller Coaster"
 }

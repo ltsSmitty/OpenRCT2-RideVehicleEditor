@@ -33,7 +33,7 @@ export const getTileElements = <T extends TileElement>(elementType: TileElementT
 /**
  * Utility function to get all "surface" elements at a given coords.
  */
-export const getSurfaceElementsFromCoords = (coords: CoordsXY | CoordsXYZ | CoordsXYZD) => {
+export const getSurfaceElementsFromCoords = (coords: CoordsXY | CoordsXYZ | CoordsXYZD): TileElementItem<SurfaceElement>[] => {
     return getTileElements<SurfaceElement>("surface", { x: coords.x, y: coords.y });
 };
 
@@ -169,8 +169,18 @@ export const getAllSegmentTrackElements = (segment: Segment | null): TrackElemen
 };
 
 /**
+ * Get the TrackElementItem for a segment.
+ * If there are multiple elements at the given coords, it will return the 0th.
+ */
+export const getTrackElementFromSegment = (segment: Segment) => {
+    // get the segment's ride and coords
+    const { ride, location } = segment.get();
+    return getSpecificTrackElement(ride, location);
+}
+
+/**
  * Get the TrackElementItem for a specific ride and given XYZD.
- * If there are multiple elements at the given coords, it will return all of them.
+ * If there are somehow multiple elements at the given coords, it will return the 0th.
  */
 export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): TrackElementItem => {
     const trackELementsOnTile = getTrackElementsFromCoords({ x: coords.x, y: coords.y });
@@ -287,7 +297,7 @@ export const getTrackColours = (newSeg: Segment | null): TrackColour => {
 /**
  * For a given segment, return whether or not a next segment exists and if so, what it is.
  */
-export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, selectedBuild: TrackElementType, buildDirection: "next" | "previous" | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
+export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, buildDirection: "next" | "previous" | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
 
     if (selectedSegment == null || selectedSegment.nextLocation() == null) {
         debug(`${selectedSegment == null ? "selectedSegment is null" : "selectedSegment.nextLocation() is null"}`);
@@ -295,10 +305,6 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, sele
     }
     if (buildDirection == null) {
         debug(`buildDirection is null`);
-        return { exists: false, element: null };
-    }
-    if (selectedBuild == null) {
-        debug(`selectedBuild is null`);
         return { exists: false, element: null };
     }
 

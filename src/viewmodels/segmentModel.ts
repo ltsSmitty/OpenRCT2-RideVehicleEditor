@@ -14,7 +14,7 @@ import { TrackElementType } from '../utilities/trackElementType';
 import { TrackElementItem } from '../services/SegmentController';
 import { RideType } from '../utilities/rideType';
 
-const startingRideType: RideType = 15; // Looping Coaster
+const startingRideType: RideType | null = null; // Looping Coaster
 const startingDirection = "next";
 
 type NextSegmentExistsValidator = {
@@ -42,7 +42,7 @@ export class SegmentModel {
 
 
     private nextSegmentExists: NextSegmentExistsValidator = { exists: false, element: null };
-    private originalRideType: RideType = startingRideType;
+    readonly originalRideType = store<RideType | null>(startingRideType);
 
     private segmentPainter = new SegmentElementPainter();
 
@@ -55,7 +55,7 @@ export class SegmentModel {
         this.selectedSegment.subscribe((seg) => this.onSegmentChange(seg));
         this.buildDirection.subscribe((dir) => this.onBuildDirectionChange(dir));
         this.buildRotation.subscribe((rotation) => this.onRotationChange(rotation));
-        this.buildableTrackTypes.subscribe((newbuildableTrackTypesList) => this.onbuildableTrackTypesChange(newbuildableTrackTypesList));
+        this.buildableTrackTypes.subscribe((newbuildableTrackTypesList) => this.onBuildableTrackTypesChange(newbuildableTrackTypesList));
         this.selectedBuild.subscribe((newSelectedBuild) => this.onSelectedBuildChange(newSelectedBuild));
         this.previewSegment.subscribe((newPreviewSegment) => this.onPreviewSegmentChange(newPreviewSegment));
 
@@ -193,6 +193,7 @@ export class SegmentModel {
         debug(`Segment changed to ${TrackElementType[newSeg?.get().trackType]} at coords (${newSeg?.get().location.x}, ${newSeg?.get().location.y}, ${newSeg?.get().location.z}, direction: ${newSeg?.get().location.direction})`);
 
         this.highlightSelectedSegment(); // highlight the selected segment to make it obvious what's selected.
+        this.setOriginalRideType(newSeg); // update the original rideType
 
         // before figuring out what can be built in the direction, check if there's even an option
         // check if there's room for a preview segment
@@ -204,7 +205,6 @@ export class SegmentModel {
         // is there a ghost track in direction? => not sure
         // is it empty in direction? => calculate buildable track types
 
-        this.setOriginalRideType(newSeg); // update the original rideType
 
         // potentially do this in the buttonModel in response to this change instead of doing it here.
         this.updateBuildableTrackTypes();
@@ -280,7 +280,7 @@ export class SegmentModel {
         // // todo make sure to set nextBuildPosition at the sme time
     };
 
-    private onbuildableTrackTypesChange = (newBuildOptions: TrackElementType[]): void => {
+    private onBuildableTrackTypesChange = (newBuildOptions: TrackElementType[]): void => {
         debug(`Buildable segments have changed.`);
 
         // this is where it might be worthwhile to use another class to do this hard work.
@@ -398,10 +398,12 @@ export class SegmentModel {
         storage.setPreviewSegment(newPreviewSegment);
     }
 
-    private setOriginalRideType = (segment: Segment): void => {
+    private setOriginalRideType = (segment: Segment, alsoSetSelectedRideType: boolean = true): void => {
         const rideId = segment.get().ride;
         const ride = map.getRide(rideId);
-        this.originalRideType = (ride.type);
+        this.selectedRideType.set(ride.type);
+        this.originalRideType.set(ride.type);
+        debug(`original ride type set to ${ride.type}`);
     };
 
     updateRideTypeOfSegment = (segment: Segment, newRideType: RideType): void => {

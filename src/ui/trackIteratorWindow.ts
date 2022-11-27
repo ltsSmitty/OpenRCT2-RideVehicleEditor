@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { compute, dropdown, groupbox, horizontal, listview, window } from "openrct2-flexui";
+import { compute, dropdown, button, groupbox, horizontal, listview, window } from "openrct2-flexui";
 import { ElementWrapper } from '../viewmodels/elementWrapper';
 import { isDevelopment, pluginVersion } from "../environment";
 import { TrackElementType } from "../utilities/trackElementType";
@@ -9,6 +9,7 @@ import { SegmentModel } from '../viewmodels/segmentModel';
 import { ButtonSelectorModel } from '../viewmodels/buttonSelectorModel';
 import selectSegment from '../services/buttonActions/selectSegment';
 import { customImageFor } from '../objects/customButtonSprites';
+import { RideType } from "../utilities/rideType";
 
 
 const buttonSize = 15;
@@ -377,6 +378,63 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 			element.button({
 				text: "Build",
 				buttonType: "build"
+			}),
+			// ride favorite selection section
+
+			// currently selected ride
+			horizontal({
+				content: [
+					dropdown({
+						items: compute(buttonModel.rideTypeFavorites, (favorites) => {
+							const selectedRideType = favorites[0]?.ride;
+							if (!selectedRideType) return ["No ride selected"];
+							return [`${selectedRideType}-${RideType[selectedRideType || -1]}`];
+						}),
+						disabled: compute(buttonModel.rideTypeFavorites, (favorites) => {
+							debug(`favorites[0]: ${favorites[0]}`);
+							return (!favorites[0]?.ride) ? true : false;
+						}),
+					}),
+					button({
+						width: 15,
+						height: 15,
+						isPressed: compute(buttonModel.selectedFavoriteIndex, (index) => {
+							return ((index == 0) ? true : false);
+						}),
+						onClick: () => {
+							buttonModel.selectedFavoriteIndex.set(0);
+						}
+					}),
+				]
+			}),
+			// first favorite
+			horizontal({
+				content: [
+					dropdown({
+						items: compute(buttonModel.rideTypeFavorites, (favorites) => {
+							// if the currently selected favorite is the first one, don't show it in the dropdown
+							// list all the possible tracked rides
+							map.getRide(0).
+							const selectedRideType = favorites[0]?.ride;
+							if (!selectedRideType) return ["No ride selected"];
+							return [`${selectedRideType}-${RideType[selectedRideType || -1]}`];
+						}),
+						disabled: compute(buttonModel.rideTypeFavorites, (favorites) => {
+							debug(`favorites[0]: ${favorites[0]}`);
+							return (!favorites[0]?.ride) ? true : false;
+						}),
+					}),
+					button({
+						width: 15,
+						height: 15,
+						isPressed: compute(buttonModel.selectedFavoriteIndex, (index) => {
+							return ((index == 0) ? true : false);
+						}),
+						onClick: () => {
+							buttonModel.selectedFavoriteIndex.set(0);
+						}
+					}),
+				]
 			}),
 		]
 	});
