@@ -1,8 +1,6 @@
-import { TrackElementItem } from './SegmentController';
 import { TrackElementType } from "../utilities/trackElementType";
 import { RideType } from "../utilities/rideType";
 import { debug } from "../utilities/logger";
-import { Segment } from "../objects/segment";
 import * as finder from './trackElementFinder';
 
 
@@ -44,6 +42,7 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
         const zModifier = normalizeBeginAndEndValues(trackType, normalizeZ);
         newBuildLocation.z = buildLocation.z + zModifier.beginZ;
 
+        // when building backwards, you have to also tweak the x/y/direction based on the segment
         if (normalizeZ == "previous") {
             const xyModifier = modifyXYCoords(buildLocation, trackType, normalizeZ);
             newBuildLocation.x = (xyModifier?.x || 0);
@@ -57,8 +56,6 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
     debug(`compare the original buildLocation to the newBuildLocation: ${JSON.stringify(buildLocation)} vs ${JSON.stringify(newBuildLocation)}`);
     debug(`about to try building ${TrackElementType[trackType]} at ${newBuildLocation.x}, ${newBuildLocation.y}, ${newBuildLocation.z}, ${newBuildLocation.direction}`);
 
-
-
     const gameActionParams = {
         ...mainProps,
         ...newBuildLocation,
@@ -70,14 +67,10 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
         isFromTrackDesign,
         flags
     };
-    // debug(`about to build using gameActionParans: \n${JSON.stringify(gameActionParams, null, 2)}`);
     context.executeAction(gameActionEvent, gameActionParams, (result) => {
-        // debug(`Build result: ${JSON.stringify(result)}`);
         toggleRideBuildingCheats(false);
         if (callback) return callback({ result, actualBuildLocation: newBuildLocation });
     });
-
-    toggleRideBuildingCheats(false);
 };
 
 // TODOO check what the values were before toggling  and set them back to what they were so we're not turning off cheats the user wants to be on
