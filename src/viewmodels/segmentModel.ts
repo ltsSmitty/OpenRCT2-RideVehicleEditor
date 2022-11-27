@@ -1,6 +1,6 @@
 
 import { SegmentElementPainter } from './../objects/segmentElementPainter';
-import { Segment } from './../objects/segment';
+import { Segment, SegmentDescriptor } from './../objects/segment';
 import * as highlighter from '../services/highlightGround';
 import * as builder from './builderModel';
 import * as finder from '../services/trackElementFinder';
@@ -20,12 +20,12 @@ const startingDirection = "next";
 type NextSegmentExistsValidator = {
     exists: false | "real" | "ghost",
     element: null | TrackElementItem
-}
+};
 
 export class SegmentModel {
 
     readonly selectedSegment = store<Segment | null>(null);
-    readonly selectedBuild = store<TrackElementType | null>(null);
+    readonly selectedBuild = store<Partial<SegmentDescriptor>>({});
     readonly previewSegment = store<Segment | null>(null);
 
     // does this need to be here?
@@ -38,8 +38,6 @@ export class SegmentModel {
 
     // List the track elements on a selected tile. Used for dropdown selection.
     readonly trackElementsOnSelectedTile = store<TrackElementItem[]>([]);
-
-
 
     private nextSegmentExists: NextSegmentExistsValidator = { exists: false, element: null };
     readonly originalRideType = store<RideType | null>(startingRideType);
