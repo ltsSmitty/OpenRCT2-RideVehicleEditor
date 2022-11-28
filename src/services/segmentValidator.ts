@@ -7,8 +7,8 @@ import { RideType } from "../utilities/rideType";
  * To go in the previous direction, just swap which is first and which is second.
  */
 const areSegmentsCompatible = (initialTrackElement: TrackElementType, finalTrackElement: TrackElementType): boolean => {
-    const initial = context.getTrackSegment(initialTrackElement);
-    const final = context.getTrackSegment(finalTrackElement);
+    const initial = context.getTrackSegment(Number(initialTrackElement));
+    const final = context.getTrackSegment(Number(finalTrackElement));
     const slopesMatch = initial?.endSlope == final?.beginSlope;
     const banksMatch = initial?.endBank == final?.beginBank;
     const turnsMatch = initial?.turnDirection == final?.turnDirection;

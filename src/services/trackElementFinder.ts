@@ -93,7 +93,7 @@ const getRelativeElementCoordsUnderSegment = (segment: Segment): TrackSegmentEle
 
 export const getRelativeElementCoordsForTrackSegment = (trackType: TrackElementType): TrackSegmentElement[] | null => {
     // get the element index of this segment in order to
-    const thisSegmentType = context.getTrackSegment(trackType);
+    const thisSegmentType = context.getTrackSegment(Number(trackType));
     return thisSegmentType?.elements || null;
 };
 
@@ -193,7 +193,7 @@ export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): Track
 
         // comparing z is not as straightforward becauase it has to account for the height of down segments.
         const zModifiers = trackForThisRide.map(e => {
-            const trackType = context.getTrackSegment(e.element.trackType);
+            const trackType = context.getTrackSegment(Number(e.element.trackType));
             return <number>trackType?.beginZ;
         });
 
@@ -271,8 +271,8 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
         return null;
     }
 
-    // debug(`Getting TI at the track element of ride ${segment.get().ride} at (${segment.get().location.x}, ${segment.get().location.y}, ${segment.get().location.z}) dir ${segment.get().location.direction}`);
-    // debug(`Looking for the indexOf the track element.`)
+    debug(`Getting TI at the track element of ride ${segment.get().ride} at (${segment.get().location.x}, ${segment.get().location.y}, ${segment.get().location.z}) dir ${segment.get().location.direction}`);
+    debug(`Looking for the indexOf the track element.`)
     const thisSegmentIndex = getSpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator
     const newTI = map.getTrackIterator(<CoordsXY>segment.get().location, thisSegmentIndex); // set up TI
 
@@ -325,7 +325,7 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, buil
     const nextTracksWhichMatchDirectionAndZ = trackForThisRide.filter(t => {
         // t is a track element that already exists on the tile in question. it may has a different z and direction than the one we're trying to place
         const trackSegment = t.segment?.get();
-        const selectedSegmentBaseZ = context.getTrackSegment(trackSegment?.trackType || 0)?.beginZ || 0;
+        const selectedSegmentBaseZ = context.getTrackSegment(Number(trackSegment?.trackType || 0))?.beginZ || 0;
 
         // todo this might be where a % might be needed.
         debug(`Existing track piece.baseZ + selectedSegmentBaseZ = ${t.element.baseZ} + ${selectedSegmentBaseZ} = ${t.element.baseZ + selectedSegmentBaseZ}`);

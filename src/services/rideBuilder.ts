@@ -59,7 +59,7 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
     const gameActionParams = {
         ...mainProps,
         ...newBuildLocation,
-        trackType,
+        trackType: Number(trackType),
         brakeSpeed,
         colour,
         seatRotation,
@@ -85,16 +85,17 @@ const toggleRideBuildingCheats = (cheatsOn: boolean) => {
 
 
 const getSegmentBeginAndEndZ = (segmentType: TrackElementType | number) => {
-    const thisSegment = context.getTrackSegment(segmentType);
+    debug(`getSegmentBeginAndEndZ: ${segmentType}`);
+    const thisSegment = context.getTrackSegment(Number(segmentType));
     if (!thisSegment) return { beginZ: 0, endZ: 0 };
     return {
         beginZ: thisSegment.beginZ,
         endZ: thisSegment.endZ
-    }
-}
+    };
+};
 
 const getSegmentEndXAndY = (segmentType: TrackElementType | number): { endX: number, endY: number } => {
-    const thisSegment = context.getTrackSegment(segmentType);
+    const thisSegment = context.getTrackSegment(Number(segmentType));
     if (!thisSegment) return { endX: 0, endY: 0 };
     return {
         endX: thisSegment.endX,
@@ -145,7 +146,7 @@ const modifyXYCoords = (initialLocation: CoordsXYZD, trackType: TrackElementType
         return null;
     }
 
-    const thisTrackType = context.getTrackSegment(trackType);
+    const thisTrackType = context.getTrackSegment(Number(trackType));
     debug(`begin and end directions for this track type ${TrackElementType[trackType]}: ${thisTrackType?.beginDirection}, ${thisTrackType?.endDirection}`);
 
     const xyModifier = getSegmentEndXAndY(trackType);

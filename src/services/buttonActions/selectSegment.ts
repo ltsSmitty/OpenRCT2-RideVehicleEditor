@@ -21,7 +21,7 @@ const selectSegment = (model: SegmentModel, buttonSelectorModel: ButtonSelectorM
                 // update model selectedSegment to 0th val to display in ListView
                 // otherwise the Listview will be blank until one is selected from the dropdown
                 if (model.trackElementsOnSelectedTile.get().length > 0) {
-                    debug(`a segment was selected: ${model.trackElementsOnSelectedTile.get()[0].segment}`);
+                    // debug(`a segment was selected: ${model.trackElementsOnSelectedTile.get()[0].segment}`);
                     model.selectedSegment.set(elementsOnCoords[0].segment);
                 }
             },

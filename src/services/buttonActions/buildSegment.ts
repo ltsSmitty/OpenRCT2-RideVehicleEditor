@@ -1,7 +1,7 @@
 import { SegmentModel } from "../../viewmodels/segmentModel";
 
 const buildSegment = (model: SegmentModel): void => {
-    model.buildSelectedFollowingPiece();
+    model.build("real");
     model.moveToFollowingSegment(model.buildDirection.get());
 };
 
