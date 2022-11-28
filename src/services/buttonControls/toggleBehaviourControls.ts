@@ -132,19 +132,19 @@ export const buttonToggleChanged = (options: {
             break;
         }
         case "boosters": {
-            modelResponse = model.selectedBuild.set(100); //     "Booster" = 100,
+            modelResponse = model.updateSelectedBuild("trackType", 100);
             break;
         }
         case "camera": {
-            modelResponse = model.selectedBuild.set(114); //  "OnRidePhoto" = 114,
+            modelResponse = model.updateSelectedBuild("trackType", 114); //  "OnRidePhoto" = 114,
             break;
         }
         case "brakes": {
-            modelResponse = model.selectedBuild.set(99); //      "Brakes" = 99,
+            modelResponse = model.updateSelectedBuild("trackType", 99); //      "Brakes" = 99,
             break;
         }
         case "blockBrakes": {
-            modelResponse = model.selectedBuild.set(216); //   "BlockBrakes" = 216,
+            modelResponse = model.updateSelectedBuild("trackType", 216); //   "BlockBrakes" = 216,
             break;
         }
     }
@@ -160,14 +160,9 @@ export const buttonToggleChanged = (options: {
         buttonModel.selectedSpecial.get()
     ];
 
-    // only get the non-null elements from selectedElements
-    // for some reason TS doesn't get that they won't be null values.
-    // gonna have to force a non-null assertion downstream
     const filteredElements = selectedElements.filter(element => element !== null);
-    const newBuildableTrackTypes = buttonMap.getElementsFromGivenButtons(filteredElements);
-
-    model.buildableTrackTypes.set(newBuildableTrackTypes);
-
+    model.trackTypeSelector.updateButtonsPushed(filteredElements);
+    // model.buildableTrackByButtons.set(newBuildableTrackTypes);
     model.debugButtonChange({ buttonType, isPressed, modelResponse });
 
 };

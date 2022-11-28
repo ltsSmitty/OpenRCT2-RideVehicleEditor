@@ -13,6 +13,7 @@ import { debug } from '../utilities/logger';
 import { TrackElementType } from '../utilities/trackElementType';
 import { TrackElementItem } from '../services/SegmentController';
 import { RideType } from '../utilities/rideType';
+import { TrackTypeSelector } from '../objects/trackTypeSelector';
 
 const startingRideType: RideType | null = null; // Looping Coaster
 const startingDirection = "next";
@@ -35,7 +36,8 @@ export class SegmentModel {
     readonly previewSegment = store<Segment | null>(null);
 
     // does this need to be here?
-    readonly buildableTrackTypes = store<TrackElementType[]>([]);
+    readonly buildableTrackByRelativeSegment = store<TrackElementType[]>([]);
+    readonly buildableTrackByButtons = store<TrackElementType[]>([]);
     // not used yet, but for placing the first station or a snippet to start a ride at a new place
     readonly buildRotation = store<Direction | null>(null);
 
@@ -46,19 +48,22 @@ export class SegmentModel {
     readonly originalRideType = store<RideType | null>(startingRideType);
 
     private segmentPainter = new SegmentElementPainter();
+    readonly trackTypeSelector: TrackTypeSelector;
 
     constructor() {
         // initialize values
         this.updateSelectedBuild("rideType", startingRideType);
         this.buildDirection.set(startingDirection);
+        this.trackTypeSelector = new TrackTypeSelector(this);
 
         // initialize event listeners
         this.selectedSegment.subscribe((seg) => this.onSegmentChange(seg));
         this.buildDirection.subscribe((dir) => this.onBuildDirectionChange(dir));
         this.buildRotation.subscribe((rotation) => this.onRotationChange(rotation));
-        this.buildableTrackTypes.subscribe((newbuildableTrackTypesList) => this.onBuildableTrackTypesChange(newbuildableTrackTypesList));
+        this.buildableTrackByRelativeSegment.subscribe((newbuildableTrackTypesList) => this.onBuildableTrackTypesChange(newbuildableTrackTypesList));
         this.selectedBuild.subscribe((newSelectedBuild) => this.onSelectedBuildChange(newSelectedBuild));
         this.previewSegment.subscribe((newPreviewSegment) => this.onPreviewSegmentChange(newPreviewSegment));
+        this.buildableTrackByButtons.subscribe((newBuildableTrackByButtons) => this.onBuildableTrackByButtonsChange(newBuildableTrackByButtons));
 
         // context.subscribe("action.execute", (event: GameActionEventArgs) => {
         //     const action = event.action as ActionType;
@@ -73,6 +78,17 @@ export class SegmentModel {
         //         }
         //     }
         // })
+    }
+
+    private onBuildableTrackByButtonsChange(tracksAvailablePerButtons: TrackElementType[]): void {
+        // need to compared tracksAvailablePerButtons to the current buildableTrackTypes
+        //return all the values which match
+        const trackBySegment = this.buildableTrackByRelativeSegment.get();
+        debug(`trackBySegment: ${JSON.stringify(trackBySegment)}`);
+        debug(`trackByButtons: ${JSON.stringify(tracksAvailablePerButtons)}`);
+        const buildableTrackTypes = trackBySegment.filter((track) => tracksAvailablePerButtons.indexOf(track) >= 0);
+        debug(`There are a total of ${buildableTrackTypes.length} buildable tracks which match both the buttons pressed and the segment position. I really hope there's only one. Regardless, settng the 0th as the selected trackType`);
+        this.updateSelectedBuild("trackType", buildableTrackTypes[0]);
     }
 
     /**
@@ -239,22 +255,22 @@ export class SegmentModel {
 
     private updateBuildableTrackTypes(): void {
 
-        const newBuildableOptions = builder.getBuildOptionsForSegment(<Segment>this.selectedSegment.get(), this.buildableTrackTypes.get()); // selectedSegment is definitely non-null
+        const newBuildableOptions = builder.getBuildOptionsForSegment(<Segment>this.selectedSegment.get(), this.buildableTrackByRelativeSegment.get()); // selectedSegment is definitely non-null
         const direction = this.buildDirection.get();
 
         if (direction === "next") {
             debug(`There are ${newBuildableOptions.next.length} buildable options for the next segment: $`);
             debug(newBuildableOptions.next.map((seg) => TrackElementType[seg]).join(", "));
-            this.buildableTrackTypes.set([...newBuildableOptions.next]);
+            this.buildableTrackByRelativeSegment.set([...newBuildableOptions.next]);
             return;
         }
         if (direction === "previous") {
             debug(`There are ${newBuildableOptions.previous.length} buildable options for the previous segment`);
-            this.buildableTrackTypes.set([...newBuildableOptions.previous]);
+            this.buildableTrackByRelativeSegment.set([...newBuildableOptions.previous]);
             return;
         }
         debug(`No direction was set for the buildable segments.This should not happen.`);
-        this.buildableTrackTypes.set([]);
+        this.buildableTrackByRelativeSegment.set([]);
     }
 
     private highlightSelectedSegment(): void {
@@ -280,12 +296,12 @@ export class SegmentModel {
         debug(`Build direction changed to ${newDirection}`);
         this.updateLocationModel(); // update the location model
         if (!newDirection) {
-            this.buildableTrackTypes.set([]);
+            this.buildableTrackByRelativeSegment.set([]);
             return;
         }
         if (this.selectedSegment.get() == null) {
             debug(`Error in onBuildDirectionChange: no segment selected. Setting buildableTrackTypes to null.`);
-            this.buildableTrackTypes.set([]);
+            this.buildableTrackByRelativeSegment.set([]);
             return;
         }
         this.updateBuildableTrackTypes();
@@ -311,9 +327,9 @@ export class SegmentModel {
     private onBuildableTrackTypesChange = (newBuildOptions: TrackElementType[]): void => {
         debug(`Buildable segments have changed.`);
 
+        // figure out which are valid based on the selected segment
+
         // this is where it might be worthwhile to use another class to do this hard work.
-        // todo make it return something better than just the 0th element.
-        debug(`attempting to reference the selectedBuild.trackType, but not sure if it's been nulled or not. It's ${this.selectedBuild.get().trackType}`);
         const recommendedSegment = getSuggestedNextSegment(newBuildOptions, this.selectedSegment.get(), this.selectedBuild.get().trackType ?? 0);
 
         debug(`The default selected build has been selected: ${TrackElementType[recommendedSegment]}`);

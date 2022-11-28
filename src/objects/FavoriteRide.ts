@@ -1,6 +1,6 @@
 import { RideType } from './../utilities/rideType';
 import { TrackElementType } from './../utilities/trackElementType';
-import { AvailableTrackSegmentTypes, getAvailableTrackSegmentsForRideType } from '../services/segmentValidator';
+import { AvailableTrackSegmentTypes, getAvailableTrackSegmentsForRideType } from '../objects/trackTypeSelector';
 
 
 // export type RideFavorite = {

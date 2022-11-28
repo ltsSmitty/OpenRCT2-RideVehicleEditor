@@ -1,16 +1,11 @@
-import { getAvailableTrackSegmentsForRideType, AvailableTrackSegmentTypes } from './../services/segmentValidator';
+import { FavoriteRide } from './../objects/FavoriteRide';
+import { getAvailableTrackSegmentsForRideType, AvailableTrackSegmentTypes } from '../objects/trackTypeSelector';
 import { store, arrayStore } from 'openrct2-flexui';
 import { Segment } from '../objects/segment';
 import { debug } from '../utilities/logger';
 import { RideType } from '../utilities/rideType';
 import { CurveButton, BankButton, PitchButton, SpecialButton, MiscButton, DetailButton, SelectionControlButton, BuildWindowButton, } from './../services/buttonActions/buttonTypes';
 import { SegmentModel } from './segmentModel';
-
-
-type RideFavorite = {
-    ride: RideType,
-    availableTrackTypes: AvailableTrackSegmentTypes
-};
 
 export class ButtonSelectorModel {
 
@@ -23,6 +18,7 @@ export class ButtonSelectorModel {
     readonly selectedControl = store<SelectionControlButton | null>(null);
     readonly allSelectedButtons = arrayStore<BuildWindowButton>([]);
     readonly model: SegmentModel;
+    readonly allAvailableTrackedRides = arrayStore<RideType>(getAvailableTrackedRideTypes());
 
     /**
      * Should a ride be able to draw standard segments or any possible drawable segment.
@@ -33,7 +29,7 @@ export class ButtonSelectorModel {
     /**
      * Stores the selected ride type and 3 favorite ride types from the window. The available track segements are memoized in the array.
      */
-    readonly rideTypeFavorites = arrayStore<RideFavorite | null>([null, null, null, null]);
+    readonly favoriteRides = arrayStore<FavoriteRide>([]);
 
     /**
      * Store the current active ride type
@@ -54,9 +50,7 @@ export class ButtonSelectorModel {
     private onSegmentChange(newSegment: Segment | null) {
         debug(`onSegmentChange, about to set the ride type to ${newSegment?.get().rideType ?? null}`);
         const newRideType = newSegment?.get().rideType ?? 999;
-        const availableTrackTypes = getAvailableTrackSegmentsForRideType(newRideType);
-        this.rideTypeFavorites.update(0,
-            { ride: newRideType, availableTrackTypes: availableTrackTypes });
+        this.favoriteRides.update(0, new FavoriteRide(newRideType));
     }
 
     /**
@@ -67,41 +61,32 @@ export class ButtonSelectorModel {
     updateRideTypeFavorite(rideType: RideType, index: number): void {
         // get all the possible track types for this ride type
         // then update the buildableTrackTypes array
-        const trackTypes = getAvailableTrackSegmentsForRideType(rideType);
-        const updatedFavorite: RideFavorite = {
-            ride: rideType,
-            availableTrackTypes: trackTypes
-        }
-        this.rideTypeFavorites.update(index, updatedFavorite);
+        this.favoriteRides.update(index, new FavoriteRide(rideType));
     }
 
     /**
      * When the button is selected to build with a different rideType
     */
-    updateSelectedRideType(index: number) {
-        this.model.selectedRideType.set(this.rideTypeFavorites.get()[index]?.ride ?? null);
-        // this.model.
-    }
-
-    /**
-     *  Update the model's buildable track segment types depending on what type of ride is selected and the construction mode (enabled vs. extra)
-     * @param index index of the favorite selected.
-     */
-    updateBuildableTrackTypes(index: number): void {
-        if (index >= 0 && index < 4) {
-            const trackTypes = this.rideTypeFavorites.get()[index];
-            if (trackTypes) {
-                if (this.trackConstructionMode === "enabled") {
-                    this.model.buildableTrackTypes.set(
-                        [...trackTypes.availableTrackTypes.enabled,
-                        ...trackTypes.availableTrackTypes.covered]);
-                } else {
-                    this.model.buildableTrackTypes.set(
-                        [...trackTypes.availableTrackTypes.enabled,
-                        ...trackTypes.availableTrackTypes.covered,
-                        ...trackTypes.availableTrackTypes.extra]);
-                }
-            }
+    updateSelectedRideType(index: number): void {
+        const newRideType = this.favoriteRides.get()[index].rideType;
+        if (newRideType) {
+            this.model.trackTypeSelector.updateRideType(newRideType);
+            return;
         }
+        debug(`cant change ride type; ${newRideType} is null/undefined`);
     }
 }
+/**
+ * Gets all available ride types that are currently loaded.
+ */
+const getAvailableTrackedRideTypes = (): RideType[] => {
+    const trackedRides = context.getAllObjects("ride")
+        .filter(r => r.carsPerFlatRide == 255) // tracked rides == 255, flatrides >= 1, shops == 0
+        .map(r => r.rideType[0]);
+    debug(`Bizarrely the api returns an array result for rideType, shown:
+        ${JSON.stringify(trackedRides, null, 2)}`);
+    //remove duplicates without using a set
+    const filtered = trackedRides.filter((v, i, a) => a.indexOf(v) === i);
+    // sort the array in alphabetical order
+    return filtered.sort((a, b) => a - b);
+};

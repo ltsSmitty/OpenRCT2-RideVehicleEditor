@@ -34,11 +34,7 @@ if (isDevelopment) {
 export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: ElementWrapper, buttonModel: ButtonSelectorModel) => {
 	const model = segmentModel;
 	const element = elementWrapper;
-
-	const getTrackElementTypeName = (val: number): string => {
-		return (TrackElementType)[val];
-
-	};
+	const trackSelector = model.trackTypeSelector;
 
 	return window({
 		title,
@@ -385,15 +381,12 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 			horizontal({
 				content: [
 					dropdown({
-						items: compute(buttonModel.rideTypeFavorites, (favorites) => {
-							const selectedRideType = favorites[0]?.ride;
+						items: compute(buttonModel.favoriteRides, (favorites) => {
+							const selectedRideType = favorites[0]?.rideType;
 							if (!selectedRideType) return ["No ride selected"];
 							return [`${selectedRideType}-${RideType[selectedRideType || -1]}`];
 						}),
-						disabled: compute(buttonModel.rideTypeFavorites, (favorites) => {
-							debug(`favorites[0]: ${favorites[0]}`);
-							return (!favorites[0]?.ride) ? true : false;
-						}),
+						disabled: true
 					}),
 					button({
 						width: 15,
@@ -411,31 +404,65 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 			horizontal({
 				content: [
 					dropdown({
-						items: compute(buttonModel.rideTypeFavorites, (favorites) => {
-							// if the currently selected favorite is the first one, don't show it in the dropdown
-							// list all the possible tracked rides
-							map.getRide(0).
-							const selectedRideType = favorites[0]?.ride;
-							if (!selectedRideType) return ["No ride selected"];
-							return [`${selectedRideType}-${RideType[selectedRideType || -1]}`];
+						items: compute(buttonModel.favoriteRides, (favorites) => {
+							return buttonModel.allAvailableTrackedRides.get().map(ride => `${ride}-${RideType[ride || -1]}`);
 						}),
-						disabled: compute(buttonModel.rideTypeFavorites, (favorites) => {
-							debug(`favorites[0]: ${favorites[0]}`);
-							return (!favorites[0]?.ride) ? true : false;
+						disabled: compute(buttonModel.favoriteRides, (favorites) => {
+							// it should be disabled if nothing is selected
+							return (!favorites[0]?.rideType) ? true : false;
 						}),
+						onChange: (index) => {
+							const allTrackRides = buttonModel.allAvailableTrackedRides.get();
+							const newRideType = allTrackRides[index];
+							buttonModel.updateRideTypeFavorite(newRideType, 1);
+						}
 					}),
 					button({
 						width: 15,
 						height: 15,
 						isPressed: compute(buttonModel.selectedFavoriteIndex, (index) => {
-							return ((index == 0) ? true : false);
+							return ((index == 1) ? true : false);
 						}),
 						onClick: () => {
-							buttonModel.selectedFavoriteIndex.set(0);
+							buttonModel.selectedFavoriteIndex.set(1);
 						}
 					}),
 				]
 			}),
+			// second favorite
+			// horizontal({
+			// 	content: [
+			// 		dropdown({
+			// 			items: compute(buttonModel.f, (favorites) => {
+			// 				return filterAvailableTrackTypeDropdowns(2);
+			// 			}),
+			// 			disabled: compute(buttonModel.rideTypeFavorites, (favorites) => {
+			// 				// it should be disabled if nothing is selected
+			// 				return (!favorites[0]?.ride) ? true : false;
+			// 			}),
+			// 			onChange: (index) => {
+			// 				const allTrackRides = buttonModel.allAvailableTrackedRides.get();
+			// 				// remove favorites[0].ride
+			// 				const rideTypes = allTrackRides.filter(ride => ride !== buttonModel.rideTypeFavorites.get()[0]?.ride);
+			// 				const newRideType = rideTypes[index];
+			// 				// set the new ride type in buttonModel.rideTypeFavorites[1]
+			// 				buttonModel.updateRideTypeFavorite(newRideType, 2)
+			// 			}
+			// 		}),
+			// 		button({
+			// 			width: 15,
+			// 			height: 15,
+			// 			isPressed: compute(buttonModel.selectedFavoriteIndex, (index) => {
+			// 				return ((index == 1) ? true : false);
+			// 			}),
+			// 			onClick: () => {
+			// 				buttonModel.selectedFavoriteIndex.set(1);
+			// 			}
+			// 		}),
+			// 	]
+			// }),
 		]
 	});
+
+
 }
