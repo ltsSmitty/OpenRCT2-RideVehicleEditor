@@ -141,12 +141,6 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								height: directionButtonHeight,
 								image: customImageFor("sBendRight")
 							}),
-						]
-					}),
-					// banking
-					horizontal({
-						height: buttonRowHeight,
-						content: [
 							element.toggle({
 								buttonType: "bankLeft",
 								width: directionButtonWidth,
@@ -167,6 +161,30 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 							})
 						]
 					}),
+					// // banking
+					// horizontal({
+					// 	height: buttonRowHeight,
+					// 	content: [
+					// 		element.toggle({
+					// 			buttonType: "bankLeft",
+					// 			width: directionButtonWidth,
+					// 			height: directionButtonHeight,
+					// 			image: 5153 // left bank
+					// 		}),
+					// 		element.toggle({
+					// 			buttonType: "noBank",
+					// 			width: directionButtonWidth,
+					// 			height: directionButtonHeight,
+					// 			image: 5154 // no bank
+					// 		}),
+					// 		element.toggle({
+					// 			buttonType: "bankRight",
+					// 			width: directionButtonWidth,
+					// 			height: directionButtonHeight,
+					// 			image: 5155 // right bank
+					// 		})
+					// 	]
+					// }),
 					// steepness
 					horizontal({
 						height: buttonRowHeight,
@@ -245,10 +263,6 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 								height: directionButtonHeight,
 								image: 23496 // camera
 							}),
-						]
-					}),
-					horizontal({
-						content: [
 							element.toggle({
 								buttonType: "brakes",
 								width: directionButtonWidth,
@@ -263,6 +277,24 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 							}),
 						]
 					}),
+
+					// move to just one row for visibility
+					// horizontal({
+					// 	content: [
+					// 		element.toggle({
+					// 			buttonType: "brakes",
+					// 			width: directionButtonWidth,
+					// 			height: directionButtonHeight,
+					// 			image: 5131 // brakes
+					// 		}),
+					// 		element.toggle({
+					// 			buttonType: "blockBrakes",
+					// 			width: directionButtonWidth,
+					// 			height: directionButtonHeight,
+					// 			image: 5116 // block brakes
+					// 		}),
+					// 	]
+					// }),
 				]
 			}),
 			// demolish, move forward/back, select, trial run
