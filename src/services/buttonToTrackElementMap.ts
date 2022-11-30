@@ -78,7 +78,7 @@ export const getElementsFromGivenButtons = (buttons: (BuildWindowButton | null)[
             elements.push(element as unknown as TrackElementType);
         }
     }
-    debug(`There are ${elements.length} elements which can built with the given buttons ${buttons}: ${JSON.stringify(elements.map(e => TrackElementType[e]), null, 2)}`);
+    debug(`There are ${elements.length} elements which can built with the given buttons.`);
     return elements;
 };
 

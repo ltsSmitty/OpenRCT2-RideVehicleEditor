@@ -53,8 +53,15 @@ export const buildOrRemoveTrackElement = (trackProps: TrackElementProps, action:
         }
     }
 
+    if (newBuildLocation.direction > 3) {
+        debug(`setting the direction mod 4 to ${newBuildLocation.direction % 4}`);
+        newBuildLocation.direction = <Direction>(newBuildLocation.direction % 4);
+    }
+
     debug(`compare the original buildLocation to the newBuildLocation: ${JSON.stringify(buildLocation)} vs ${JSON.stringify(newBuildLocation)}`);
     debug(`about to try building ${TrackElementType[trackType]} at ${newBuildLocation.x}, ${newBuildLocation.y}, ${newBuildLocation.z}, ${newBuildLocation.direction}`);
+
+
 
     const gameActionParams = {
         ...mainProps,

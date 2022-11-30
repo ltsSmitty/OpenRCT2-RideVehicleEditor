@@ -186,8 +186,6 @@ export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): Track
     const trackELementsOnTile = getTrackElementsFromCoords({ x: coords.x, y: coords.y });
     const trackForThisRide = trackELementsOnTile.filter(e => e.element.ride === ride);
 
-    // debug(`Searching through ${trackForThisRide.length} elements for ride ${ride} at (${coords.x}, ${coords.y}, ${coords.z}, dir ${coords.direction})`);
-
     // if there are two segments for the same ride in this tile, make sure it's the proper one
     if (trackForThisRide.length > 1) {
 
@@ -235,6 +233,8 @@ export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): Track
         if (chosenTrack.length > 1) {
             debug(`There are two overlapping elements at this tile with the same z and direction. Now comparing the x and y. FYI, Was looking for an element matched the coords:
             ${JSON.stringify(coords)}`);
+            debug(`the sequence of the elements is ${chosenTrack.map(track => track.element.sequence)}`);
+            debug(`the occupied Quadrants of the elements is ${chosenTrack.map(track => track.element.occupiedQuadrants)}`);
 
             const matchingAllCoords = chosenTrack.filter((t, index) => {
                 const actualX = t.segment?.get().location.x;
@@ -266,13 +266,12 @@ const isRideAStall = (rideNumber: number): boolean => {
 
 
 export const getTIAtSegment = (segment: Segment | null): TrackIterator | null => {
+    debug(`Getting a TI at segment.`);
     if (segment == null) {
-        debug(`segment was null`);
+        debug(`Segment was null; returning TI as null`);
         return null;
     }
-
-    debug(`Getting TI at the track element of ride ${segment.get().ride} at (${segment.get().location.x}, ${segment.get().location.y}, ${segment.get().location.z}) dir ${segment.get().location.direction}`);
-    debug(`Looking for the indexOf the track element.`)
+    debug(`Getting specific track element.`);
     const thisSegmentIndex = getSpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator
     const newTI = map.getTrackIterator(<CoordsXY>segment.get().location, thisSegmentIndex); // set up TI
 
@@ -280,6 +279,7 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
         debug(`There was an issue creating the track iterator to get next segment options.`);
         return null;
     }
+    debug(`New TI is created at position (${newTI.position.x}, ${newTI.position.y}, ${newTI.position.z}) dir ${newTI.position.direction}.`);
     return newTI;
 };
 
@@ -297,25 +297,28 @@ export const getTrackColours = (newSeg: Segment | null): TrackColour => {
 /**
  * For a given segment, return whether or not a next segment exists and if so, what it is.
  */
-export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, buildDirection: "next" | "previous" | null): { exists: false | "ghost" | "real", element: TrackElementItem | null } => {
+export const doesSegmentHaveNextSegment = ({ selectedSegment, tiAtSegment, buildDirection }: { selectedSegment: Segment | null, tiAtSegment: TrackIterator, buildDirection: "next" | "previous" | null }): null | "ghost" | "real" => {
 
-    if (selectedSegment == null || selectedSegment.nextLocation() == null) {
-        debug(`${selectedSegment == null ? "selectedSegment is null" : "selectedSegment.nextLocation() is null"}`);
-        return { exists: false, element: null };
+    // create a copy of the TI to safely iterate through the track
+    const thisTI = <TrackIterator>{ ...tiAtSegment };
+
+    if (selectedSegment == null || thisTI.nextPosition == null) {
+        debug(`${selectedSegment == null ? "selectedSegment is null" : "tiAtSegment.nextPosition is null"}`);
+        return null;
     }
     if (buildDirection == null) {
         debug(`buildDirection is null`);
-        return { exists: false, element: null };
+        return null;
     }
 
-    // todo maybe this could be wrong, but probably not. maybe if a new track was build above an old one the index could get messed up?
+    (buildDirection === "next") ? thisTI.next() : thisTI.previous();
 
-    const { x, y, z, direction } = (buildDirection == "next" ? selectedSegment.nextLocation()! : selectedSegment.previousLocation()!); // location of next track element
+    const { x, y, z, direction } = thisTI.position; // location of next track element
     const trackELementsOnNextTile = getTrackElementsFromCoords({ x, y });
 
     if (trackELementsOnNextTile.length === 0) {
         debug(`No track elements on next tile`);
-        return { exists: false, element: null };
+        return null;
     }
 
     // make sure the ride matches this ride
@@ -331,7 +334,8 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, buil
         debug(`Existing track piece.baseZ + selectedSegmentBaseZ = ${t.element.baseZ} + ${selectedSegmentBaseZ} = ${t.element.baseZ + selectedSegmentBaseZ}`);
         debug(`Existing track piece baseZ - selectedSegmentBaseZ = ${t.element.baseZ} - ${selectedSegmentBaseZ} = ${t.element.baseZ - selectedSegmentBaseZ}`);
         debug(`Existing track piece baseZ = z: ${t.element.baseZ} ?= ${z}`);
-        debug(`Non-adjusted trackSegment direction: ${t.element.direction} ?= ${direction}`);
+        debug(`Non-adjusted trackSegment direction: ${t.element.direction} ?= ${direction}`, true);
+
         return (t.element.direction === direction && (t.element.baseZ + selectedSegmentBaseZ === z || t.element.baseZ - selectedSegmentBaseZ === z || t.element.baseZ === z));
     });
 
@@ -343,7 +347,7 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, buil
         debug(`There is a track at the next coords, but it doesn't match the proper z range and direction, so returning that there is no next track.`);
         debug(`${trackForThisRide.map(t => ` baseZ: (${t.element.baseZ}, direction: ${t.element.direction})`)}`);
 
-        return { exists: false, element: null };
+        return null;
     }
 
     if (trackForThisRide.length > 1) {
@@ -357,6 +361,6 @@ export const doesSegmentHaveNextSegment = (selectedSegment: Segment | null, buil
 
     }
 
-    if (thisTrack.element.isGhost) return { exists: "ghost", element: thisTrack };
-    return { exists: "real", element: thisTrack };
+    if (thisTrack.element.isGhost) return 'ghost';
+    return "real";
 };

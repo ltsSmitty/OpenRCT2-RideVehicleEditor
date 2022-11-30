@@ -61,11 +61,21 @@ if (Environment.isDevelopment && isDuktapeAvailable) {
 /**
  * Prints a debug message if the plugin is run in development mode.
  */
-export function debug(message: string): void {
+export function debug(message: string, emphasize = false): void {
 	if (Environment.isDevelopment) {
-		print("debug", message);
+		if (!emphasize) return print("debug", message);
+
+		return print("debug",
+			`-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+
+
+		${message}
+
+
+		-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_`);
 	}
 }
+
 
 
 /**

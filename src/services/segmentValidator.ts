@@ -1,3 +1,4 @@
+import { Segment } from "../objects/segment";
 import { debug } from "../utilities/logger";
 import { TrackElementType } from "../utilities/trackElementType";
 
@@ -10,9 +11,11 @@ const areSegmentsCompatible = (initialTrackElement: TrackElementType, finalTrack
     const final = context.getTrackSegment(Number(finalTrackElement));
     const slopesMatch = initial?.endSlope == final?.beginSlope;
     const banksMatch = initial?.endBank == final?.beginBank;
-    const turnsMatch = initial?.turnDirection == final?.turnDirection;
-
-    return (slopesMatch && banksMatch && turnsMatch);
+    const diagonalsMatch = trackEndsDiagonal(initialTrackElement) == trackStartsDiagonal(finalTrackElement);
+    // debug(`diagonalsMatch: ${diagonalsMatch}`);
+    // const turnsMatch = initial?.turnDirection == final?.turnDirection; // turns out this isn't relevant
+    debug(`Checking compatability of ${TrackElementType[initialTrackElement]} into ${TrackElementType[finalTrackElement]}: ${slopesMatch && banksMatch && diagonalsMatch}`);
+    return (slopesMatch && banksMatch && diagonalsMatch);
 };
 
 export const getBuildableSegments = (
@@ -35,3 +38,39 @@ export const getBuildableSegments = (
     }
     return [];
 };
+
+// check if the segment is alredy diagonal
+// if it is, then filter the valid elements to only include diagonal elements
+// otherwise filter the valid elements to only include non-diagonal elements
+
+export const filterForDiagonalSegments: (validElements: TrackElementType[], segment: Segment) => TrackElementType[] = (validElements, segment) => {
+    if (segment.get().location.direction > 3) {
+        return validElements.filter(el => isTrackElementTypeDiagonal(el));
+    } else {
+        return validElements.filter(el => !isTrackElementTypeDiagonal(el));
+    }
+};
+
+const isTrackElementTypeDiagonal = (trackElementType: TrackElementType): boolean => {
+    const trackTypeName = TrackElementType[trackElementType];
+    const stringStartsDiag = (trackTypeName.slice(0, 4) === "diag");
+    const stringEnd9 = trackTypeName.slice(-10).toLowerCase();
+    const stringEndsOrthogonal = (stringEnd9 === "orthogonal");
+    // debug(`${trackTypeName} is diagonal: ${stringStartsDiag || stringEndsOrthogonal}`);
+    return stringStartsDiag || stringEndsOrthogonal;
+};
+
+
+const trackStartsDiagonal = (trackElementType: TrackElementType): boolean => {
+    const trackTypeName = TrackElementType[trackElementType];
+    const stringStartsDiag = (trackTypeName.slice(0, 4) === "diag");
+    // debug(`${trackTypeName} starts diagonal: ${stringStartsDiag}`);
+    return stringStartsDiag;
+}
+
+const trackEndsDiagonal = (trackElementType: TrackElementType): boolean => {
+    const trackTypeName = TrackElementType[trackElementType];
+    const stringEndsDiag = (trackTypeName.slice(-4).toLowerCase() === "diag");
+    // debug(`${trackTypeName} ends diagonal: ${stringEndsDiag}`);
+    return stringEndsDiag;
+}
