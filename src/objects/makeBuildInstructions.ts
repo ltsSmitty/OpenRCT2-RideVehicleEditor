@@ -1,4 +1,4 @@
-import { SegmentDescriptor } from './segment';
+import { SegmentDescriptor, Segment } from './segment';
 import { Flags } from '../utilities/Flags';
 import { TrackElementType } from '../utilities/trackElementType';
 import { RideType } from '../utilities/rideType';
@@ -38,11 +38,17 @@ const defaultTrackRemoveProps: TrackRemoveProps = {
     flags: Flags.BuildTrackReal
 };
 
-export const makeBuildInstructions = (segment: SegmentDescriptor, type: "real" | "ghost"): { build: TrackPlaceProps; remove: TrackRemoveProps; } => {
+export const makeBuildInstructions = ({ segment, isGhost, modifiedLocation }: { segment: SegmentDescriptor, isGhost: boolean, modifiedLocation: CoordsXYZD }): { build: TrackPlaceProps; remove: TrackRemoveProps; } => {
+
+    // need to override the segment location with the modified location
+    const { location, ...rest } = segment;
+    const newSegment = new Segment({ ...rest, location: modifiedLocation });
+
     const trackPlaceProps = defaultTrackPlaceProps;
     const trackRemoveProps = defaultTrackRemoveProps;
 
-    if (type === "real") {
+    if (!isGhost) {
+        // real
         trackPlaceProps.trackPlaceFlags = Flags.BuildTrackReal;
         trackPlaceProps.flags = Flags.BuildTrackReal;
         trackRemoveProps.flags = Flags.BuildTrackReal;
@@ -53,7 +59,7 @@ export const makeBuildInstructions = (segment: SegmentDescriptor, type: "real" |
         trackRemoveProps.flags = Flags.BuildTrackPreview;
     }
     return {
-        build: { ...trackPlaceProps, ...segment },
-        remove: { ...trackRemoveProps, ...segment }
+        build: { ...trackPlaceProps, ...newSegment },
+        remove: { ...trackRemoveProps, ...newSegment }
     };
 };

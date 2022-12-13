@@ -75,6 +75,6 @@ export const simulateRide = (ride: number, activate: boolean) => {
 		flags: 0
 	}
 	context.executeAction("ridesetstatus", simulationArgs, () => {
-		Log.debug(`Simulation started for ride ${ride}`);
+		console.log(`Simulation started for ride ${ride}`);
 	})
 }

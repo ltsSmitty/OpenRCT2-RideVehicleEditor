@@ -6,13 +6,13 @@ import * as finder from "../services/trackElementFinder";
 /**
  *  Use the built in ui.tileSelection to highlight the ground tiles under the segment.
  */
-export const highlightMapRangeUnderSegment = (segment: Segment | null, callback?: (highlightedMapRange: MapRange | null) => void): void => {
-    if (segment == null) {
+export const highlightMapRangeUnderSegment = ({ segment, thisTI, callback }: { segment: Segment | null, thisTI: TrackIterator | null, callback?: (highlightedMapRange: MapRange | null) => void }): void => {
+    if (segment == null || thisTI == null) {
         ui.tileSelection.range = null;
         return;
     }
 
-    const segmentElements = finder.getAllSegmentTrackElements(segment);
+    const segmentElements = finder.getAllSegmentTrackElements({ segment, thisTI });
 
     if (!segmentElements) {
         debug(`the segmentElement array is empty`);
@@ -21,7 +21,7 @@ export const highlightMapRangeUnderSegment = (segment: Segment | null, callback?
 
     const coords = segment.get().location;
     if (coords == null) {
-        debug(`Unexepctedbly unable to get corresponding coords for this segment. `)
+        debug(`Unexepctedbly unable to get corresponding coords for this segment. `);
     }
     const x1 = coords.x;
     const y1 = coords.y;

@@ -14,7 +14,7 @@ const areSegmentsCompatible = (initialTrackElement: TrackElementType, finalTrack
     const diagonalsMatch = trackEndsDiagonal(initialTrackElement) == trackStartsDiagonal(finalTrackElement);
     // debug(`diagonalsMatch: ${diagonalsMatch}`);
     // const turnsMatch = initial?.turnDirection == final?.turnDirection; // turns out this isn't relevant
-    debug(`Checking compatability of ${TrackElementType[initialTrackElement]} into ${TrackElementType[finalTrackElement]}: ${slopesMatch && banksMatch && diagonalsMatch}`);
+    // debug(`Checking compatability of ${TrackElementType[initialTrackElement]} into ${TrackElementType[finalTrackElement]}: ${slopesMatch && banksMatch && diagonalsMatch}`);
     return (slopesMatch && banksMatch && diagonalsMatch);
 };
 
