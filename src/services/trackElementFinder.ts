@@ -27,7 +27,7 @@ export const getTileElements = <T extends TileElement>(elementType: TileElementT
         return filtered;
     }, []);
 
-    // debug(`Query returned ${reducedELements.length} elements`);
+    // console.log(`Query returned ${reducedELements.length} elements`);
     return reducedELements;
 };
 /**
@@ -83,20 +83,10 @@ const getSegmentFromTrackElement = (e: TileElementItem<TrackElement>): Segment |
  * @summary Returns an array of relative coords of the track elements for the segment.
  * @description E.g. for a large left turn, it returns 7 relatively spaced coords (for the seven tiles it covers)) that go from (0,0) to (+/-64,+/-64) depending on how the segment is rotated.
  */
-const getRelativeElementCoordsUnderSegment = (segment: Segment): TrackSegmentElement[] | null => {
-    // get the element index of this segment in order to
-    const thisTI = getTIAtSegment(segment);
-    const segmentElements = thisTI?.segment?.elements;
-    if (!segmentElements) return null;
-    return segmentElements;
+const getRelativeElementsAtCurrentTIPosition = (thisTI: TrackIterator): TrackSegmentElement[] | null => {
+    const segmentElements = thisTI.segment?.elements;
+    return segmentElements ?? [];
 };
-
-export const getRelativeElementCoordsForTrackSegment = (trackType: TrackElementType): TrackSegmentElement[] | null => {
-    // get the element index of this segment in order to
-    const thisSegmentType = context.getTrackSegment(Number(trackType));
-    return thisSegmentType?.elements || null;
-};
-
 
 /**
  * @summary Get all TrackElementItems for a given segment. Use to get all elements of a multi-element segment (e.g. LeftQuarterTurn3Tiles, LeftQuarterTurn5Tiles, etc.). Useful for painting each element of the segment.
@@ -104,12 +94,12 @@ export const getRelativeElementCoordsForTrackSegment = (trackType: TrackElementT
  *
  * @returns the TrackElementItems with their absolute position the element, e.g. (1248, 1984)
  */
-export const getAllSegmentTrackElements = (segment: Segment | null): TrackElementItem[] => {
+export const getAllSegmentTrackElements = ({ segment, thisTI }: { segment: Segment, thisTI: TrackIterator }): TrackElementItem[] => {
     if (segment == null) {
         return [];
     }
 
-    const segmentElements = getRelativeElementCoordsUnderSegment(segment);
+    const segmentElements = getRelativeElementsAtCurrentTIPosition(thisTI);
 
     if (!segmentElements) {
         debug(`Error: somehow this segment has no elements`);
@@ -230,10 +220,18 @@ export const getSpecificTrackElement = (ride: number, coords: CoordsXYZD): Track
             debug(`Error: No matching segments were found (but at least one should have been), so this is going to error out undefined downstream.
             `);
         }
+        if (chosenTrack.length === 2) {
+            if (chosenTrack[0].element.trackType === chosenTrack[1].element.trackType) {
+                // debug(`there were two segments, there, but they're both the exact same track type (${TrackElementType[chosenTrack[0].element.trackType]}) – so we'll return it.`);
+                return chosenTrack[0];
+            }
+
+        }
+
         if (chosenTrack.length > 1) {
-            debug(`There are two overlapping elements at this tile with the same z and direction. Now comparing the x and y. FYI, Was looking for an element matched the coords:
+
+            debug(`There are multiple different overlapping elements at this tile with the same z and direction – ${chosenTrack.map(track => TrackElementType[track.element.trackType])}. Now comparing the x and y. FYI, Was looking for an element matched the coords:
             ${JSON.stringify(coords)}`);
-            debug(`the sequence of the elements is ${chosenTrack.map(track => track.element.sequence)}`);
             debug(`the occupied Quadrants of the elements is ${chosenTrack.map(track => track.element.occupiedQuadrants)}`);
 
             const matchingAllCoords = chosenTrack.filter((t, index) => {
@@ -294,13 +292,22 @@ export const getTrackColours = (newSeg: Segment | null): TrackColour => {
     return theseTrackColours;
 };
 
+const getIteratedPosition = (buildDirection: "next" | "previous", thisTI: TrackIterator): CoordsXYZD => {
+    debug(`this.TI is at position (${thisTI.position.x}, ${thisTI.position.y}, ${thisTI.position.z}) dir ${thisTI.position.direction}.`);
+    (buildDirection === "next") ? thisTI.next() : thisTI.previous();
+    const iteratedPosition = { ...thisTI.position };
+    debug(`now this.ti is at position (${iteratedPosition.x}, ${iteratedPosition.y}, ${iteratedPosition.z}) dir ${iteratedPosition.direction}.`);
+    (buildDirection === "next") ? thisTI.previous() : thisTI.next();
+    return iteratedPosition;
+}
+
 /**
  * For a given segment, return whether or not a next segment exists and if so, what it is.
  */
 export const doesSegmentHaveNextSegment = ({ selectedSegment, tiAtSegment, buildDirection }: { selectedSegment: Segment | null, tiAtSegment: TrackIterator, buildDirection: "next" | "previous" | null }): null | "ghost" | "real" => {
 
     // create a copy of the TI to safely iterate through the track
-    const thisTI = <TrackIterator>{ ...tiAtSegment };
+    const thisTI = tiAtSegment;
 
     if (selectedSegment == null || thisTI.nextPosition == null) {
         debug(`${selectedSegment == null ? "selectedSegment is null" : "tiAtSegment.nextPosition is null"}`);
@@ -310,10 +317,14 @@ export const doesSegmentHaveNextSegment = ({ selectedSegment, tiAtSegment, build
         debug(`buildDirection is null`);
         return null;
     }
+    const followingPosition = (buildDirection === "next") ? thisTI.nextPosition : thisTI.previousPosition;
 
-    (buildDirection === "next") ? thisTI.next() : thisTI.previous();
+    if (followingPosition == null) {
+        debug(`followingPosition is null`);
+        return null;
+    }
 
-    const { x, y, z, direction } = thisTI.position; // location of next track element
+    const { x, y, z, direction } = followingPosition; // location of next track element
     const trackELementsOnNextTile = getTrackElementsFromCoords({ x, y });
 
     if (trackELementsOnNextTile.length === 0) {
@@ -323,7 +334,15 @@ export const doesSegmentHaveNextSegment = ({ selectedSegment, tiAtSegment, build
 
     // make sure the ride matches this ride
     const trackForThisRide = trackELementsOnNextTile.filter(e => e.element.ride === selectedSegment.get().ride);
-    debug(`There are ${trackForThisRide.length} track elements for this ride on the next tile.`);
+
+    // hopefully this one happens most of the time, that there's only one track element on those coords.
+    debug(`There are ${trackForThisRide.length} track elements for this ride on the ${direction} tile.`);
+    if (trackForThisRide.length === 1) {
+        const thisElementType = trackForThisRide[0].element.isGhost ? "ghost" : "real";
+        debug(`It is a ${thisElementType} element.`)
+        return thisElementType;
+    }
+
 
     const nextTracksWhichMatchDirectionAndZ = trackForThisRide.filter(t => {
         // t is a track element that already exists on the tile in question. it may has a different z and direction than the one we're trying to place
