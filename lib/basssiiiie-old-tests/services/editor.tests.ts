@@ -2,26 +2,27 @@
 
 import test from "ava";
 import Mock from "openrct2-mocks";
-import VehicleEditor from "../../src/services/vehicleEditor";
+import VehicleEditor from "../../../src/services/vehicleEditor";
 import VehicleSelector from "../../src/services/selector";
 
 
-function setupPark(): void
-{
+function setupPark(): void {
 	global.context = Mock.context({
 		objects: [
-			Mock.rideObject(<RideObject>{ index: 2, name: "steam trains", vehicles:
-			[
-				Mock.rideObjectVehicle({
-					carMass: 100, numSeats: 1, poweredAcceleration: 45, poweredMaxSpeed: 35, flags: ~0
-				}),
-				Mock.rideObjectVehicle({
-					carMass: 50, numSeats: 2
-				}),
-				Mock.rideObjectVehicle({
-					carMass: 200, numSeats: 4
-				})
-			]}),
+			Mock.rideObject(<RideObject>{
+				index: 2, name: "steam trains", vehicles:
+					[
+						Mock.rideObjectVehicle({
+							carMass: 100, numSeats: 1, poweredAcceleration: 45, poweredMaxSpeed: 35, flags: ~0
+						}),
+						Mock.rideObjectVehicle({
+							carMass: 50, numSeats: 2
+						}),
+						Mock.rideObjectVehicle({
+							carMass: 200, numSeats: 4
+						})
+					]
+			}),
 		]
 	});
 	global.map = Mock.map({
@@ -33,14 +34,13 @@ function setupPark(): void
 			Mock.car(<Car>{ id: 23, nextCarOnTrain: null, ride: 7, rideObject: 2, vehicleObject: 2, trackProgress: 25 }),
 		],
 		rides: [
-			Mock.ride(<Ride>{ id: 7, name: "steam trains 1", vehicles: [ 20 ] }),
+			Mock.ride(<Ride>{ id: 7, name: "steam trains 1", vehicles: [20] }),
 		]
 	});
 }
 
 
-test("Set vehicle: locomotive", t =>
-{
+test("Set vehicle: locomotive", t => {
 	setupPark();
 	const selector = new VehicleSelector();
 	const editor = new VehicleEditor(selector);
@@ -59,8 +59,7 @@ test("Set vehicle: locomotive", t =>
 });
 
 
-test("Set vehicle: tender", t =>
-{
+test("Set vehicle: tender", t => {
 	setupPark();
 	const selector = new VehicleSelector();
 	const editor = new VehicleEditor(selector);
@@ -79,8 +78,7 @@ test("Set vehicle: tender", t =>
 });
 
 
-test("Set vehicle: passenger car", t =>
-{
+test("Set vehicle: passenger car", t => {
 	setupPark();
 	const selector = new VehicleSelector();
 	const editor = new VehicleEditor(selector);
@@ -99,8 +97,7 @@ test("Set vehicle: passenger car", t =>
 });
 
 
-test.skip("Deselect: reset all values", t =>
-{
+test.skip("Deselect: reset all values", t => {
 	setupPark();
 	const selector = new VehicleSelector();
 	const editor = new VehicleEditor(selector);

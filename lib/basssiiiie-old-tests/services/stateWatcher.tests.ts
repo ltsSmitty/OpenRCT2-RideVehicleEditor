@@ -2,29 +2,32 @@
 
 import test from "ava";
 import Mock, { ContextMock, GameMapMock, UiMock } from "openrct2-mocks";
-import VehicleEditor from "../../src/services/vehicleEditor";
+import VehicleEditor from "../../../src/services/vehicleEditor";
 import VehicleSelector from "../../src/services/selector";
 import StateWatcher, { RideSetStatusArgs } from "../../src/services/stateWatcher";
 import VehicleEditorWindow from "../../src/ui/editorWindow";
 import track from "../.trackable/trackable";
 
 
-function setupPark(): void
-{
+function setupPark(): void {
 	global.context = Mock.context({
 		objects: [
-			Mock.rideObject(<RideObject>{ index: 2, name: "chairlift", vehicles:
-			[
-				Mock.rideObjectVehicle({
-					carMass: 30, numSeats: 2, poweredAcceleration: 5, poweredMaxSpeed: 15, flags: ~0
-				}),
-			]}),
-			Mock.rideObject(<RideObject>{ index: 3, name: "wooden coaster", vehicles:
-			[
-				Mock.rideObjectVehicle({
-					carMass: 60, numSeats: 4
-				}),
-			]}),
+			Mock.rideObject(<RideObject>{
+				index: 2, name: "chairlift", vehicles:
+					[
+						Mock.rideObjectVehicle({
+							carMass: 30, numSeats: 2, poweredAcceleration: 5, poweredMaxSpeed: 15, flags: ~0
+						}),
+					]
+			}),
+			Mock.rideObject(<RideObject>{
+				index: 3, name: "wooden coaster", vehicles:
+					[
+						Mock.rideObjectVehicle({
+							carMass: 60, numSeats: 4
+						}),
+					]
+			}),
 		]
 	});
 	global.map = Mock.map({
@@ -34,7 +37,7 @@ function setupPark(): void
 			Mock.car(<Car>{ id: 21, ride: 6, rideObject: 2, vehicleObject: 0, trackProgress: 20 }),
 		],
 		rides: [
-			Mock.ride(<Ride>{ id: 6, name: "chairlift 1", vehicles: [ 20, 21 ] }),
+			Mock.ride(<Ride>{ id: 6, name: "chairlift 1", vehicles: [20, 21] }),
 			Mock.ride(<Ride>{ id: 7, name: "wooden coaster 1" }),
 		]
 	});
@@ -43,8 +46,7 @@ function setupPark(): void
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function setupWatcher()
-{
+function setupWatcher() {
 	VehicleEditorWindow.resetGlobals();
 	setupPark();
 	const selector = new VehicleSelector();
@@ -62,8 +64,7 @@ function setupWatcher()
 }
 
 
-test("Dispose: disposes all subscriptions", t =>
-{
+test("Dispose: disposes all subscriptions", t => {
 	const params = setupWatcher();
 	const context = (global.context as ContextMock);
 
@@ -75,8 +76,7 @@ test("Dispose: disposes all subscriptions", t =>
 });
 
 
-test("Ride create: reloads ride list", t =>
-{
+test("Ride create: reloads ride list", t => {
 	setupWatcher();
 	const context = (global.context as ContextMock);
 	const map = (global.map as GameMapMock);
@@ -93,8 +93,7 @@ test("Ride create: reloads ride list", t =>
 });
 
 
-test("Ride demolish: reloads ride list", t =>
-{
+test("Ride demolish: reloads ride list", t => {
 	setupWatcher();
 	const context = (global.context as ContextMock);
 	const map = (global.map as GameMapMock);
@@ -111,8 +110,7 @@ test("Ride demolish: reloads ride list", t =>
 });
 
 
-test("Ride rename: reloads ride list", t =>
-{
+test("Ride rename: reloads ride list", t => {
 	setupWatcher();
 	const context = (global.context as ContextMock);
 	const map = (global.map as GameMapMock);
@@ -130,8 +128,7 @@ test("Ride rename: reloads ride list", t =>
 });
 
 
-test("Ride open: reloads editor", t =>
-{
+test("Ride open: reloads editor", t => {
 	const params = setupWatcher();
 	params.selector.selectRide(7);
 	const context = (global.context as ContextMock);
@@ -157,7 +154,7 @@ test("Ride open: reloads editor", t =>
 	t.is(seats.text, "Not available");
 
 	map.entities.unshift(
-		Mock.car({ id: 31, ride: 7, rideObject: 3, trackProgress: 110, nextCarOnTrain: 32}),
+		Mock.car({ id: 31, ride: 7, rideObject: 3, trackProgress: 110, nextCarOnTrain: 32 }),
 		Mock.car({ id: 32, ride: 7, rideObject: 3, trackProgress: 120 }),
 		Mock.car({ id: 33, ride: 7, rideObject: 3, trackProgress: 210, nextCarOnTrain: 34 }),
 		Mock.car({ id: 34, ride: 7, rideObject: 3, trackProgress: 220 }),
@@ -182,8 +179,7 @@ test("Ride open: reloads editor", t =>
 });
 
 
-test("Ride close and remove cars: reloads editor", t =>
-{
+test("Ride close and remove cars: reloads editor", t => {
 	setupWatcher();
 	const context = (global.context as ContextMock);
 	const map = (global.map as GameMapMock);
@@ -221,8 +217,7 @@ test("Ride close and remove cars: reloads editor", t =>
 });
 
 
-test("Ride close but keep cars: nothing changes", t =>
-{
+test("Ride close but keep cars: nothing changes", t => {
 	const params = setupWatcher();
 	params.selector.selectTrain(1);
 	const context = (global.context as ContextMock);
@@ -257,8 +252,7 @@ test("Ride close but keep cars: nothing changes", t =>
 });
 
 
-test("Hidden window: do nothing", t =>
-{
+test("Hidden window: do nothing", t => {
 	const params = setupWatcher();
 	const tracker = track((map as GameMapMock).entities as Car[]);
 	params.window.close();

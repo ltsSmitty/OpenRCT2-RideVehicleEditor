@@ -1,9 +1,8 @@
 import test from "ava";
-import * as MathHelper from "../../src/utilities/mathHelper";
+import * as MathHelper from "../../../src/utilities/mathHelper";
 
 
-test("clamp(): only max", t =>
-{
+test("clamp(): only max", t => {
 	t.is(MathHelper.clamp(-3, 0, 5), 0);
 	t.is(MathHelper.clamp(-1, 0, 5), 0);
 	t.is(MathHelper.clamp(0, 0, 5), 0);
@@ -15,8 +14,7 @@ test("clamp(): only max", t =>
 });
 
 
-test("clamp(): max & min", t =>
-{
+test("clamp(): max & min", t => {
 	t.is(MathHelper.clamp(7, 10, 15), 10);
 	t.is(MathHelper.clamp(9, 10, 15), 10);
 	t.is(MathHelper.clamp(10, 10, 15), 10);
@@ -28,8 +26,7 @@ test("clamp(): max & min", t =>
 });
 
 
-test("wrap(): only max", t =>
-{
+test("wrap(): only max", t => {
 	t.is(MathHelper.wrap(-3, 0, 5), 4);
 	t.is(MathHelper.wrap(-1, 0, 5), 4);
 	t.is(MathHelper.wrap(0, 0, 5), 0);
@@ -41,8 +38,7 @@ test("wrap(): only max", t =>
 });
 
 
-test("wrap(): max & min", t =>
-{
+test("wrap(): max & min", t => {
 	t.is(MathHelper.wrap(7, 10, 15), 14);
 	t.is(MathHelper.wrap(9, 10, 15), 14);
 	t.is(MathHelper.wrap(10, 10, 15), 10);

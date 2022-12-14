@@ -9,7 +9,9 @@
 			"request": "launch",
 			"name": "Debug AVA test file",
 			"program": "${workspaceFolder}/node_modules/ava/entrypoints/cli.mjs",
-			"args": [
+			"runtimeArgs": [
+				"debug",
+				"--break",
 				"${file}"
 			],
 			"outputCapture": "std",

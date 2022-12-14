@@ -2,8 +2,14 @@
 	"compilerOptions": {
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"lib": [ "es5" ],
+		"lib": [
+			"es5"
+		],
 		"noFallthroughCasesInSwitch": true,
+		"types": [
+			"node",
+			"jest"
+		],
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
