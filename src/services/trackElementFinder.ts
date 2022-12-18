@@ -263,15 +263,34 @@ const isRideAStall = (rideNumber: number): boolean => {
 };
 
 
-export const getTIAtSegment = (segment: Segment | null): TrackIterator | null => {
-    debug(`Getting a TI at segment.`);
-    if (segment == null) {
-        debug(`Segment was null; returning TI as null`);
-        return null;
+/**
+ * Provide either a segment or a ride and location, and get a track iterator.
+ * @param param0
+ * @returns
+ */
+export const getTIAtSegment = ({ segment, ride, location }: { segment?: Segment | null, ride?: number, location?: CoordsXYZD }): TrackIterator | null => {
+
+    let thisRide: number;
+    let thisLocation: CoordsXYZD;
+
+    if (segment) {
+        thisRide = segment.get().ride;
+        thisLocation = segment.get().location;
     }
+    else
+        if (ride && location) {
+            thisRide = ride;
+            thisLocation = location;
+        }
+        else {
+            debug(`Error: No segment or ride & location provided to getTIAtSegment.`);
+            return null;
+        }
+
+
     debug(`Getting specific track element.`);
-    const thisSegmentIndex = getSpecificTrackElement(segment.get().ride, segment.get().location).index; // needed for iterator
-    const newTI = map.getTrackIterator(<CoordsXY>segment.get().location, thisSegmentIndex); // set up TI
+    const thisSegmentIndex = getSpecificTrackElement(thisRide, thisLocation).index; // needed for iterator
+    const newTI = map.getTrackIterator({ x: thisLocation.x, y: thisLocation.y }, thisSegmentIndex); // set up TI
 
     if (newTI == null) {
         debug(`There was an issue creating the track iterator to get next segment options.`);
@@ -280,6 +299,7 @@ export const getTIAtSegment = (segment: Segment | null): TrackIterator | null =>
     debug(`New TI is created at position (${newTI.position.x}, ${newTI.position.y}, ${newTI.position.z}) dir ${newTI.position.direction}.`);
     return newTI;
 };
+
 
 export const getTrackColours = (newSeg: Segment | null): TrackColour => {
     // ride.colourSchemes is one option, but i wonder if you can do better
