@@ -1,12 +1,7 @@
 import { RideType } from './../utilities/rideType';
 import { TrackElementType } from './../utilities/trackElementType';
-import { AvailableTrackSegmentTypes, getAvailableTrackSegmentsForRideType } from '../objects/trackTypeSelector';
-
-
-// export type RideFavorite = {
-//     ride: RideType,
-//     availableTrackTypes: AvailableTrackSegmentTypes
-// };
+import { AvailableTrackSegmentTypes } from '../objects/trackTypeSelector';
+import { getAvailableTrackSegmentsForRideType } from '../objects/AvailableTrackSegments/availableTrackSegments';
 
 export class FavoriteRide {
     rideType: RideType;

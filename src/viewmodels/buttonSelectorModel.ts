@@ -1,5 +1,4 @@
 import { FavoriteRide } from './../objects/FavoriteRide';
-import { getAvailableTrackSegmentsForRideType, AvailableTrackSegmentTypes } from '../objects/trackTypeSelector';
 import { store, arrayStore } from 'openrct2-flexui';
 import { Segment } from '../objects/segment';
 import { debug } from '../utilities/logger';
@@ -12,7 +11,7 @@ export class ButtonSelectorModel {
     readonly selectedCurve = store<CurveButton | null>("noCurve");
     readonly selectedBank = store<BankButton | null>("noBank");
     readonly selectedPitch = store<PitchButton | null>("noPitch");
-    readonly selectedDetail = store<DetailButton | null>(null);
+    readonly selectedDetails = store<DetailButton[] | null>(null);
     readonly selectedMisc = store<MiscButton | null>(null);
     readonly selectedSpecial = store<SpecialButton | null>(null);
     readonly selectedControl = store<SelectionControlButton | null>(null);

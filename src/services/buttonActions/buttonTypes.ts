@@ -52,3 +52,7 @@ export type SelectionControlButton =
 export type BuildWindowButton = SelectionButton | SelectionControlButton;
 
 export type SelectionButton = CurveButton | BankButton | PitchButton | SpecialButton | DetailButton | MiscButton;
+
+export type ButtonPressed<T extends SelectionButton> = {
+    [button in T]?: boolean;
+};

@@ -19,21 +19,28 @@ const areSegmentsCompatible = (initialTrackElement: TrackElementType, finalTrack
 };
 
 export const getBuildableSegments = (
-    initialTrackELement: TrackElementType,
+    initialTrackElement: TrackElementType,
     trackElementOptions: TrackElementType[],
     direction: "next" | "previous"): TrackElementType[] => {
 
-    debug(`getting buildable segments for ${TrackElementType[initialTrackELement]} in direction ${direction}`);
+    debug(`getting buildable segments from ${TrackElementType[initialTrackElement]} in direction ${direction}`);
 
     // swap the order of elements depending on next vs previous
     if (direction == "next") {
-        const buildableSegments = trackElementOptions.filter(el =>
-            areSegmentsCompatible(initialTrackELement, el));
+        const buildableSegments = trackElementOptions.filter(el => {
+            debug(`checking if ${TrackElementType[initialTrackElement]} into ${TrackElementType[el]} is compatible`);
+            return areSegmentsCompatible(initialTrackElement, el);
+        });
+
+
         return buildableSegments;
     }
     if (direction == "previous") {
-        const buildableSegments = trackElementOptions.filter(el =>
-            areSegmentsCompatible(el, initialTrackELement));
+        const buildableSegments = trackElementOptions.filter(el => {
+            debug(`checking if${TrackElementType[el]} into ${TrackElementType[initialTrackElement]}   is compatible`);
+            return areSegmentsCompatible(el, initialTrackElement);
+        });
+
         return buildableSegments;
     }
     return [];

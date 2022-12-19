@@ -1,12 +1,13 @@
 import { SegmentModel } from './../viewmodels/segmentModel';
-import { BuildWindowButton } from './../services/buttonActions/buttonTypes';
 import { RideType } from "../utilities/rideType";
 import { TrackElementType } from "../utilities/trackElementType";
 import { Segment } from "./segment";
 import { Store } from 'openrct2-flexui';
 import * as buttonMap from '../services/buttonToTrackElementMap';
 import { getBuildableSegments, filterForDiagonalSegments } from '../services/segmentValidator';
+import { getAvailableTrackSegmentsForRideType } from '../objects/AvailableTrackSegments/availableTrackSegments';
 import { debug } from '../utilities/logger';
+import { ButtonsActivelyPressed } from '../services/buttonToTrackElementMap';
 
 /**
 * The lists of {@link TrackSegment} types which a ride is able to build.
@@ -31,7 +32,7 @@ export type AvailableTrackSegmentTypes = {
 export class TrackTypeSelector {
 
     private _rideType: RideType | null;
-    private _buttonsPushed: (BuildWindowButton | null)[];
+    private _buttonsPushed: ButtonsActivelyPressed;
     private _trackConstructionMode: "enabled" | "extra" = "enabled";
     private _segmentsAvailableForRideType: AvailableTrackSegmentTypes;
     private _referenceModel: SegmentModel;
@@ -45,8 +46,8 @@ export class TrackTypeSelector {
         this._referenceSegment = referenceModel.selectedSegment.get();
         this._buildDirectionStore = referenceModel.buildDirection;
         this._rideType = this._referenceSegment?.get().rideType ?? null;
-        this._buttonsPushed = [];
-        this._segmentsAvailableForRideType = getAvailableTrackSegmentsForRideType(this._rideType);
+        this._buttonsPushed = {};
+        this._segmentsAvailableForRideType = (this._rideType !== null) ? getAvailableTrackSegmentsForRideType(this._rideType) : { enabled: [], extra: [], covered: [] };
         this._selectedTrackType = null;
 
         this.recalculate("constructor");
@@ -65,8 +66,9 @@ export class TrackTypeSelector {
         this.recalculate("rideType");
     }
 
-    updateButtonsPushed(buttonsPushed: (BuildWindowButton | null)[]) {
+    updateButtonsPushed(buttonsPushed: (ButtonsActivelyPressed)): void {
         debug(`buttonsPushed changed to ${buttonsPushed}`);
+
         this._buttonsPushed = buttonsPushed;
         this.recalculate("buttonPushed");
     }
@@ -104,6 +106,7 @@ export class TrackTypeSelector {
             return;
         }
 
+
         const validElementsFromButtons = buttonMap.getElementsFromGivenButtons(this._buttonsPushed); // the possible types from the buttons
         const validElementsFromRide = this._segmentsAvailableForRideType; // the possible types from the rideType
 
@@ -118,6 +121,7 @@ export class TrackTypeSelector {
                 return extraElements.indexOf(Number(element)) !== -1;
             }
         });
+
 
         // check compatability again the reference segment
         const finalElements = getBuildableSegments(this._referenceSegment?.get().trackType, validElements, this._buildDirectionStore.get() ?? "next");
@@ -140,14 +144,4 @@ export class TrackTypeSelector {
     }
 }
 
-export const getAvailableTrackSegmentsForRideType = (rideType: RideType | null): AvailableTrackSegmentTypes => {
-    // todo actually implement this
-    // const buildableSegments = context.getBuildableSegmentsForRideType(rideType); // sadly this doesn't exist
-    const buildableSegments = context.getAllTrackSegments().map(x => x.type);
-    return {
-        enabled: buildableSegments,
-        extra: [],
-        covered: [],
-    };
-};
 

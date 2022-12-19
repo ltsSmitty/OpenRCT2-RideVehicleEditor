@@ -1,3 +1,4 @@
+import { DetailButton } from './../buttonActions/buttonTypes';
 import { ButtonSelectorModel } from '../../viewmodels/buttonSelectorModel';
 import { SegmentModel } from '../../viewmodels/segmentModel';
 
@@ -6,9 +7,9 @@ import simulateRide from '../buttonActions/simulateRide';
 import selectSegment from '../buttonActions/selectSegment';
 import { debug } from '../../utilities/logger';
 import buildSegment from '../buttonActions/buildSegment';
-import * as buttonMap from '../buttonToTrackElementMap';
 import { BuildWindowButton } from '../buttonActions/buttonTypes';
 import * as button from '../buttonActions/buttonTypeChecks';
+import { ButtonsActivelyPressed } from '../buttonToTrackElementMap';
 
 
 export const buttonToggleChanged = (options: {
@@ -74,58 +75,6 @@ export const buttonToggleChanged = (options: {
         // action: change selected build
 
 
-        // case "left1Tile": {
-        //     modelResponse = model.selectedBuild.set(50); //"LeftQuarterTurn1Tile" = 50,
-        //     break;
-        // }
-        // case "left3Tile": {
-        //     modelResponse = model.selectedBuild.set(42); //"LeftQuarterTurn3Tiles" = 42,
-        //     break;
-        // }
-        // case "left5Tile": {
-        //     modelResponse = model.selectedBuild.set(16); //    "LeftQuarterTurn5Tiles" = 16,
-        //     break;
-        // }
-        // case "noCurve": {
-        //     modelResponse = model.selectedBuild.set(0); // "Flat" = 0
-        //     // clear all other buttons
-        //     break;
-        // }
-        // case "right5Tile": {
-        //     modelResponse = model.selectedBuild.set(17); // "RightQuarterTurn5Tiles" = 17,
-        //     break;
-        // }
-        // case "right3Tile": {
-        //     modelResponse = model.selectedBuild.set(43); // "RightQuarterTurn3Tiles" = 43,
-        //     break;
-        // }
-        // case "right1Tile": {
-        //     modelResponse = model.selectedBuild.set(51); // "RightQuarterTurn1Tile" = 51,
-        //     break;
-        // }
-        // case "leftLargeTurn": {
-        //     // check if it's already diagonal;
-        //     // starting straight uses     "LeftEighthToDiag" = 133,
-        //     // starting diagonal uses     "LeftEighthToOrthogonal" = 135,
-
-        //     // change if banked
-        //     break;
-        // }
-        // case "rightLargeTurn": {
-        //     // check if it's already diagonal;
-        //     // starting straight uses     "RightEighthToDiag" = 134,
-        //     // starting diagonal uses     "RightEighthToOrthogonal" = 136,
-        //     break;
-        // }
-        // case "sBendLeft": {
-        //     modelResponse = model.selectedBuild.set(38); //   "SBendLeft" = 38,
-        //     break;
-        // }
-        // case "sBendRight": {
-        //     modelResponse = model.selectedBuild.set(39); //  "SBendRight" = 39,
-        //     break;
-        // }
-
         // details
         case "chainLift": {
             // loop through all the elements of this segment and set "hasChainLift" to true
@@ -148,20 +97,34 @@ export const buttonToggleChanged = (options: {
             break;
         }
     }
-    debug(`What pieces could be built given the currently pressed buttons?`)
+    debug(`What pieces could be built given the currently pressed buttons?`);
 
-    const selectedElements = [
-        buttonModel.selectedBank.get(),
-        buttonModel.selectedCurve.get(),
-        buttonModel.selectedPitch.get(),
-        buttonModel.selectedDetail.get(),
-        buttonModel.selectedMisc.get(),
-        buttonModel.selectedControl.get(),
-        buttonModel.selectedSpecial.get()
-    ];
+    const pitchButton = buttonModel.selectedPitch.get();
+    const bankButton = buttonModel.selectedBank.get();
+    const curveButton = buttonModel.selectedCurve.get();
+    const specialButton = buttonModel.selectedSpecial.get();
+    const miscButton = buttonModel.selectedMisc.get();
+    const detailButtons = buttonModel.selectedDetails.get();
 
-    const filteredElements = selectedElements.filter(element => element !== null);
-    model.trackTypeSelector.updateButtonsPushed(filteredElements);
+    // todo also compare whether the button is enabled before saying that it's active.
+    const pitchButtonActive = (pitchButton !== null ? pitchButton : undefined);
+    const bankButtonActive = (bankButton !== null ? bankButton : undefined);
+    const curveButtonActive = (curveButton !== null ? curveButton : undefined);
+    const specialButtonActive = (specialButton !== null ? specialButton : undefined);
+    const miscButtonActive = (miscButton !== null ? miscButton : undefined);
+    const detailButtonsActive = (detailButtons !== null ? detailButtons : [] as DetailButton[]);
+
+
+    const selectedElements: ButtonsActivelyPressed = {
+        curve: curveButtonActive,
+        bank: bankButtonActive,
+        pitch: pitchButtonActive,
+        special: specialButtonActive,
+        misc: miscButtonActive,
+        detail: detailButtonsActive,
+    };
+
+    model.trackTypeSelector.updateButtonsPushed(selectedElements);
     // model.buildableTrackByButtons.set(newBuildableTrackTypes);
     model.debugButtonChange({ buttonType, isPressed, modelResponse });
 

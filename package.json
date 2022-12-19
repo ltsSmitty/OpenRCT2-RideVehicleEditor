@@ -22,6 +22,8 @@
 		"url": "https://github.com/Basssiiie/OpenRCT2-RideVehicleEditor/issues"
 	},
 	"dependencies": {
+		"lodash": "^4.17.21",
+		"lodash-es": "^4.17.21",
 		"openrct2-flexui": "^0.1.0-prerelease.4"
 	},
 	"devDependencies": {
@@ -35,6 +37,8 @@
 		"@rollup/plugin-replace": "^4.0.0",
 		"@rollup/plugin-typescript": "^8.2.5",
 		"@types/jest": "^29.2.4",
+		"@types/lodash": "^4.14.191",
+		"@types/lodash-es": "^4.17.6",
 		"@typescript-eslint/eslint-plugin": "^5.2.0",
 		"@typescript-eslint/parser": "^5.2.0",
 		"ava": "^4.3.1",
