@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
 import { TrackElementType } from './../utilities/trackElementType';
-import { CurveButton, PitchButton, BankButton, SpecialButton, DetailButton, SelectionButton, MiscButton, BuildWindowButton } from './../services/buttonActions/buttonTypes';
+import { CurveButton, PitchButton, BankButton, SpecialButton, DetailButton, SelectionButton, MiscButton } from './../services/buttonActions/buttonTypes';
 import { debug } from '../utilities/logger';
 import _ from 'lodash-es';
 
@@ -150,168 +150,167 @@ const trackElementToButtonMap: ButtonToElementMap = {
     96: { curve: 'right3Tile', pitch: 'up60', bank: 'noBank' }, // RightQuarterTurn1TileUp60
     97: { curve: 'left3Tile', pitch: 'down60', bank: 'noBank' }, // LeftQuarterTurn1TileDown60
     98: { curve: 'right3Tile', pitch: 'down60', bank: 'noBank' }, // RightQuarterTurn1TileDown60
-    99: { misc: 'brakes' }, // Brakes
-    100: { special: `special` }, // RotationControlToggleAlias
-    101: { misc: 'boosters' }, // Booster
-    102: { special: `special` }, // Maze
-    103: { special: `special` }, // LeftQuarterBankedHelixLargeUp
-    104: { special: `special` }, // RightQuarterBankedHelixLargeUp
-    105: { special: `special` }, // LeftQuarterBankedHelixLargeDown
-    106: { special: `special` }, // RightQuarterBankedHelixLargeDown
-    107: { special: `special` }, // LeftQuarterHelixLargeUp
-    108: { special: `special` }, // RightQuarterHelixLargeUp
-    109: { special: `special` }, // LeftQuarterHelixLargeDown
-    110: { special: `special` }, // RightQuarterHelixLargeDown
-    111: { curve: 'noCurve', pitch: 'up25', bank: 'bankLeft' }, // Up25LeftBanked
-    112: { curve: 'noCurve', pitch: 'up25', bank: 'bankRight' }, // Up25RightBanked
-    113: { special: `special` }, // Waterfall
-    114: { special: `special` }, // Rapids
-    115: { misc: 'camera' }, // OnRidePhoto
-    116: { curve: 'noCurve', pitch: 'down25', bank: 'bankLeft' }, // Down25LeftBanked
-    117: { curve: 'noCurve', pitch: 'down25', bank: 'bankRight' }, // Down25RightBanked
-    118: { special: `special` }, // Watersplash
-    119: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // FlatToUp60LongBase
-    120: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // Up60ToFlatLongBase
-    121: { special: `special` }, // Whirlpool
-    122: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // Down60ToFlatLongBase
-    123: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // FlatToDown60LongBase
-    124: { special: `special` }, // CableLiftHill
-    125: { special: `special` }, // ReverseFreefallSlope
-    126: { special: `special` }, // ReverseFreefallVertical
-    127: { curve: 'noCurve', pitch: 'up90', bank: 'noBank' }, // Up90
-    128: { curve: 'noCurve', pitch: 'down90', bank: 'noBank' }, // Down90
-    129: { curve: 'noCurve', pitch: 'up90', bank: 'noBank' }, // Up60ToUp90
-    130: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // Down90ToDown60
-    131: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // Up90ToUp60
-    132: { curve: 'noCurve', pitch: 'down90', bank: 'noBank' }, // Down60ToDown90
-    133: { special: `special` }, // BrakeForDrop
-    134: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // LeftEighthToDiag
-    135: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // RightEighthToDiag
-    136: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // LeftEighthToOrthogonal
-    137: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // RightEighthToOrthogonal
-    138: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'bankLeft' }, // LeftEighthBankToDiag
-    139: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'bankRight' }, // RightEighthBankToDiag
-    140: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'bankLeft' }, // LeftEighthBankToOrthogonal
-    141: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'bankRight' }, // RightEighthBankToOrthogonal
-    142: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagFlat
-    143: { curve: 'noCurve', pitch: 'up25', bank: 'noBank' }, // DiagUp25
-    144: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // DiagUp60
-    145: { curve: 'noCurve', pitch: 'up25', bank: 'noBank' }, // DiagFlatToUp25
-    146: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // DiagUp25ToUp60
-    147: { curve: 'noCurve', pitch: 'up25', bank: 'noBank' }, // DiagUp60ToUp25
-    148: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagUp25ToFlat
-    149: { curve: 'noCurve', pitch: 'down25', bank: 'noBank' }, // DiagDown25
-    150: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // DiagDown60
-    151: { curve: 'noCurve', pitch: 'down25', bank: 'noBank' }, // DiagFlatToDown25
-    152: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // DiagDown25ToDown60
-    153: { curve: 'noCurve', pitch: 'down25', bank: 'noBank' }, // DiagDown60ToDown25
-    154: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagDown25ToFlat
-    155: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // DiagFlatToUp60
-    156: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagUp60ToFlat
-    157: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // DiagFlatToDown60
-    158: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagDown60ToFlat
-    159: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagFlatToLeftBank
-    160: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagFlatToRightBank
-    161: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagLeftBankToFlat
-    162: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagRightBankToFlat
-    163: { curve: 'noCurve', pitch: 'up25', bank: 'bankLeft' }, // DiagLeftBankToUp25
-    164: { curve: 'noCurve', pitch: 'up25', bank: 'bankRight' }, // DiagRightBankToUp25
-    165: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagUp25ToLeftBank
-    166: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagUp25ToRightBank
-    167: { curve: 'noCurve', pitch: 'down25', bank: 'bankLeft' }, // DiagLeftBankToDown25
-    168: { curve: 'noCurve', pitch: 'down25', bank: 'bankRight' }, // DiagRightBankToDown25
-    169: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagDown25ToLeftBank
-    170: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagDown25ToRightBank
-    171: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagLeftBank
-    172: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagRightBank
-    173: { special: `special` }, // LogFlumeReverser
-    174: { special: `special` }, // SpinningTunnel
-    175: { special: `special` }, // LeftBarrelRollUpToDown
-    176: { special: `special` }, // RightBarrelRollUpToDown
-    177: { special: `special` }, // LeftBarrelRollDownToUp
-    178: { special: `special` }, // RightBarrelRollDownToUp
-    179: { curve: 'left3Tile', pitch: 'up25', bank: 'noBank' }, // LeftBankToLeftQuarterTurn3TilesUp25
-    180: { curve: 'right3Tile', pitch: 'up25', bank: 'noBank' }, // RightBankToRightQuarterTurn3TilesUp25
-    181: { curve: 'left3Tile', pitch: 'down25', bank: 'noBank' }, // LeftQuarterTurn3TilesDown25ToLeftBank
-    182: { curve: 'right3Tile', pitch: 'down25', bank: 'noBank' }, // RightQuarterTurn3TilesDown25ToRightBank
-    183: { special: `special` }, // PoweredLift
-    184: { special: `special` }, // LeftLargeHalfLoopUp
-    185: { special: `special` }, // RightLargeHalfLoopUp
-    186: { special: `special` }, // RightLargeHalfLoopDown
-    187: { special: `special` }, // LeftLargeHalfLoopDown
-    188: { special: `special` }, // LeftFlyerTwistUp
-    189: { special: `special` }, // RightFlyerTwistUp
-    190: { special: `special` }, // LeftFlyerTwistDown
-    191: { special: `special` }, // RightFlyerTwistDown
-    192: { special: `special` }, // FlyerHalfLoopUninvertedUp
-    193: { special: `special` }, // FlyerHalfLoopInvertedDown
-    194: { special: `special` }, // LeftFlyerCorkscrewUp
-    195: { special: `special` }, // RightFlyerCorkscrewUp
-    196: { special: `special` }, // LeftFlyerCorkscrewDown
-    197: { special: `special` }, // RightFlyerCorkscrewDown
-    198: { special: `special` }, // HeartLineTransferUp
-    199: { special: `special` }, // HeartLineTransferDown
-    200: { special: `special` }, // LeftHeartLineRoll
-    201: { special: `special` }, // RightHeartLineRoll
-    202: { special: `special` }, // MinigolfHoleA
-    203: { special: `special` }, // MinigolfHoleB
-    204: { special: `special` }, // MinigolfHoleC
-    205: { special: `special` }, // MinigolfHoleD
-    206: { special: `special` }, // MinigolfHoleE
-    207: { special: `special` }, // MultiDimInvertedFlatToDown90QuarterLoop
-    208: { special: `special` }, // Up90ToInvertedFlatQuarterLoop
-    209: { special: `special` }, // InvertedFlatToDown90QuarterLoop
-    210: { special: `special` }, // LeftCurvedLiftHill
-    211: { special: `special` }, // RightCurvedLiftHill
-    212: { special: `special` }, // LeftReverser
-    213: { special: `special` }, // RightReverser
-    214: { special: `special` }, // AirThrustTopCap
-    215: { special: `special` }, // AirThrustVerticalDown
-    216: { special: `special` }, // AirThrustVerticalDownToLevel
-    217: { misc: 'blockBrakes' }, // BlockBrakes
-    218: { curve: 'left3Tile', pitch: 'up25', bank: 'bankLeft' }, // LeftBankedQuarterTurn3TileUp25
-    219: { curve: 'right3Tile', pitch: 'up25', bank: 'bankRight' }, // RightBankedQuarterTurn3TileUp25
-    220: { curve: 'left3Tile', pitch: 'down25', bank: 'bankLeft' }, // LeftBankedQuarterTurn3TileDown25
-    221: { curve: 'right3Tile', pitch: 'down25', bank: 'bankRight' }, // RightBankedQuarterTurn3TileDown25
-    222: { curve: 'left5Tile', pitch: 'up25', bank: 'bankLeft' }, // LeftBankedQuarterTurn5TileUp25
-    223: { curve: 'right5Tile', pitch: 'up25', bank: 'bankRight' }, // RightBankedQuarterTurn5TileUp25
-    224: { curve: 'left5Tile', pitch: 'down25', bank: 'bankLeft' }, // LeftBankedQuarterTurn5TileDown25
-    225: { curve: 'right5Tile', pitch: 'down25', bank: 'bankRight' }, // RightBankedQuarterTurn5TileDown25
-    226: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // Up25ToLeftBankedUp25
-    227: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // Up25ToRightBankedUp25
-    228: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedUp25ToUp25
-    229: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedUp25ToUp25
-    230: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // Down25ToLeftBankedDown25
-    231: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // Down25ToRightBankedDown25
-    232: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedDown25ToDown25
-    233: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedDown25ToDown25
-    234: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // LeftBankedFlatToLeftBankedUp25
-    235: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // RightBankedFlatToRightBankedUp25
-    236: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // LeftBankedUp25ToLeftBankedFlat
-    237: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // RightBankedUp25ToRightBankedFlat
-    238: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // LeftBankedFlatToLeftBankedDown25
-    239: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // RightBankedFlatToRightBankedDown25
-    240: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedDown25ToLeftBankedFlat
-    241: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedDown25ToRightBankedFlat
-    242: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // FlatToLeftBankedUp25
-    243: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // FlatToRightBankedUp25
-    244: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedUp25ToFlat
-    245: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedUp25ToFlat
-    246: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // FlatToLeftBankedDown25
-    247: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // FlatToRightBankedDown25
-    248: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedDown25ToFlat
-    249: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedDown25ToFlat
-    250: { curve: 'left3Tile', pitch: 'up90', bank: 'noBank' }, // LeftQuarterTurn1TileUp90
-    251: { curve: 'right3Tile', pitch: 'up90', bank: 'noBank' }, // RightQuarterTurn1TileUp90
-    252: { curve: 'left3Tile', pitch: 'down90', bank: 'noBank' }, // LeftQuarterTurn1TileDown90
-    253: { curve: 'right3Tile', pitch: 'down90', bank: 'noBank' }, // RightQuarterTurn1TileDown90
-    254: { special: `special` }, // MultiDimUp90ToInvertedFlatQuarterLoop
-    255: { special: `special` }, // MultiDimFlatToDown90QuarterLoop
-    256: { special: `special` }, // MultiDimInvertedUp90ToFlatQuarterLoop
-    //     257: { special: `special` }, // RotationControlToggle // currently undocumented
+    99: { misc: 'brakes' }, // Brakes and also the RotationControlToggleAlias
+    100: { misc: 'boosters' }, // Booster
+    101: { special: `special` }, // Maze
+    102: { special: `special` }, // LeftQuarterBankedHelixLargeUp
+    103: { special: `special` }, // RightQuarterBankedHelixLargeUp
+    104: { special: `special` }, // LeftQuarterBankedHelixLargeDown
+    105: { special: `special` }, // RightQuarterBankedHelixLargeDown
+    106: { special: `special` }, // LeftQuarterHelixLargeUp
+    107: { special: `special` }, // RightQuarterHelixLargeUp
+    108: { special: `special` }, // LeftQuarterHelixLargeDown
+    109: { special: `special` }, // RightQuarterHelixLargeDown
+    110: { curve: 'noCurve', pitch: 'up25', bank: 'bankLeft' }, // Up25LeftBanked
+    111: { curve: 'noCurve', pitch: 'up25', bank: 'bankRight' }, // Up25RightBanked
+    112: { special: `special` }, // Waterfall
+    113: { special: `special` }, // Rapids
+    114: { misc: 'camera' }, // OnRidePhoto
+    115: { curve: 'noCurve', pitch: 'down25', bank: 'bankLeft' }, // Down25LeftBanked
+    116: { curve: 'noCurve', pitch: 'down25', bank: 'bankRight' }, // Down25RightBanked
+    117: { special: `special` }, // Watersplash
+    118: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // FlatToUp60LongBase
+    119: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // Up60ToFlatLongBase
+    120: { special: `special` }, // Whirlpool
+    121: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // Down60ToFlatLongBase
+    122: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // FlatToDown60LongBase
+    123: { special: `special` }, // CableLiftHill
+    124: { special: `special` }, // ReverseFreefallSlope
+    125: { special: `special` }, // ReverseFreefallVertical
+    126: { curve: 'noCurve', pitch: 'up90', bank: 'noBank' }, // Up90
+    127: { curve: 'noCurve', pitch: 'down90', bank: 'noBank' }, // Down90
+    128: { curve: 'noCurve', pitch: 'up90', bank: 'noBank' }, // Up60ToUp90
+    129: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // Down90ToDown60
+    130: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // Up90ToUp60
+    131: { curve: 'noCurve', pitch: 'down90', bank: 'noBank' }, // Down60ToDown90
+    132: { special: `special` }, // BrakeForDrop
+    133: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // LeftEighthToDiag
+    134: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // RightEighthToDiag
+    135: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // LeftEighthToOrthogonal
+    136: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'noBank' }, // RightEighthToOrthogonal
+    137: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'bankLeft' }, // LeftEighthBankToDiag
+    138: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'bankRight' }, // RightEighthBankToDiag
+    139: { curve: 'leftLargeTurn', pitch: 'noPitch', bank: 'bankLeft' }, // LeftEighthBankToOrthogonal
+    140: { curve: 'rightLargeTurn', pitch: 'noPitch', bank: 'bankRight' }, // RightEighthBankToOrthogonal
+    141: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagFlat
+    142: { curve: 'noCurve', pitch: 'up25', bank: 'noBank' }, // DiagUp25
+    143: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // DiagUp60
+    144: { curve: 'noCurve', pitch: 'up25', bank: 'noBank' }, // DiagFlatToUp25
+    145: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // DiagUp25ToUp60
+    146: { curve: 'noCurve', pitch: 'up25', bank: 'noBank' }, // DiagUp60ToUp25
+    147: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagUp25ToFlat
+    148: { curve: 'noCurve', pitch: 'down25', bank: 'noBank' }, // DiagDown25
+    149: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // DiagDown60
+    150: { curve: 'noCurve', pitch: 'down25', bank: 'noBank' }, // DiagFlatToDown25
+    151: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // DiagDown25ToDown60
+    152: { curve: 'noCurve', pitch: 'down25', bank: 'noBank' }, // DiagDown60ToDown25
+    153: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagDown25ToFlat
+    154: { curve: 'noCurve', pitch: 'up60', bank: 'noBank' }, // DiagFlatToUp60
+    155: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagUp60ToFlat
+    156: { curve: 'noCurve', pitch: 'down60', bank: 'noBank' }, // DiagFlatToDown60
+    157: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagDown60ToFlat
+    158: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagFlatToLeftBank
+    159: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagFlatToRightBank
+    160: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagLeftBankToFlat
+    161: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // DiagRightBankToFlat
+    162: { curve: 'noCurve', pitch: 'up25', bank: 'bankLeft' }, // DiagLeftBankToUp25
+    163: { curve: 'noCurve', pitch: 'up25', bank: 'bankRight' }, // DiagRightBankToUp25
+    164: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagUp25ToLeftBank
+    165: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagUp25ToRightBank
+    166: { curve: 'noCurve', pitch: 'down25', bank: 'bankLeft' }, // DiagLeftBankToDown25
+    167: { curve: 'noCurve', pitch: 'down25', bank: 'bankRight' }, // DiagRightBankToDown25
+    168: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagDown25ToLeftBank
+    169: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagDown25ToRightBank
+    170: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // DiagLeftBank
+    171: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // DiagRightBank
+    172: { special: `special` }, // LogFlumeReverser
+    173: { special: `special` }, // SpinningTunnel
+    174: { special: `special` }, // LeftBarrelRollUpToDown
+    175: { special: `special` }, // RightBarrelRollUpToDown
+    176: { special: `special` }, // LeftBarrelRollDownToUp
+    177: { special: `special` }, // RightBarrelRollDownToUp
+    178: { curve: 'left3Tile', pitch: 'up25', bank: 'noBank' }, // LeftBankToLeftQuarterTurn3TilesUp25
+    179: { curve: 'right3Tile', pitch: 'up25', bank: 'noBank' }, // RightBankToRightQuarterTurn3TilesUp25
+    180: { curve: 'left3Tile', pitch: 'down25', bank: 'noBank' }, // LeftQuarterTurn3TilesDown25ToLeftBank
+    181: { curve: 'right3Tile', pitch: 'down25', bank: 'noBank' }, // RightQuarterTurn3TilesDown25ToRightBank
+    182: { special: `special` }, // PoweredLift
+    183: { special: `special` }, // LeftLargeHalfLoopUp
+    184: { special: `special` }, // RightLargeHalfLoopUp
+    185: { special: `special` }, // RightLargeHalfLoopDown
+    186: { special: `special` }, // LeftLargeHalfLoopDown
+    187: { special: `special` }, // LeftFlyerTwistUp
+    188: { special: `special` }, // RightFlyerTwistUp
+    189: { special: `special` }, // LeftFlyerTwistDown
+    190: { special: `special` }, // RightFlyerTwistDown
+    191: { special: `special` }, // FlyerHalfLoopUninvertedUp
+    192: { special: `special` }, // FlyerHalfLoopInvertedDown
+    193: { special: `special` }, // LeftFlyerCorkscrewUp
+    194: { special: `special` }, // RightFlyerCorkscrewUp
+    195: { special: `special` }, // LeftFlyerCorkscrewDown
+    196: { special: `special` }, // RightFlyerCorkscrewDown
+    197: { special: `special` }, // HeartLineTransferUp
+    198: { special: `special` }, // HeartLineTransferDown
+    199: { special: `special` }, // LeftHeartLineRoll
+    200: { special: `special` }, // RightHeartLineRoll
+    201: { special: `special` }, // MinigolfHoleA
+    202: { special: `special` }, // MinigolfHoleB
+    203: { special: `special` }, // MinigolfHoleC
+    204: { special: `special` }, // MinigolfHoleD
+    205: { special: `special` }, // MinigolfHoleE
+    206: { special: `special` }, // MultiDimInvertedFlatToDown90QuarterLoop
+    207: { special: `special` }, // Up90ToInvertedFlatQuarterLoop
+    208: { special: `special` }, // InvertedFlatToDown90QuarterLoop
+    209: { special: `special` }, // LeftCurvedLiftHill
+    210: { special: `special` }, // RightCurvedLiftHill
+    211: { special: `special` }, // LeftReverser
+    212: { special: `special` }, // RightReverser
+    213: { special: `special` }, // AirThrustTopCap
+    214: { special: `special` }, // AirThrustVerticalDown
+    215: { special: `special` }, // AirThrustVerticalDownToLevel
+    216: { misc: 'blockBrakes' }, // BlockBrakes
+    217: { curve: 'left3Tile', pitch: 'up25', bank: 'bankLeft' }, // LeftBankedQuarterTurn3TileUp25
+    218: { curve: 'right3Tile', pitch: 'up25', bank: 'bankRight' }, // RightBankedQuarterTurn3TileUp25
+    219: { curve: 'left3Tile', pitch: 'down25', bank: 'bankLeft' }, // LeftBankedQuarterTurn3TileDown25
+    220: { curve: 'right3Tile', pitch: 'down25', bank: 'bankRight' }, // RightBankedQuarterTurn3TileDown25
+    221: { curve: 'left5Tile', pitch: 'up25', bank: 'bankLeft' }, // LeftBankedQuarterTurn5TileUp25
+    222: { curve: 'right5Tile', pitch: 'up25', bank: 'bankRight' }, // RightBankedQuarterTurn5TileUp25
+    223: { curve: 'left5Tile', pitch: 'down25', bank: 'bankLeft' }, // LeftBankedQuarterTurn5TileDown25
+    224: { curve: 'right5Tile', pitch: 'down25', bank: 'bankRight' }, // RightBankedQuarterTurn5TileDown25
+    225: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // Up25ToLeftBankedUp25
+    226: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // Up25ToRightBankedUp25
+    227: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedUp25ToUp25
+    228: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedUp25ToUp25
+    229: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // Down25ToLeftBankedDown25
+    230: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // Down25ToRightBankedDown25
+    231: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedDown25ToDown25
+    232: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedDown25ToDown25
+    233: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // LeftBankedFlatToLeftBankedUp25
+    234: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // RightBankedFlatToRightBankedUp25
+    235: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // LeftBankedUp25ToLeftBankedFlat
+    236: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // RightBankedUp25ToRightBankedFlat
+    237: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // LeftBankedFlatToLeftBankedDown25
+    238: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // RightBankedFlatToRightBankedDown25
+    239: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedDown25ToLeftBankedFlat
+    240: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedDown25ToRightBankedFlat
+    241: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // FlatToLeftBankedUp25
+    242: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // FlatToRightBankedUp25
+    243: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedUp25ToFlat
+    244: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedUp25ToFlat
+    245: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankLeft' }, // FlatToLeftBankedDown25
+    246: { curve: 'noCurve', pitch: 'noPitch', bank: 'bankRight' }, // FlatToRightBankedDown25
+    247: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // LeftBankedDown25ToFlat
+    248: { curve: 'noCurve', pitch: 'noPitch', bank: 'noBank' }, // RightBankedDown25ToFlat
+    249: { curve: 'left3Tile', pitch: 'up90', bank: 'noBank' }, // LeftQuarterTurn1TileUp90
+    250: { curve: 'right3Tile', pitch: 'up90', bank: 'noBank' }, // RightQuarterTurn1TileUp90
+    251: { curve: 'left3Tile', pitch: 'down90', bank: 'noBank' }, // LeftQuarterTurn1TileDown90
+    252: { curve: 'right3Tile', pitch: 'down90', bank: 'noBank' }, // RightQuarterTurn1TileDown90
+    253: { special: `special` }, // MultiDimUp90ToInvertedFlatQuarterLoop
+    254: { special: `special` }, // MultiDimFlatToDown90QuarterLoop
+    255: { special: `special` }, // MultiDimInvertedUp90ToFlatQuarterLoop
+    256: { special: `special` }, // RotationControlToggle // currently undocumented
 
-    // 258-266: These are unused, and all the pieces after are OpenRCT pieces
 
+    // 257-265: These are unused, and all the pieces after are OpenRCT pieces: {
     267: { special: `special` }, // LeftLargeCorkscrewUp
     268: { special: `special` }, // RightLargeCorkscrewUp
     269: { special: `special` }, // LeftLargeCorkscrewDown
