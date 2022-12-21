@@ -156,8 +156,6 @@ export class SegmentModel {
 			// 	}
 			// });
 		}
-
-		// this.demolish("previewSegment");
 		this.build("real");
 
 	}
@@ -479,6 +477,7 @@ export class SegmentModel {
 
 	build(ghost: "ghost" | "real" = "real",
 		callback?: ((response: { result: GameActionResult, newlyBuiltSegment: Segment }) => void)): void {
+
 		const build = <SegmentDescriptor>this.selectedBuild.get();
 		const builtSegment = new Segment(build);
 		const direction = this.buildDirection.get()!;
@@ -514,7 +513,10 @@ export class SegmentModel {
 	}
 
 	updateTrackIterator(): void {
-		this.TIAtSelectedSegment = finder.getTIAtSegment(this.selectedSegment.get());
+
+		const segment = this.selectedSegment.get();
+
+		this.TIAtSelectedSegment = finder.getTIAtSegment({ segment, ride: segment?.ride, location: segment?.location });
 	}
 
 	private checkForNextTrackInDirection = (): "real" | "ghost" | null => {

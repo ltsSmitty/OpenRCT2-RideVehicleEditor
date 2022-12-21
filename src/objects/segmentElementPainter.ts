@@ -1,4 +1,3 @@
-import { TrackElementType } from './../utilities/trackElementType';
 import { TrackElementItem } from "../services/SegmentController";
 import { Segment } from "./segment";
 import * as finder from "../services/trackElementFinder";
@@ -40,8 +39,13 @@ export class SegmentElementPainter {
         // get the ride to repaint
         const thisRide = map.getRide(this._initialSegment.get().ride);
 
-        const thisElement = finder.getSpecificTrackElement(this._initialSegment.get().ride, this._initialSegment.get().location)
-        const elBaseZ = thisElement.element.baseZ;
+        const thisElement: TrackElementItem | undefined = finder.getSpecificTrackElement(this._initialSegment.get().ride, this._initialSegment.get().location);
+
+        if (!thisElement) {
+            debug(`No track element found at ${JSON.stringify(this._initialSegment.get().location)}. Probably the window was closed improperly.`);
+            return;
+        }
+        const elBaseZ = thisElement?.element.baseZ;
 
         const { x, y, direction } = this._initialSegment.get().location;
         const newCoordAttempt = { x, y, z: elBaseZ, direction };
@@ -66,6 +70,7 @@ export class SegmentElementPainter {
         this._initialSegment = segment;
         this._initialTrackColourScheme = colourScheme;
         this._initialColourSchemeValue = colourSchemeValue;
+        debug(`Restored the initial track segment colour from cold storage: ${JSON.stringify(paintedSegmentDetails)}`);
         this.restoreInitialColour(true);
     }
 
