@@ -4,7 +4,7 @@ import { SelectionButton, BuildWindowButton } from './../../services/buttonActio
 import { RideType } from "../../utilities/rideType";
 import { TrackElementType } from "../../utilities/trackElementType";
 import { Segment } from "../segment";
-import { GlobalConstructionController } from '../GlobalConstructionController';
+import { GlobalStateController } from '../GlobalConstructionController';
 
 /** Select all the pieces which a ride can validly build, or all the pieces that it can technically draw */
 export type DrawableSegmentBuildRule = "enabled" | "extra" | "covered";
@@ -81,7 +81,7 @@ interface IValidTrackElementTypes {
 
 
 interface ISegmentSequence {
-    globalController: GlobalConstructionController;
+    globalController: GlobalStateController;
     segments: Segment[]; // the sequence of segments starting from stationBegin
     selectedIndex: number; // the index of the selected segment in segments[]
     selectedSegment: Segment | null; // the selected segment
@@ -105,14 +105,14 @@ export class SegmentSequence implements ISegmentSequence {
     segments: Segment[] = [];
     selectedIndex: number = 0;
     selectedSegment: Segment | null = null;
-    private globalController: GlobalConstructionController;
+    private globalState: GlobalStateController;
 
     validateSegmentsActuallyExist(): boolean {
         return this.segments.length > 0;
     }
 
-    constructor(globalController: GlobalConstructionController) {
-        this.globalController = globalController;
+    constructor(globalController: GlobalStateController) {
+        this.globalState = globalController;
 
     }
 

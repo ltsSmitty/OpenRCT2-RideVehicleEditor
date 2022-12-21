@@ -6,7 +6,7 @@ import { DrawableSegmentBuildRule, SegmentSequence } from "./CoreControllers/Seg
 import { TrackTypeSelector } from "./trackTypeSelector";
 
 
-export class GlobalConstructionController {
+export class GlobalStateController {
     /**
  * Globally need available
  * * build direction (next vs previous)
@@ -18,7 +18,7 @@ export class GlobalConstructionController {
 * * the build tool
  */
 
-    buildDirection: "next" | "previous" | null;
+    buildDirection: BuildDirection;
     buildState: BuildStateController;
     buttonState: ButtonStateController; // create with `this` in the constructor
     segmentSequence: SegmentSequence;
@@ -32,15 +32,15 @@ export class GlobalConstructionController {
  *
  * @param globalController
  */
-const getValidTrackElements = (globalController: GlobalConstructionController): TrackElementType[] | null => {
-    const { buildDirection, buildState, buttonState, segmentSequence } = globalController;
+const getValidTrackElements = (globalStateController: GlobalStateController): TrackElementType[] | null => {
+    const { buildDirection, buildState, buttonState, segmentSequence } = globalStateController;
 
-    if (segmentSequence.)
+    // if (segmentSequence.)
 
-        const { rideType, trackElementType, initialLocation, computedLocation } = buildState;
+    const { rideType, trackElementType, initialLocation, computedLocation } = buildState;
 
     // get all the valid track
     const validElementsForRideType = getAvailableTrackElementTypes(rideType);
-    const trackTypeSelector = new TrackTypeSelector(globalController);
+    const trackTypeSelector = new TrackTypeSelector(globalStateController);
 
 };
