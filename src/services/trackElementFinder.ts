@@ -273,7 +273,9 @@ export const getTIAtSegment = ({ segment, ride, location }: { segment?: Segment 
     let thisRide: number;
     let thisLocation: CoordsXYZD;
 
+
     if (segment) {
+        debug(`Getting TI at segment ${segment}.`);
         thisRide = segment.get().ride;
         thisLocation = segment.get().location;
     }

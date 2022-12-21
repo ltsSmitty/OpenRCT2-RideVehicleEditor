@@ -1,6 +1,6 @@
-import { RideType } from "../../utilities/rideType"
-import { AvailableTrackSegmentTypes } from "../trackTypeSelector"
-import LoopingCoasterAvailableSegmentTypes from "./LoopingCoaster"
+import { RideType } from "../../utilities/rideType";
+import { AvailableTrackSegmentTypes } from "../trackTypeSelector";
+import LoopingCoasterAvailableSegmentTypes from "./LoopingCoaster";
 
 
 //

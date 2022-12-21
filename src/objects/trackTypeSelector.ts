@@ -110,6 +110,9 @@ export class TrackTypeSelector {
         const validElementsFromButtons = buttonMap.getElementsFromGivenButtons(this._buttonsPushed); // the possible types from the buttons
         const validElementsFromRide = this._segmentsAvailableForRideType; // the possible types from the rideType
 
+        debug(`validElementsFromButtons: ${validElementsFromButtons}`)
+        debug(`validElementsFromRide: ${validElementsFromRide}`)
+
         // need to figure out which of those are the same
         const validElements = validElementsFromButtons.filter((element) => {
             const enabledElements = [...validElementsFromRide.enabled, ...validElementsFromRide.covered];

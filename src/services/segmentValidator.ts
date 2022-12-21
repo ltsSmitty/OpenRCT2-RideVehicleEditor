@@ -24,11 +24,12 @@ export const getBuildableSegments = (
     direction: "next" | "previous"): TrackElementType[] => {
 
     debug(`getting buildable segments from ${TrackElementType[initialTrackElement]} in direction ${direction}`);
+    debug(`potential segments: ${trackElementOptions.map(el => TrackElementType[el]).join(", ")}`);
 
     // swap the order of elements depending on next vs previous
     if (direction == "next") {
         const buildableSegments = trackElementOptions.filter(el => {
-            debug(`checking if ${TrackElementType[initialTrackElement]} into ${TrackElementType[el]} is compatible`);
+            // debug(`checking if ${TrackElementType[initialTrackElement]} into ${TrackElementType[el]} is compatible`);
             return areSegmentsCompatible(initialTrackElement, el);
         });
 
@@ -37,7 +38,7 @@ export const getBuildableSegments = (
     }
     if (direction == "previous") {
         const buildableSegments = trackElementOptions.filter(el => {
-            debug(`checking if${TrackElementType[el]} into ${TrackElementType[initialTrackElement]}   is compatible`);
+            // debug(`checking if${TrackElementType[el]} into ${TrackElementType[initialTrackElement]}   is compatible`);
             return areSegmentsCompatible(el, initialTrackElement);
         });
 

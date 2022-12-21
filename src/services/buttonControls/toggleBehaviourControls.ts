@@ -2,11 +2,11 @@ import { DetailButton } from './../buttonActions/buttonTypes';
 import { ButtonSelectorModel } from '../../viewmodels/buttonSelectorModel';
 import { SegmentModel } from '../../viewmodels/segmentModel';
 
-import iterateSelection from '../buttonActions/iterateSelection';
-import simulateRide from '../buttonActions/simulateRide';
-import selectSegment from '../buttonActions/selectSegment';
+import iterateSelection from '../buttonActions/iterateSelectionAction';
+import simulateRide from '../buttonActions/simulateRideAction';
+import selectSegment from '../buttonActions/selectSegmentAction';
 import { debug } from '../../utilities/logger';
-import buildSegment from '../buttonActions/buildSegment';
+import buildSegment from '../buttonActions/buildSegmentAction';
 import { BuildWindowButton } from '../buttonActions/buttonTypes';
 import * as button from '../buttonActions/buttonTypeChecks';
 import { ButtonsActivelyPressed } from '../buttonToTrackElementMap';

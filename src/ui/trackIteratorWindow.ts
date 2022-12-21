@@ -7,7 +7,7 @@ import { TrackElementType } from "../utilities/trackElementType";
 import { debug } from "../utilities/logger";
 import { SegmentModel } from '../viewmodels/segmentModel';
 import { ButtonSelectorModel } from '../viewmodels/buttonSelectorModel';
-import selectSegment from '../services/buttonActions/selectSegment';
+import selectSegment from '../services/buttonActions/selectSegmentAction';
 import { customImageFor } from '../objects/customButtonSprites';
 import { RideType } from "../utilities/rideType";
 
