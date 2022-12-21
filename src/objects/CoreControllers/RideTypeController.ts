@@ -1,33 +1,28 @@
 import { TrackElementType } from '../../utilities/trackElementType';
 import { getAvailableTrackElementTypes } from './../../services/TrackTypeValidator';
-import { RideConstructionProps } from './CoreInterface';
+import { RideType } from '../../utilities/rideType';
 // use this object to get/set the ride type of the selected segment.
 // use this object to infer the available TrackElementTypes based on the ride type
 
 
-export class RideTypeController extends RideConstructionProps {
+export class RideTypeController {
 
-    private _rideType: number;
+    private _rideType: RideType | null = null;
 
-    constructor(props: RideConstructionProps) {
-        super(props);
-        this._rideType = 0;
+    constructor() {
+        this.rideType = null;
     }
-
-    get rideType(): number {
-        return this._rideType;
+    get rideType(): RideType | null {
+        return this.rideType;
     }
 
     set rideType(rideType) {
-        this._rideType = rideType;
+        this.rideType = rideType;
     }
-
     get availableTrackElementTypes(): TrackElementType[] {
         return getAvailableTrackElementTypes(this._rideType);
     }
 
 }
 
-const rideTypeController = new RideTypeController();
-const trackTypes = rideTypeController.availableTrackElementTypes;
 
