@@ -1,3 +1,4 @@
+import { SelectionControlButton } from './buttonActions/buttonTypes';
 /* eslint-disable prefer-const */
 import { TrackElementType } from './../utilities/trackElementType';
 import { CurveButton, PitchButton, BankButton, SpecialButton, DetailButton, SelectionButton, MiscButton } from './../services/buttonActions/buttonTypes';
@@ -14,6 +15,7 @@ export type ButtonsActivelyPressed = {
     special?: SpecialButton;
     misc?: MiscButton;
     detail?: DetailButton[];
+    other?: SelectionControlButton;
 };
 
 type ButtonToElementMap = Record<TrackElementType, ButtonsActivelyPressed>;

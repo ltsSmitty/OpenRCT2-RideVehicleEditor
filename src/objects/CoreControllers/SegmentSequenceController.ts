@@ -6,8 +6,6 @@ import { TrackElementType } from "../../utilities/trackElementType";
 import { Segment } from "../segment";
 import { GlobalStateController } from '../GlobalConstructionController';
 
-/** Select all the pieces which a ride can validly build, or all the pieces that it can technically draw */
-export type DrawableSegmentBuildRule = "enabled" | "extra" | "covered";
 
 interface IBuildPropContainer {
     segmentBuildRule: DrawableSegmentBuildRule | null;

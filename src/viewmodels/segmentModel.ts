@@ -66,17 +66,17 @@ export class SegmentModel {
 		this.previewSegment.subscribe((newPreviewSegment) => this.onPreviewSegmentChange(newPreviewSegment));
 
 		// context.subscribe("action.execute", (event: GameActionEventArgs) => {
-		//     const action = event.action as ActionType;
-		//     switch (action) {
-		//         case "ridesetappearance":
-		//         case "ridesetcolourscheme": {
-		//             debug(`<${action}>\n\t- type: ${event.type}
+		// 	const action = event.action as ActionType;
+		// 	switch (action) {
+		// 		case "ridesetappearance":
+		// 		case "ridesetcolourscheme": {
+		// 			debug(`<${action}>\n\t- type: ${event.type}
 		// \t- args: ${JSON.stringify(
-		//                 event.args, null, 2
-		//             )}\n\t- result: ${JSON.stringify(event.result)}`);
-		//             break;
-		//         }
-		//     }
+		// 				event.args, null, 2
+		// 			)}\n\t- result: ${JSON.stringify(event.result)}`);
+		// 			break;
+		// 		}
+		// 	}
 		// })
 	}
 

@@ -14,8 +14,8 @@ import { RideType } from "../utilities/rideType";
 
 const buttonSize = 15;
 const directionButtonHeight = 25;
-const buttonWidthSmall = 25
-const buttonWidthMedium = 25
+const buttonWidthSmall = 25;
+const buttonWidthMedium = 25;
 // const buttonWidthLarge = 18
 const directionButtonWidth = 25;
 const buttonRowHeight = 30;
@@ -119,8 +119,8 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 						content: [
 							element.toggle({
 								buttonType: "sBendLeft",
-								width: directionButtonWidth,
-								height: directionButtonHeight,
+								width: 19,
+								height: 20,
 								image: customImageFor("sBendLeft"),
 							}),
 							element.toggle({
@@ -137,8 +137,8 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 							}),
 							element.toggle({
 								buttonType: "sBendRight",
-								width: directionButtonWidth,
-								height: directionButtonHeight,
+								width: 19,
+								height: 20,
 								image: customImageFor("sBendRight")
 							}),
 							element.toggle({
@@ -355,10 +355,19 @@ export const trackIteratorWindow = (segmentModel: SegmentModel, elementWrapper: 
 				height: 100,
 				items: compute(buttonModel.selectedCurve, buttonModel.selectedBank, buttonModel.selectedPitch, (curve, bank, pitch) => {
 
+					let x, y, z, direction;
+					if (model.selectedBuild.get()?.location) {
+						x = model.selectedBuild.get().location?.x;
+						y = model.selectedBuild.get()?.location?.y;
+						z = model.selectedBuild.get()?.location?.z;
+						direction = model.selectedBuild.get()?.location?.direction
+					}
+
 					return [
 						`Curve: ${curve}`,
 						`Bank: ${bank}`,
 						`Pitch: ${pitch}`,
+						`SelectedLocation: ${x}, ${y}, ${z}; ${direction}`
 					]
 
 					// if (!segment) return ["No segment selected"];

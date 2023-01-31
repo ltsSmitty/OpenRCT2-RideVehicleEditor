@@ -2,8 +2,9 @@ import { getBuildableSegments } from './../services/segmentValidator';
 import { getAvailableTrackElementTypes } from "../services/TrackTypeValidator";
 import { BuildStateController } from "./CoreControllers/BuildStateController";
 import { ButtonStateController } from "./CoreControllers/ButtonStateController";
-import { DrawableSegmentBuildRule, SegmentSequence } from "./CoreControllers/SegmentSequenceController";
+import { SegmentSequence } from "./CoreControllers/SegmentSequenceController";
 import { TrackTypeSelector } from "./trackTypeSelector";
+import { Store } from 'openrct2-flexui';
 
 
 export class GlobalStateController {
@@ -18,7 +19,7 @@ export class GlobalStateController {
 * * the build tool
  */
 
-    buildDirection: BuildDirection;
+    buildDirection: Store<BuildDirection>;
     buildState: BuildStateController;
     buttonState: ButtonStateController; // create with `this` in the constructor
     segmentSequence: SegmentSequence;
