@@ -45,7 +45,7 @@ export const highlightMapRangeUnderSegment = ({ segment, thisTI, callback }: { s
     // debug(`mapRange: ${JSON.stringify(mapRange)}`);
     ui.tileSelection.range = mapRange;
     if (callback) callback(mapRange);
-}
+};
 
 export const highlightSelectedElements = (segment: Segment | null) => {
     if (segment == null) { return }

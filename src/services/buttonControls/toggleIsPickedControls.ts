@@ -41,4 +41,4 @@ export const shouldThisBePressed =
             });
         }
         return false;
-    }
+    };

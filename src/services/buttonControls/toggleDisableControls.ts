@@ -1,8 +1,5 @@
 import { BuildWindowButton } from '../buttonActions/buttonTypes';
 import { SegmentModel } from '../../viewmodels/segmentModel';
-import { compute, store } from "openrct2-flexui";
-import { debug } from "../../utilities/logger";
-import { TrackElementType } from "../../utilities/trackElementType";
 import { ButtonSelectorModel } from "../../viewmodels/buttonSelectorModel";
 
 import * as button from '../buttonActions/buttonTypeChecks';
