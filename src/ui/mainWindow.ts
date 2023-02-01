@@ -37,8 +37,7 @@ const applyOptionsTip = "Apply the selected vehicle settings to a specific set o
 const multiplierTip = "Multiplies all spinner controls by the specified amount";
 
 let title = `Ride vehicle editor (v${pluginVersion})`;
-if (isDevelopment)
-{
+if (isDevelopment) {
 	title += " [DEBUG]";
 }
 
@@ -99,7 +98,7 @@ export const mainWindow = window({
 				content: [ // toolbar
 					horizontal([
 						vertical({
-							padding: [ "1w", 0 ],
+							padding: ["1w", 0],
 							spacing: 8,
 							content: [ // buttons
 								toggle({
@@ -127,11 +126,9 @@ export const mainWindow = window({
 									tooltip: "Locate your vehicle when you've lost it (again)",
 									image: 5167, // SPR_LOCATE,
 									disabled: model.isEditDisabled,
-									onClick: () =>
-									{
+									onClick: () => {
 										const vehicle = model.selectedVehicle.get();
-										if (vehicle)
-										{
+										if (vehicle) {
 											locate(vehicle[0]);
 										}
 									}
@@ -412,7 +409,7 @@ export const mainWindow = window({
 		]),
 		label({ // credits
 			height: 11,
-			padding: [ 0, 20 ], // do not cover the resize corner
+			padding: [0, 20], // do not cover the resize corner
 			text: "github.com/Basssiiie/OpenRCT2-RideVehicleEditor",
 			tooltip: "Go to this URL to check for the latest updates",
 			alignment: "centred",
@@ -422,13 +419,11 @@ export const mainWindow = window({
 });
 
 
-function labelSpinner(params: LabelParams & SpinnerParams): WidgetCreator<FlexiblePosition>
-{
+function labelSpinner(params: LabelParams & SpinnerParams): WidgetCreator<FlexiblePosition> {
 	return combinedLabelSpinner(controlsLabelWidth, controlsSpinnerWidth, params);
 }
 
-function positionSpinner(params: LabelParams & SpinnerParams): WidgetCreator<FlexiblePosition>
-{
+function positionSpinner(params: LabelParams & SpinnerParams): WidgetCreator<FlexiblePosition> {
 	params.tooltip = "The fantastic map location of your vehicle and where to find it. Only works when the vehicle is not moving.";
 	return combinedLabelSpinner(controlsLabelWidth, controlsSpinnerWidth, params, false);
 }

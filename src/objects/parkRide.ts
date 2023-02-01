@@ -5,8 +5,7 @@ import { RideTrain } from "./rideTrain";
 /**
  * Gets a list of all rides in the park.
  */
-export function getAllRides(): ParkRide[]
-{
+export function getAllRides(): ParkRide[] {
 	return map
 		.rides
 		.filter(r => r.classification === "ride")
@@ -18,8 +17,7 @@ export function getAllRides(): ParkRide[]
 /**
  * Represents a ride in the park.
  */
-export class ParkRide
-{
+export class ParkRide {
 	readonly id: number;
 	private _ride?: Ride | null;
 	private _trains?: RideTrain[] | null;
@@ -30,31 +28,25 @@ export class ParkRide
 	 */
 	constructor(ride: Ride);
 	constructor(id: number);
-	constructor(param: Ride | number)
-	{
-		if (typeof param === "number")
-		{
+	constructor(param: Ride | number) {
+		if (typeof param === "number") {
 			this.id = param;
 			this.refresh();
 		}
-		else
-		{
+		else {
 			this.id = param.id;
 			this._ride = param;
 		}
 	}
 
 
-	refresh(): void
-	{
+	refresh(): void {
 		const obj = map.getRide(this.id);
-		if (obj)
-		{
+		if (obj) {
 			this._ride = obj;
 			this._trains = null;
 		}
-		else
-		{
+		else {
 			this._ride = null;
 		}
 	}
@@ -63,8 +55,7 @@ export class ParkRide
 	/**
 	 * Gets the associated ride data from the game.
 	 */
-	ride(): Ride
-	{
+	ride(): Ride {
 		Log.assert(!!this._ride, `Selected ride with id '${this.id}' is missing.`);
 		return <Ride>this._ride;
 	}
@@ -73,10 +64,8 @@ export class ParkRide
 	/**
 	 * Get all trains on this ride.
 	 */
-	trains(): RideTrain[]
-	{
-		if (!this._trains)
-		{
+	trains(): RideTrain[] {
+		if (!this._trains) {
 			const missingTrain = (): void => this.refresh();
 			this._trains = this.ride().vehicles.map(r => new RideTrain(r, missingTrain));
 		}
