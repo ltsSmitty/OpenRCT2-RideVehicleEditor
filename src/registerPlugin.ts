@@ -5,9 +5,9 @@ import { main } from "./main";
 
 
 registerPlugin({
-	name: "RideVehicleEditor",
+	name: "TrackPaintMatcher",
 	version: Environment.pluginVersion,
-	authors: ["Basssiiie"],
+	authors: ["ltsSmitty"],
 	type: "local",
 	licence: "MIT",
 	main,
