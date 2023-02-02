@@ -6,7 +6,10 @@
  */
 export const pluginVersion = "0.1";
 
-
+/**
+ * Returns the name of the plugin.
+ */
+export const pluginName = "TrackPaintMatcher";
 /**
  * Returns the build configuration of the plugin.
  */
