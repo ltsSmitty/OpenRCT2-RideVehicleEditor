@@ -1,8 +1,8 @@
-# RideVehicleEditor plugin for OpenRCT2
+# Wet Paint plugin for OpenRCT2
 
-This plugin lets you edit vehicles on any ride in your park on the fly.
+Your ride vehicles are dripping with paint, covering the tracks as they roll over them!.
 
-![(Image of train with edited vehicles)](https://raw.githubusercontent.com/Basssiiie/OpenRCT2-RideVehicleEditor/master/img/chaos.png)
+![(Gif of train repainting the track)](https://i.imgur.com/P989UI9.mp4)
 
 ### Current features
 - Select and switch through all ride vehicles in your park, or use the picker to click on the vehicle directly.
