@@ -1,7 +1,6 @@
-# Wet Paint
-## Dynamic Track Colouration Plugin for OpenRCT2
+# Wet Paint – Dynamic Track Colouration for OpenRCT2
 
-Your ride vehicles are dripping with paint, covering the tracks as they roll over them!
+Your ride vehicles are dripping with paint, covering the tracks with paint as they roll over them!
 
 ![(Gif of train repainting the)](https://github.com/ltsSmitty/OpenRCT2-RideVehicleEditor/blob/1e7d94cb9b6d7103e5d82efc84d930bd8ddbac12/img/vertical-painter.gif)
 
@@ -10,12 +9,15 @@ Your ride vehicles are dripping with paint, covering the tracks as they roll ove
 
 ## How to use it
 1. Open the plugin and select a ride from the dropdown or pick one with the eyedropper, and enable colour matching.
-2. In the ride, change the ride colour mode to `Different colours per train`.
-3. Set the individual train cars to the colours you want.
- - The first train colour becomes the main track colour
- - The second train colour becomes the secondary track colour
- - The third colour becomes the track support colour
-4. **If your ride has more than 3 trains**, you'll need to set the multiples of three trains to have the same colours. E.g., you'll need to manually set Train 1 & Train 4 & Train 7 to have the same colours, and Train 2 & Train 5 & Train 8 to match, and Train 3 & Train 6 & Train 9 to matchm etc,
+2. In the ride's paint window, change the ride colour mode to `Different colours per train`.
+3. Set the individual train cars to the colours you want:
+  - The first train colour becomes the main track colour
+  - The second train colour becomes the secondary track colour
+  - The third colour becomes the track support colour
+4. **If your ride has more than 3 trains**, you'll need to set the multiples of three trains to have the same colours. E.g., you'll need to manually set
+* `Train 1` & `Train 4` & `Train 7` to have the same colours, and
+* `Train 2` & `Train 5` & `Train 8` to match, and
+* `Train 3` & `Train 6` & `Train 9` to matchm etc.
 
 ### FAQ
 - The plugin uses the `Alternative track colour schemes` for setting the track colours, which is what limits to using only 3 different paint schemes.
