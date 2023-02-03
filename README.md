@@ -2,7 +2,7 @@
 
 Your ride vehicles are dripping with paint, covering the tracks as they roll over them!.
 
-![(Gif of train repainting the)](https://raw.githubusercontent.com/Basssiiie/OpenRCT2-RideVehicleEditor/master/img/chaos.png)
+![(Gif of train repainting the)](https://github.com/ltsSmitty/OpenRCT2-RideVehicleEditor/blob/1e7d94cb9b6d7103e5d82efc84d930bd8ddbac12/img/vertical-painter.gif)
 
 ### Current features
 - Select and switch through all ride vehicles in your park, or use the picker to click on the vehicle directly.
