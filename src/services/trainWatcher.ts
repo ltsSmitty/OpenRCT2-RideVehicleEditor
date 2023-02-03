@@ -1,4 +1,3 @@
-import { RideVehicle } from './../objects/rideVehicle';
 import { ArrayStore, Colour } from "openrct2-flexui";
 import { ParkRide } from "../objects/parkRide";
 import { RidePaintPreference } from "../viewmodels/rideViewModel";
@@ -19,9 +18,6 @@ export class TrainWatcher {
 
     onRefresh(): void {
         // Log.debug(`${this._ridesToPaint.get().length} rides to paint this tick`);
-
-        // implement a loop through all the rides. in this case, i'm going to force there to be not more than one for this calculation
-
         this._ridesToPaint.get().forEach((ridePreference, idx) => {
             if (!ridePreference.values.enableColourReset &&
                 !ridePreference.values.enableColourMatching) {
@@ -30,14 +26,27 @@ export class TrainWatcher {
             }
 
             const ride = ridePreference.ride;
+
             // Log.debug(`Ride: ${ride.ride().name}`);
             const trains = ride.trains();
-            if (trains.length === 0) { return; }
 
+            // break loop if there are no vehicles on the first train
+            const firstTrain = trains[0];
+
+            if (!firstTrain || !firstTrain.vehicles() || firstTrain.vehicles().length === 0) {
+                Log.debug(`No trains found for ride ${ride.ride().name}`);
+                ride.refresh();
+                return;
+            }
 
             trains.forEach((train, index) => {
-                const vehicles = train.vehicles()
-                if (vehicles.length === 0) { return; }
+                const vehicles = train.vehicles();
+                // if (!vehicles || vehicles.length === 0) {
+                //     Log.debug(`No vehicle found for train`);
+                //     ride.refresh();
+                //     train.refresh();
+                //     return;
+                // }
                 const car = vehicles[0].car();
 
                 if (car.trackProgress < lazyTrackProgressAmount) {
