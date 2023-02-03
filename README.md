@@ -16,11 +16,14 @@ Your ride vehicles are dripping with paint, covering the tracks with paint as th
   - The third colour becomes the track support colour
 4. **If your ride has more than 3 trains**, you'll need to set the multiples of three trains to have the same colours. E.g., you'll need to manually set
 * `Train 1` & `Train 4` & `Train 7` to have the same colours, and
-* `Train 2` & `Train 5` & `Train 8` to match, and
-* `Train 3` & `Train 6` & `Train 9` to matchm etc.
+* `Train 2` & `Train 5` & `Train 8` to have the same colours, and
+* `Train 3` & `Train 6` & `Train 9` to have the same colours, etc.
 
 ### FAQ
 - The plugin uses the `Alternative track colour schemes` for setting the track colours, which is what limits to using only 3 different paint schemes.
+-
+###  Is it safe to uninstall the plugin if I don't want it anymore?
+**Answer:** yes, uninstalling the plugin (by removing it from the Plugins folder) does not break your game or save files.
 
 
 ### Potential improvments
@@ -40,6 +43,12 @@ Your ride vehicles are dripping with paint, covering the tracks with paint as th
 
 ###  Is it safe to uninstall the plugin if I don't want it anymore?
 **Answer:** yes, uninstalling the plugin (by removing it from the Plugins folder) does not break your game or save files.
+
+### Special Thanks
+
+This plugin was inspired by a [Github discussion](https://github.com/OpenRCT2/OpenRCT2/discussions/19290) asking if this kind of painting was possible. Thanks to [particl3s](https://github.com/particl3s) for the idea.
+
+This plugin is mostly a fork of [Basssiiie's](https://github.com/Basssiiie/OpenRCT2-RideVehicleEditor) excellent Ride Vehicle Editor plugin, using his FlexUI framework. Many kudos to him for that work.
 
 ---
 
