@@ -1,11 +1,7 @@
 import { ParkRide } from "../objects/parkRide";
 import * as Log from "../utilities/logger";
-import _ from "lodash-es";
-import track from "../../tests/.trackable/trackable";
-
 
 const pickerToolId = "rve-pick-ride";
-
 
 /**
  * Starts a tool that allows the user to click on a ride to select it.
@@ -44,7 +40,7 @@ export const getRideIDsFromCoords = (coords?: CoordsXY): number[] => {
     // get all the track tile elements at coords
     if (!coords) return [];
 
-    Log.debug(`Getting ride IDs from coords ${coords.x}, ${coords.y}.`);
+    // Log.debug(`Getting ride IDs from coords ${coords.x}, ${coords.y}.`);
     const trackElements = getTileElements<TrackElement>("track", coords);
 
     // filter out the stalls since we don't care about those

@@ -1,5 +1,5 @@
 import { loadAllPreferencesOnOpen, PreferenceStorage } from './../services/preferenceSerializer';
-import { Colour, compute, Store, store, arrayStore } from "openrct2-flexui";
+import { Store, store, arrayStore } from "openrct2-flexui";
 import { getAllRides, ParkRide } from "../objects/parkRide";
 import { findIndex } from "../utilities/arrayHelper";
 import * as Log from "../utilities/logger";
@@ -36,7 +36,7 @@ export class RideViewModel {
         this._onPlayerAction ||= context.subscribe("action.execute", e => this._onPlayerActionExecuted(e));
 
         // initialize the train watcher
-        const trainWatcher = new TrainWatcher(this.ridesToPaint);
+        const _trainWatcher = new TrainWatcher(this.ridesToPaint);
 
         this.loadAllPreferencesOnOpen();
     }
@@ -85,7 +85,7 @@ export class RideViewModel {
         // check if the selected ride has already been serialized
         // if it has, update the values to match
         const { values } = storage.getRidePreferences(rideIDAsKey);
-        Log.debug(`Loaded values: ${JSON.stringify(values)}`);
+        // Log.debug(`Loaded values: ${JSON.stringify(values)}`);
         if (values) {
             this.enableColourMatching.set(values.enableColourMatching);
             this.enableColourReset.set(values.enableColourReset);
@@ -105,6 +105,8 @@ export class RideViewModel {
 
         const enableColourMatching = this.enableColourMatching.get();
         const enableColourReset = this.enableColourReset.get();
+
+        Log.debug(`Repaint preference set for ${selectedParkRide[0].ride().name} to ${enableColourMatching}.`);
 
         // update the serialised values
         storage.saveRidePreferences({
@@ -141,11 +143,12 @@ export class RideViewModel {
 
     private loadAllPreferencesOnOpen(): void {
         const loadedPreferences = loadAllPreferencesOnOpen();
-        this.ridesToPaint.set(loadedPreferences);
+        Log.debug(`Loading preferences:`);
         Log.debug(JSON.stringify(loadedPreferences, null, 2));
+        this.ridesToPaint.set(loadedPreferences);
     }
 
-    onRidesToPaintChange(): void {
+    private onRidesToPaintChange(): void {
         Log.debug("Rides to paint changed");
         const _ridesToPaint = this.ridesToPaint.get();
         // loop through each and if the values are both false, remove it from the array
@@ -166,11 +169,13 @@ export class RideViewModel {
             case "ridecreate":
             case "ridesetname":
                 {
+                    Log.debug("Ride created or renamed");
                     this.rides.set(getAllRides());
                     break;
                 }
             case "ridedemolish":
                 {
+                    Log.debug("Ride demolished");
                     this.rides.set(getAllRides());
                     // remove the ride from the list of rides to paint
                     const _ridesToPaint = this.ridesToPaint.get();
