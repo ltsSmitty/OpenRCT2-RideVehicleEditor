@@ -1,6 +1,7 @@
 import * as Environment from "../environment";
 import { ParkRide } from "../objects/parkRide";
 import { RidePaintPreference } from "../viewmodels/rideViewModel";
+import * as Log from "../utilities/logger";
 
 const saveKey = `${Environment.pluginName}.ridePreferences`;
 
@@ -15,10 +16,11 @@ type SavePreference = {
 type SaveValues = SavePreference["values"];
 
 export const loadAllPreferencesOnOpen = (): RidePaintPreference[] => {
-    let i = 0;
     const ridePreferences: RidePaintPreference[] = [];
-
-    while (map.getRide(i)) {
+    let i = 0;
+    const numRides = map.numRides;
+    while (i < numRides) {
+        Log.debug(`Loading preferences for ride ${i}`);
         const pref = getRidePreferences(i);
         ridePreferences.push({
             ride: new ParkRide(i),
