@@ -1,28 +1,30 @@
-# Wet Paint plugin for OpenRCT2
+# Wet Paint
+## Dynamic Track Colouration Plugin for OpenRCT2
 
-Your ride vehicles are dripping with paint, covering the tracks as they roll over them!.
+Your ride vehicles are dripping with paint, covering the tracks as they roll over them!
 
 ![(Gif of train repainting the)](https://github.com/ltsSmitty/OpenRCT2-RideVehicleEditor/blob/1e7d94cb9b6d7103e5d82efc84d930bd8ddbac12/img/vertical-painter.gif)
 
 ### Current features
-- Select and switch through all ride vehicles in your park, or use the picker to click on the vehicle directly.
-- Change the vehicle type for each vehicle independently.
-- Switch through different variants of the same ride type. (E.g. locomotive, tender or passenger car.)
-- Modify properties like mass, number of seats, (powered) acceleration of each vehicle.
-- Modify spacing between different vehicles on the same train.
-- Copy and paste the settings of a vehicle over other completely unrelated vehicles.
-- Easily apply your changes to all vehicles on the train or the ride.
+- Paint the tracks under a ride with up to three different colour themes.
 
-### Planned features
-- Please submit any ideas under [Issues](https://github.com/Basssiiie/OpenRCT2-RideVehicleEditor/issues).
+## How to use it
+1. Open the plugin and select a ride from the dropdown or pick one with the eyedropper, and enable colour matching.
+2. In the ride, change the ride colour mode to `Different colours per train`.
+3. Set the individual train cars to the colours you want.
+ - The first train colour becomes the main track colour
+ - The second train colour becomes the secondary track colour
+ - The third colour becomes the track support colour
+4. **If your ride has more than 3 trains**, you'll need to set the multiples of three trains to have the same colours. E.g., you'll need to manually set Train 1 & Train 4 & Train 7 to have the same colours, and Train 2 & Train 5 & Train 8 to match, and Train 3 & Train 6 & Train 9 to matchm etc,
 
-## See it in action
+### FAQ
+- The plugin uses the `Alternative track colour schemes` for setting the track colours, which is what limits to using only 3 different paint schemes.
 
-A few people made some great videos showcasing how to use the plugin.
 
-- **[Mini Vehicle Hacking Contest - The Results](https://youtu.be/ThXNZdzY3Ys)**, by Deurklink and his DKMP community (using v1.0)
-- **[Git Gud at OpenRCT2 #93: Vehicle hacking with the Ride Vehicle Editor Plugin!](https://youtu.be/xSzyTD7xFss)**, by Deurklink (using v1.0)
-- **[The Joy of Hacking OpenRCT2: Vehicle Hacking 101](https://youtu.be/gqQHDqQQRDw)**, by Zarathustra (using v0.3)
+### Potential improvments
+- Automatically change the 4th + more trains to automatically match the colours of the associated 1st, 2nd, and 3rd.
+- Modify vehicle train colours directly inside the plugin window.
+- Various performance improvements
 
 ## Installation
 
@@ -33,26 +35,6 @@ A few people made some great videos showcasing how to use the plugin.
     - Otherwise this folder is commonly found in `C:/Users/<YOUR NAME>/Documents/OpenRCT2/plugin` on Windows.
     - If you already had this plugin installed before, you can safely overwrite the old file.
 4. Once the file is there, it should show up ingame in the dropdown menu under the map icon.
-
-## FAQ
-
-### Does it transfer over save games?
-**Answer:** yes, all changes will be saved with your save game.
-
-### Can someone who doesn't have the plugin still open my park after I edited my vehicles?
-**Answer:** yes, all changes to vehicles will still work if the player does not have the plugin installed. The plugin is only required to make any new changes.
-
-### I want to add 100 to a vehicle's property without clicking a 100 times, how?
-**Answer:** in the bottom right corner of the editor window, there's a dropdown with the value `x1`. Change it to `x10` or `x100` to add or subtract by tens or hundreds respectively. You can also hold down the [+] and [-] buttons.
-
-### Can I reset the changes I made to a ride?
-**Answer:** yes, you can reset the ride by closing it twice (to remove the vehicles) and reopening it again. All vehicles will respawn with the original values.
-
-### Is this cheating?
-**Answer:** yes, I suppose so. This plugin replaces a previous technique involving memory hacking, which is similar to how cheat engines work. This "cheat" is not active until you have made changes in the editor window though!
-
-### Can I still play without it when I have it installed?
-**Answer:** yes, the plugin does not do anything if you do not open the editor window.
 
 ###  Is it safe to uninstall the plugin if I don't want it anymore?
 **Answer:** yes, uninstalling the plugin (by removing it from the Plugins folder) does not break your game or save files.
