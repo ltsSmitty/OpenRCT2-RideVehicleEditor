@@ -1,12 +1,14 @@
 import * as Environment from "./environment";
 import { initActions } from "./services/actions";
+import { TrainWatcher } from "./services/trainWatcher";
 import { mainWindow } from "./ui/mainWindow";
+import { RideViewModel } from "./viewmodels/rideViewModel";
 
 
 /**
  * Opens the ride editor window.
  */
-function openEditorWindow(): void {
+function openEditorWindow(model: RideViewModel): void {
 	// Check if game is up-to-date...
 	if (context.apiVersion < 59) {
 		// 59 => https://github.com/OpenRCT2/OpenRCT2/pull/17821
@@ -19,7 +21,7 @@ function openEditorWindow(): void {
 	}
 
 	// Show the current instance if one is active.
-	mainWindow.open();
+	mainWindow(model).open();
 }
 
 
@@ -33,5 +35,6 @@ export function main(): void {
 	}
 
 	initActions();
-	ui.registerMenuItem("TrackPaintMatcher", () => openEditorWindow());
+	const model = new RideViewModel();
+	ui.registerMenuItem("TrackPaintMatcher", () => openEditorWindow(model));
 }
