@@ -60,10 +60,6 @@ export default class ColourChange {
         ColourChange.setRideColourPart(ride, 5, vehicleTernaryColour, colourScheme);
     };
 
-    static setRideStationStyle = (ride: Ride, stationStyle: number): void => {
-        ColourChange.setRideColourPart(ride, 7, stationStyle);
-    };
-
     static setColourScheme = ({ segmentLocation, segmentTrackType, colourScheme }: { segmentLocation: CoordsXYZD, segmentTrackType: number, colourScheme: 0 | 1 | 2 | 3 }): void => {
         context.executeAction("ridesetcolourscheme", {
             ...segmentLocation,
@@ -76,5 +72,9 @@ export default class ColourChange {
                     console.log(`Initial args were: ${JSON.stringify({ ...segmentLocation, trackType: segmentTrackType, colourScheme }, null, 2)}`);
                 }
             });
+    };
+
+    static setRideStationStyle = (ride: Ride, stationStyle: number): void => {
+        ColourChange.setRideColourPart(ride, 7, stationStyle);
     };
 }
