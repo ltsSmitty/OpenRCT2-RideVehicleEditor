@@ -2,7 +2,7 @@
 
 Your ride vehicles are dripping with paint, covering the tracks with paint as they roll over them!
 
-![(Gif of train repainting the)](https://github.com/ltsSmitty/OpenRCT2-RideVehicleEditor/blob/1e7d94cb9b6d7103e5d82efc84d930bd8ddbac12/img/vertical-painter.gif)
+![(Gif of train repainting the track under it)](https://github.com/ltsSmitty/OpenRCT2-RideVehicleEditor/blob/1e7d94cb9b6d7103e5d82efc84d930bd8ddbac12/img/vertical-painter.gif)
 
 ### Current features
 - Paint the tracks under a ride with up to three different colour themes.
@@ -31,7 +31,7 @@ Your ride vehicles are dripping with paint, covering the tracks with paint as th
 ## Installation
 
 1. This plugin requires at least OpenRCT2 version v0.3.3 (release) or the newest develop version.
-2. Download the latest version of the plugin from the [Releases page](https://github.com/Basssiiie/OpenRCT2-RideVehicleEditor/releases).
+2. Download the latest version of the plugin from the [Releases page](https://github.com/ltsSmitty/Wet-Paint-Plugin).
 3. To install it, put the downloaded `*.js` file into your `/OpenRCT2/plugin` folder.
     - Easiest way to find the OpenRCT2-folder is by launching the OpenRCT2 game, click and hold on the red toolbox in the main menu, and select "Open custom content folder".
     - Otherwise this folder is commonly found in `C:/Users/<YOUR NAME>/Documents/OpenRCT2/plugin` on Windows.
