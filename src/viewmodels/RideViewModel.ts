@@ -1,11 +1,59 @@
 import { loadAllPreferencesOnOpen, PreferenceStorage } from './../services/preferenceSerializer';
-import { Store, store, arrayStore } from "openrct2-flexui";
+import { Store, store, arrayStore, Colour, ArrayStore } from "openrct2-flexui";
 import { getAllRides, ParkRide } from "../objects/parkRide";
 import { findIndex } from "../utilities/arrayHelper";
 import * as Log from "../utilities/logger";
 import { PreferenceStorage as storage } from "../services/preferenceSerializer";
 import _ from "lodash-es";
 import { TrainWatcher } from '../services/trainWatcher';
+
+type PaintMode = "train" | "tail";
+
+type PaintStartProps = "withFirstCar" | "afterLastCar";
+
+type PaintEndProps = "afterFirstCar" | "afterLastCar" | "perpetual";
+
+type NumberOfSetsOrColours = 1 | 2 | 3;
+
+export const propKeyStrings: Record<PaintEndProps | PaintStartProps, string> = {
+    "afterFirstCar": "After first car",
+    "afterLastCar": "After last car",
+    "perpetual": "Perpetual",
+    "withFirstCar": "With first car",
+} as const;
+
+export type ColourSet = {
+    vehicleColours: [Colour, Colour, Colour];
+    trackColours: [Colour, Colour, Colour];
+};
+
+export interface TrainModeProps {
+    mode: "train",
+    numberVehicleSets: NumberOfSetsOrColours,
+    vehicleSetColours: ColourSet[],
+    paintStart: PaintStartProps,
+    paintEnd: PaintEndProps,
+}
+
+export type TailProps = {
+    tailColours: [Colour, Colour, Colour];
+    tailLength: number;
+};
+
+export interface TailModeProps {
+    mode: "tail",
+    numberOfTailColours: NumberOfSetsOrColours,
+    paintStart: PaintStartProps,
+    tailProps: TailProps[],
+}
+
+export type PaintModeProps = TrainModeProps | TailModeProps;
+
+export type PaintProps = {
+    ride: ParkRide,
+    colouringEnabled: boolean,
+    props: PaintModeProps;
+};
 
 export type RidePaintPreference = {
     ride: ParkRide,
@@ -15,9 +63,47 @@ export type RidePaintPreference = {
     },
 };
 
+const defaultTailProp: TailProps = {
+    tailColours: [Colour.BordeauxRed, Colour.DarkOrange, Colour.DarkYellow],
+    tailLength: 3,
+};
+
+export class PaintPropsObj {
+    readonly ride = store<ParkRide | null>(null);
+    readonly colouringEnabled = store<boolean>(false);
+    readonly mode: Store<PaintMode> = store<PaintMode>("train");
+    readonly tailModeProps = { // default preset values
+        numberOfTailColours: store<NumberOfSetsOrColours>(3),
+        paintStart: store<PaintStartProps>("afterLastCar"),
+        tailProps: arrayStore<TailProps>([defaultTailProp]),
+    };
+    readonly trainModeProps = { // default preset values
+        numberVehicleSets: store<NumberOfSetsOrColours>(3),
+        vehicleSetColours: arrayStore<ColourSet>([
+            {
+                vehicleColours: [Colour.Black, Colour.Black, Colour.Black],
+                trackColours: [Colour.Black, Colour.Black, Colour.Black],
+            },
+            {
+                vehicleColours: [Colour.Black, Colour.White, Colour.Black],
+                trackColours: [Colour.White, Colour.Black, Colour.White],
+            },
+            {
+                vehicleColours: [Colour.Grey, Colour.Grey, Colour.White],
+                trackColours: [Colour.Black, Colour.Grey, Colour.Grey],
+            },
+        ]),
+        paintStart: store<PaintStartProps>("withFirstCar"),
+        paintEnd: store<PaintEndProps>("afterLastCar"),
+    };
+}
 
 export class RideViewModel {
     readonly selectedRide = store<[ParkRide, number] | null>(null);
+    readonly colouringEnabled = store<boolean>(false);
+    readonly paintMode: Store<PaintMode> = store<PaintMode>("train");
+    readonly paintProps = store<PaintModeProps | null>(null);
+
     readonly rides = store<ParkRide[]>([]);
     readonly ridesToPaint = arrayStore<RidePaintPreference>([]);
     readonly enableColourMatching = store<boolean>(false);
@@ -193,25 +279,7 @@ export class RideViewModel {
                     }
                     break;
                 }
-            /* case "ridesetstatus": // close/reopen ride
-            {
-                const index = this.selector.rideIndex;
-                if (index !== null)
-                {
-                    const ride = this.selector.ride.get();
-                    const statusUpdate = (event.args as RideSetStatusArgs);
-
-                    if (ride !== null && ride.rideId === statusUpdate.ride)
-                    {
-                        Log.debug("(watcher) Ride status changed.");
-                        this.selector.selectRide(index, this.selector.trainIndex ?? 0, this.selector.vehicleIndex ?? 0);
-                    }
-                }
-                break;
-            } */
         }
-
-        // Log.debug(`<${action}>\n\t- type: ${event.type}\n\t- args: ${JSON.stringify(event.args)}\n\t- result: ${JSON.stringify(event.result)}`);
     }
 }
 

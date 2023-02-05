@@ -16,7 +16,7 @@ function openEditorWindow(model: RideViewModel): void {
 		const message = "The version of OpenRCT2 you are currently playing is too old for this plugin.";
 
 		ui.showError(title, message);
-		console.log(`[TrackPaintMatcher] ${title} ${message}`);
+		console.log(`[Wet Paint] ${title} ${message}`);
 		return;
 	}
 
@@ -36,5 +36,5 @@ export function main(): void {
 
 	initActions();
 	const model = new RideViewModel();
-	ui.registerMenuItem("TrackPaintMatcher", () => openEditorWindow(model));
+	ui.registerMenuItem("Wet Paint", () => openEditorWindow(model));
 }
