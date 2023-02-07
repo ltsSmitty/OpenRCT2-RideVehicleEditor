@@ -1,6 +1,6 @@
 import { ArrayStore, Colour } from "openrct2-flexui";
 import { ParkRide } from "../objects/parkRide";
-import { RidePaintPreference } from "../viewmodels/rideViewModel";
+import { PaintProps } from "../viewmodels/viewModel";
 import * as Log from "../utilities/logger";
 import { getTrackElementFromCoords } from "./ridePicker";
 import ColourChange from "./ridePainter";
@@ -8,26 +8,31 @@ import ColourChange from "./ridePainter";
 const lazyTrackProgressAmount = 10;
 
 export class TrainWatcher {
-    private _ridesToPaint: ArrayStore<RidePaintPreference>;
+    private _ridesToPaint: ArrayStore<PaintProps>;
 
 
-    constructor(ridesToPaint: ArrayStore<RidePaintPreference>) {
+    constructor(ridesToPaint: ArrayStore<PaintProps>) {
         this._ridesToPaint = ridesToPaint;
         context.subscribe("interval.tick", () => this.onRefresh());
     }
 
     onRefresh(): void {
-        // Log.debug(`${this._ridesToPaint.get().length} rides to paint this tick`);
-        this._ridesToPaint.get().forEach((ridePreference, idx) => {
-            if (!ridePreference.values.enableColourReset &&
-                !ridePreference.values.enableColourMatching) {
+
+        // loop through all rides that need to be painted
+        const ridesToPaint = this._ridesToPaint.get();
+        Log.debug(`There are ${ridesToPaint.length} rides to paint`);
+        ridesToPaint.forEach((paintProp, idx) => {
+            if (!paintProp.colouringEnabled) {
+                Log.debug(`splicing out index ${idx} from _ridesToPaint}`);
                 this._ridesToPaint.splice(idx, 1);
                 return;
             }
 
-            const ride = ridePreference.ride;
-
-            // Log.debug(`Ride: ${ride.ride().name}`);
+            const ride = paintProp.ride[0];
+            if (!ride.trains()) {
+                ride.refresh();
+                return;
+            }
             const trains = ride.trains();
 
             // break loop if there are no vehicles on the first train
@@ -39,18 +44,25 @@ export class TrainWatcher {
                 return;
             }
 
+            // loop through all trains that need to be painted
             trains.forEach((train, index) => {
                 const vehicles = train.vehicles();
-                // if (!vehicles || vehicles.length === 0) {
-                //     Log.debug(`No vehicle found for train`);
-                //     ride.refresh();
-                //     train.refresh();
-                //     return;
-                // }
-                const car = vehicles[0].car();
+                if (!vehicles || vehicles.length === 0) {
+
+                    vehicles[index].refresh;
+                    ride.refresh();
+                    return;
+                }
+                const _car = vehicles[0];
+                if (!_car) {
+                    Log.debug(`No cars found for train ${index} on ${ride.ride().name}`);
+                    ride.refresh();
+                    return;
+                }
+                _car.refresh();
+                const car = _car.car();
 
                 if (car.trackProgress < lazyTrackProgressAmount) {
-
                     paintTrack({
                         ride,
                         segmentLocationToPaint: car.trackLocation,

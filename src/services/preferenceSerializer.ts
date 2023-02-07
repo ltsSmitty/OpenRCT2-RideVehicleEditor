@@ -1,59 +1,47 @@
 import * as Environment from "../environment";
-import { ParkRide } from "../objects/parkRide";
-import { RidePaintPreference } from "../viewmodels/rideViewModel";
+import { PaintProps } from "../viewmodels/viewModel";
 import * as Log from "../utilities/logger";
 
-const saveKey = `${Environment.pluginName}.ridePreferences`;
+const saveKey = `${Environment.pluginName}.rideProps`;
 
-type SavePreference = {
-    rideIDAsKey: string;
-    values: {
-        enableColourMatching: boolean;
-        enableColourReset: boolean;
-    } | undefined
-};
-
-type SaveValues = SavePreference["values"];
-
-export const loadAllPreferencesOnOpen = (): RidePaintPreference[] => {
-    const ridePreferences: RidePaintPreference[] = [];
+export const loadAllPropsOnOpen = (props?: { reset: boolean }): PaintProps[] => {
+    const rideProps: PaintProps[] = [];
     let i = 0;
     const numRides = map.numRides;
     while (i < numRides) {
-        Log.debug(`Loading preferences for ride ${i}`);
-        const pref = getRidePreferences(i);
-        ridePreferences.push({
-            ride: new ParkRide(i),
-            values: pref.values || {
-                enableColourMatching: false,
-                enableColourReset: false,
-            }
-        });
+        Log.debug(`Loading Props for ride ${i}`);
+        if (props?.reset) {
+            const rideIDAsKey = i.toString();
+            context.getParkStorage(saveKey).set(
+                rideIDAsKey,
+                undefined
+            );
+        }
+        const pref = getRideProps(i);
+        if (pref) rideProps.push(pref);
         i++;
     }
-    return ridePreferences;
+    return rideProps;
+
 };
 
-const getRidePreferences = (rideID: number | string): SavePreference => {
+const getRideProps = (rideID?: number | string): PaintProps | undefined => {
+    if (!rideID) return undefined;
     const rideIDAsKey = rideID.toString();
-    const values = <SaveValues | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
-
-    return {
-        rideIDAsKey,
-        values,
-    };
+    const props = <PaintProps | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
+    return props;
 };
 
-const saveRidePreferences = (preferences: SavePreference): void => {
-    const { rideIDAsKey, values } = preferences;
+const saveRideProps = (props: PaintProps): void => {
+    const rideIDAsKey = props.ride[0].ride().id.toString();
 
     context.getParkStorage(saveKey).set(
         rideIDAsKey,
-        values
+        props
     );
 };
 
-export const PreferenceStorage = {
-    getRidePreferences,
-    saveRidePreferences,
+export const propStorage = {
+    getRideProps,
+    saveRideProps,
 };

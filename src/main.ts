@@ -2,7 +2,7 @@ import * as Environment from "./environment";
 import { initActions } from "./services/actions";
 import { TrainWatcher } from "./services/trainWatcher";
 import { mainWindow } from "./ui/mainWindow";
-import { RideViewModel } from "./viewmodels/rideViewModel";
+import { RideViewModel } from "./viewmodels/viewModel";
 
 
 /**
