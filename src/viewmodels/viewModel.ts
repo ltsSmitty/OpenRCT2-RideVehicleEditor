@@ -348,24 +348,6 @@ export class RideViewModel {
         this.ridesToPaint.splice(rideIndex, 1);
         this.ridesToPaint.push(props);
         return;
-
-        // if the ride has been serialized, update the values
-        // this.ridesToPaint.set(
-        //     this.ridesToPaint.get().map(r => {
-        //         if (r.ride[0].ride().id === props.ride[0].ride().id) {
-        //             return props;
-        //         }
-        //         return r;
-        //     })
-        // );
-
-        // const rideIDAsKey = props.ride[0].ride().id.toString();
-        // const serializedProps = storage.getRideProps(rideIDAsKey);
-        // // if the ride has not been serialized, add it to the array
-        // if (!serializedProps) {
-        //     this.ridesToPaint.push(props);
-        //     return;
-        // }
     }
 
     private loadAllPreferencesOnOpen(): void {

@@ -4,12 +4,18 @@ import * as Log from "../utilities/logger";
 
 const saveKey = `${Environment.pluginName}.rideProps`;
 
+/**
+ * Load all the props from storage on park load. If the save gets corrupted, use the `reset` flat to clear the saved props and start again.
+ * @param props.reset
+ * @returns
+ */
 export const loadAllPropsOnOpen = (props?: { reset: boolean }): PaintProps[] => {
     const rideProps: PaintProps[] = [];
-    let i = 0;
-    const numRides = map.numRides;
-    while (i < numRides) {
+    for (let i = 0; i < map.numRides; i++) {
         Log.debug(`Loading Props for ride ${i}`);
+
+        // It is possible during development for the plugin to reach an unstable state where the rideProps don't align with the park values
+        // If that happens, run this with the `reset` flag to clear the storage and start again
         if (props?.reset) {
             const rideIDAsKey = i.toString();
             context.getParkStorage(saveKey).set(
@@ -19,12 +25,14 @@ export const loadAllPropsOnOpen = (props?: { reset: boolean }): PaintProps[] => 
         }
         const pref = getRideProps(i);
         if (pref) rideProps.push(pref);
-        i++;
     }
     return rideProps;
 
 };
 
+/**
+ * Load the paint props from parkStorage for a specific ride.
+ */
 const getRideProps = (rideID?: number | string): PaintProps | undefined => {
     if (!rideID) return undefined;
     const rideIDAsKey = rideID.toString();
@@ -32,6 +40,9 @@ const getRideProps = (rideID?: number | string): PaintProps | undefined => {
     return props;
 };
 
+/**
+ * Save the paint props to parkStorage for a specific ride.
+ */
 const saveRideProps = (props: PaintProps): void => {
     const rideIDAsKey = props.ride[0].ride().id.toString();
 
