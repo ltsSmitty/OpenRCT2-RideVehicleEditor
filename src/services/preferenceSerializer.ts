@@ -1,6 +1,7 @@
 import * as Environment from "../environment";
 import { PaintProps } from "../viewmodels/viewModel";
 import * as Log from "../utilities/logger";
+import { ParkRide } from "../objects/parkRide";
 
 const saveKey = `${Environment.pluginName}.rideProps`;
 
@@ -37,6 +38,11 @@ const getRideProps = (rideID?: number | string): PaintProps | undefined => {
     if (!rideID) return undefined;
     const rideIDAsKey = rideID.toString();
     const props = <PaintProps | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
+
+    // if the props were loaded from storage, need to rehydrate the ParkRide object
+    if (props && "ride" in props) {
+        props.ride = [new ParkRide(props.ride[0].id), props.ride[1]];
+    }
     return props;
 };
 

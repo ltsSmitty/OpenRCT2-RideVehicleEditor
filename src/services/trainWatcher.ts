@@ -1,3 +1,4 @@
+import { loadAllPropsOnOpen, propStorage } from './preferenceSerializer';
 import { ArrayStore, Colour } from "openrct2-flexui";
 import { ParkRide } from "../objects/parkRide";
 import { PaintProps } from "../viewmodels/viewModel";
@@ -20,7 +21,6 @@ export class TrainWatcher {
 
         // loop through all rides that need to be painted
         const ridesToPaint = this._ridesToPaint.get();
-        Log.debug(`There are ${ridesToPaint.length} rides to paint`);
         ridesToPaint.forEach((paintProp, idx) => {
             if (!paintProp.colouringEnabled) {
                 Log.debug(`splicing out index ${idx} from _ridesToPaint}`);
@@ -29,8 +29,11 @@ export class TrainWatcher {
             }
 
             const ride = paintProp.ride[0];
-            if (!ride.trains()) {
-                ride.refresh();
+
+            // sometimes the save can get corrupted. If that happens, refresh the ride and try again
+            if (!ride?.trains) {
+                Log.debug(`Save corrupted, resetting painting props.`);
+                this._ridesToPaint.set(loadAllPropsOnOpen({ reset: true }));
                 return;
             }
             const trains = ride.trains();
@@ -74,6 +77,14 @@ export class TrainWatcher {
         });
     }
 }
+
+function getSegmentsFromCarLocation(params: { carLocation: CoordsXYZD, ride: ParkRide, numberOfSegments: number = 1 }) {
+    // get a trackIterator at the car location
+    // return an array of {coordsXYZD, trackType}, using previous() to go backwards
+}
+
+
+
 
 const paintTrack = ({ ride, segmentLocationToPaint, colours, colourScheme }: {
     ride: ParkRide,
