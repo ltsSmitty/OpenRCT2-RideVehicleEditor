@@ -1,7 +1,9 @@
+import { TailModeProps } from './../objects/tailModeProps';
+import { FlatTrainModeProperties, TrainModePropertiesObj } from './../objects/trainModeProps';
 import * as Environment from "../environment";
-import { PaintProps } from "../viewmodels/viewModel";
 import * as Log from "../utilities/logger";
 import { ParkRide } from "../objects/parkRide";
+import { PaintProps, PaintMode } from '../objects/PaintPropsObj';
 
 const saveKey = `${Environment.pluginName}.rideProps`;
 
@@ -37,13 +39,14 @@ export const loadAllPropsOnOpen = (props?: { reset: boolean }): PaintProps[] => 
 const getRideProps = (rideID?: number | string): PaintProps | undefined => {
     if (!rideID) return undefined;
     const rideIDAsKey = rideID.toString();
-    const props = <PaintProps | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
+    const props = <FlatPaintProps | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
 
     // if the props were loaded from storage, need to rehydrate the ParkRide object
-    if (props && "ride" in props) {
-        props.ride = [new ParkRide(props.ride[0].id), props.ride[1]];
+    if (props && "numberOfVehicleSets" in props.trainModeProps) {
+        // todo old saves might end up corrupted after this change
+        return unflattenPaintProps(props);
     }
-    return props;
+    return;
 };
 
 /**
@@ -51,10 +54,11 @@ const getRideProps = (rideID?: number | string): PaintProps | undefined => {
  */
 const saveRideProps = (props: PaintProps): void => {
     const rideIDAsKey = props.ride[0].ride().id.toString();
+    const flattenedProps = flattenPaintProps(props);
 
     context.getParkStorage(saveKey).set(
         rideIDAsKey,
-        props
+        flattenedProps
     );
 };
 
@@ -62,3 +66,34 @@ export const propStorage = {
     getRideProps,
     saveRideProps,
 };
+
+type FlatPaintProps = {
+    ride: [number, number]
+    colouringEnabled: boolean
+    mode: PaintMode,
+    trainModeProps: FlatTrainModeProperties
+    tailModeProps: TailModeProps
+};
+
+
+const flattenPaintProps = (props: PaintProps): FlatPaintProps => {
+    return {
+        ride: [props.ride[0].id, props.ride[1]],
+        colouringEnabled: props.colouringEnabled,
+        mode: props.mode,
+        trainModeProps: props.trainModeProps.flatten(),
+        tailModeProps: props.tailModeProps
+    };
+};
+
+const unflattenPaintProps = (props: FlatPaintProps): PaintProps => {
+    const newObj = new TrainModePropertiesObj();
+    newObj.unflatten(props.trainModeProps);
+    return {
+        ride: [new ParkRide(props.ride[0]), props.ride[1]],
+        colouringEnabled: props.colouringEnabled,
+        mode: props.mode,
+        trainModeProps: newObj,
+        tailModeProps: props.tailModeProps
+    };
+}

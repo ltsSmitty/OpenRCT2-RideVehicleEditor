@@ -1,10 +1,12 @@
 import { loadAllPropsOnOpen, propStorage } from './preferenceSerializer';
 import { ArrayStore, Colour } from "openrct2-flexui";
 import { ParkRide } from "../objects/parkRide";
-import { PaintProps } from "../viewmodels/viewModel";
 import * as Log from "../utilities/logger";
 import { getTrackElementFromCoords } from "./ridePicker";
 import ColourChange from "./ridePainter";
+import { getTrackIteratorAtLocation } from './segmentLocator';
+import { PaintValidityChecker } from './paintValdityChecker';
+import { PaintProps } from '../objects/PaintPropsObj';
 
 const lazyTrackProgressAmount = 10;
 
@@ -56,45 +58,34 @@ export class TrainWatcher {
                     ride.refresh();
                     return;
                 }
-                const _car = vehicles[0];
-                if (!_car) {
-                    Log.debug(`No cars found for train ${index} on ${ride.ride().name}`);
-                    ride.refresh();
-                    return;
-                }
-                _car.refresh();
-                const car = _car.car();
 
-                if (car.trackProgress < lazyTrackProgressAmount) {
-                    paintTrack({
-                        ride,
-                        segmentLocationToPaint: car.trackLocation,
-                        colours: [car.colours.body, car.colours.trim, car.colours.tertiary],
-                        colourScheme: index % 3 + 1 as 1 | 2 | 3
-                    });
-                }
+                // const segmentsToPaint = new PaintValidityChecker({ paintProps: paintProp, train }).segmentsToPaint;
+                // Log.debug(`segmentsToPaint: ${JSON.stringify(segmentsToPaint)}`);
+
+                // segmentsToPaint.forEach((segmentToPaint) => paintSegment(segmentToPaint));
             });
         });
     }
 }
 
-function getSegmentsFromCarLocation(params: { carLocation: CoordsXYZD, ride: ParkRide, numberOfSegments: number = 1 }) {
-    // get a trackIterator at the car location
-    // return an array of {coordsXYZD, trackType}, using previous() to go backwards
-}
 
 
+type TrackSegmentProps = {
+    location: CoordsXYZD,
+    trackType: number,
+};
 
 
-const paintTrack = ({ ride, segmentLocationToPaint, colours, colourScheme }: {
+export type SegmentPaintProps = {
     ride: ParkRide,
     segmentLocationToPaint: CoordsXYZD,
+    trackType: number,
     colours: [Colour, Colour, Colour],
     colourScheme: 0 | 1 | 2 | 3
-}): void => {
-    const trackType = getTrackElementFromCoords({ ride, coords: segmentLocationToPaint })?.trackType;
-    if (trackType == null) { Log.debug(`No track found at ${JSON.stringify(segmentLocationToPaint)}`); return; }
+};
 
+const paintSegment = (params: SegmentPaintProps): void => {
+    const { ride, segmentLocationToPaint, colours, colourScheme, trackType } = params;
     ColourChange.setRideColour(ride.ride(), colours[0], colours[1], colours[2], -1, -1, -1, colourScheme);
     ColourChange.setColourScheme({
         segmentLocation: segmentLocationToPaint,

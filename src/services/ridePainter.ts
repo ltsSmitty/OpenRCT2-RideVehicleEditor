@@ -1,5 +1,3 @@
-import { ParkRide } from "../objects/parkRide";
-import { NumberOfSetsOrColours } from "../viewmodels/viewModel";
 import * as Log from "../utilities/logger";
 
 export default class ColourChange {
