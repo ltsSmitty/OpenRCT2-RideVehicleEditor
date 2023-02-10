@@ -94,12 +94,12 @@ export class RideViewModel {
     }
 
     private onVehicleColourSetChange(newColourSet: ColourSet, trainIndex: number): void {
-        Log.debug(`vehicle 0 ${this.painter.trainModeProps.vehicleProps[0].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[0].id}`);
-        Log.debug(`vehicle 1 ${this.painter.trainModeProps.vehicleProps[1].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[1].id}`);
-        Log.debug(`vehicle 2 ${this.painter.trainModeProps.vehicleProps[2].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[2].id}`);
-        Log.debug(`New colour set for train ${trainIndex} is: ${JSON.stringify(newColourSet)}`);
+        // Log.debug(`vehicle 0 ${this.painter.trainModeProps.vehicleProps[0].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[0].id}`);
+        // Log.debug(`vehicle 1 ${this.painter.trainModeProps.vehicleProps[1].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[1].id}`);
+        // Log.debug(`vehicle 2 ${this.painter.trainModeProps.vehicleProps[2].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[2].id}`);
+        Log.debug(`New colour set for train ${trainIndex} id ${this.painter.trainModeProps.vehicleProps[trainIndex].id} is: ${JSON.stringify(newColourSet)}`);
         // it's not saving the colour update, so im trying it here to see if it makes a difference
-        this.painter.saveProps();
+        // this.painter.saveProps();
         this.updateTrainColours(newColourSet, trainIndex);
     }
 
@@ -131,7 +131,7 @@ export class RideViewModel {
         // const loadedPreferences = loadAllPropsOnOpen({ reset: true });
         const loadedPreferences = loadAllPropsOnOpen();
         Log.debug(`Loading preferences:`);
-        Log.debug(JSON.stringify(loadedPreferences));
+        // Log.debug(JSON.stringify(loadedPreferences));
         this.ridesToPaint.set(loadedPreferences);
     }
 
@@ -220,12 +220,14 @@ export class RideViewModel {
             case "ridesetappearance":
                 {
                     Log.debug(`Ride appearance changed: ${JSON.stringify(event.args)}`);
+                    // todo trigger something here to update the colour widgets, something like `this.painter.refreshColours()`
+                    // this.painter.
                     break;
                 }
-            case "ridesetcolourscheme": {
-                Log.debug(`Ride colour scheme changed: ${JSON.stringify(event.args)}`);
-                break;
-            }
+            // case "ridesetcolourscheme": {
+            //     Log.debug(`Ride colour scheme changed: ${JSON.stringify(event.args)}`);
+            //     break;
+            // }
         }
     }
 }
@@ -246,7 +248,7 @@ function paintVehicle(params: {
     partNumber: number,
     colour: number,
 }): void {
-    Log.debug(`index/scheme: ${params.trainIndex}`);
+    // Log.debug(`index/scheme: ${params.trainIndex}`);
     context.executeAction("ridesetappearance", {
         ride: params.rideID,
         type: params.partNumber,

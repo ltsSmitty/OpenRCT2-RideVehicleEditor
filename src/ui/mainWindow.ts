@@ -19,27 +19,15 @@ if (isDevelopment) {
 
 export const mainWindow = (model: RideViewModel): WindowTemplate => {
 
-	const isTrainTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore, (r, c, m) =>
-		r == undefined ||
-		!c ||
-		m !== "train");
+	const isTrainTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore, (r, c, m) => r == undefined || !c || m !== "train");
 
-	const numTrains = compute(model.painter.rideStore, (r) => {
-		return (r ? r[0].trains().length : 0);
-	});
+	const numTrains = compute(model.painter.rideStore, (r) => (r ? r[0].trains().length : 0));
 
 	const doesTrainExist = (trainIndex: number): Store<boolean> => compute(numTrains, (n) => (trainIndex < n));
 
+	const isThisVehicleSetEnabled = (vehIndex: number): Store<boolean> => compute(model.painter.trainModeProps.numberVehicleSets, numVehicleSets => numVehicleSets > vehIndex);
 
-	const isThisVehicleSetEnabled = (vehIndex: number): Store<boolean> => compute(model.painter.trainModeProps.numberVehicleSets, numVehicleSets => {
-		return numVehicleSets > vehIndex;
-	});
-
-
-	const isTailTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore, (r, c, m) =>
-		r == undefined ||
-		!c ||
-		m !== "tail");
+	const isTailTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore, (r, c, m) => r == undefined || !c || m !== "tail");
 
 
 	return tabwindow({
@@ -195,13 +183,18 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps 
 
 	const thisColourSetStore = trainProps.colourSet;
 
+	Log.debug(`Initialized colourSetStore for the index ${trainIndex}: ${vehicleProps[trainIndex].id}`);
+
 	const calculateVisiblity = compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden");
 
 	function updateTrainColour(params: { trainIndex: number, partNumber: number, newColour: number }): void {
-		Log.debug(`Updating train colour for train ${params.trainIndex} part ${params.partNumber} to ${params.newColour}, ${vehicleProps[trainIndex].id}`);
+		Log.debug(`Updated colourSetStore for the index ${trainIndex}: ${vehicleProps[trainIndex].id}`);
+
+		Log.debug(`Updating train colour for train ${trainIndex} part ${params.partNumber} to ${params.newColour}, ${vehicleProps[trainIndex].id}`);
 		const firstColourSet = vehicleProps[trainIndex].colourSet.get();
 		firstColourSet.vehicleColours[params.partNumber] = params.newColour;
-		vehicleProps[params.trainIndex].colourSet.set({ ...firstColourSet });
+		vehicleProps[trainIndex].colourSet.set({ ...firstColourSet });
+		// vehicleProps[params.trainIndex].colourSet.set({ ...firstColourSet });
 	}
 
 	return groupbox({ // the options for a single train
@@ -219,7 +212,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps 
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
 						colour: compute(ride, thisColourSetStore, (r, s) => {
-							Log.debug(`Vehicle ${trainIndex}'s ${s.vehicleColours}.  r? ${!!r}`);
+							Log.debug(`Vehicle ${trainIndex}'s body is ${r ? r[0].ride().vehicleColours[trainIndex].body ?? "undefined" : "undefined"}`);
 							return r ? r[0].ride().vehicleColours[trainIndex].body ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrainColour({ trainIndex, partNumber: 0, newColour: c })
@@ -228,7 +221,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps 
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
 						colour: compute(ride, thisColourSetStore, (r, s) => {
-							Log.debug(`Vehicle ${trainIndex}'s ${s.vehicleColours}.  r? ${!!r}`);
+							Log.debug(`Vehicle ${trainIndex}'s trim is ${r ? r[0].ride().vehicleColours[trainIndex].trim ?? "undefined" : "undefined"}`);
 							return r ? r[0].ride().vehicleColours[trainIndex].trim ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrainColour({ trainIndex, partNumber: 1, newColour: c })
@@ -237,7 +230,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps 
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
 						colour: compute(ride, thisColourSetStore, (r, s) => {
-							Log.debug(`Vehicle ${trainIndex}'s ${s.vehicleColours}. r? ${!!r}`);
+							Log.debug(`Vehicle ${trainIndex}'s tertiary is ${r ? r[0].ride().vehicleColours[trainIndex].tertiary ?? "undefined" : "undefined"}`);
 							return r ? r[0].ride().vehicleColours[trainIndex].tertiary ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrainColour({ trainIndex, partNumber: 2, newColour: c })
