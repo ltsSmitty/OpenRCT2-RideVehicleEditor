@@ -23,11 +23,7 @@ export class RideViewModel {
         this.rides.subscribe(r => updateSelectionOrNull(this.painter.rideStore, r));
         this.painter.rideStore.subscribe(() => this.onRideSelectionChange()); // handle updating the booleans
         this.ridesToPaint.subscribe(() => this.onRidesToPaintChange()); // handle updating the serialised values
-
-        // handle updating the serialised values
-        const vehicleColourStores = this.painter.trainModeProps.vehicleProps.map(v => v.colourSet);
-        const _vehicleColourSetChangeStores = vehicleColourStores.map((v, i) => v.subscribe((newColourSet) => this.onVehicleColourSetChange(newColourSet, i)));
-
+        this.painter.trainModeProps.colourSets.subscribe(() => this.onVehicleColourChange()); // handle painting the trains
         this._onPlayerAction ||= context.subscribe("action.execute", e => this._onPlayerActionExecuted(e));
 
         // initialize the train watcher
@@ -86,21 +82,15 @@ export class RideViewModel {
 
         // set the train mode props from storage, or to defaults if nothing was loaded
         props?.trainModeProps
-            ? this.painter.trainModeProps.updateFromExisting(props.trainModeProps)
+            ? this.painter.trainModeProps.setFromExistingProps(props.trainModeProps)
             : this.painter.trainModeProps.reset();
 
         // todo something for tail mode
         this.painter.tailModeProps.set(props?.tailModeProps ?? this.painter.tailModeProps.get());
     }
 
-    private onVehicleColourSetChange(newColourSet: ColourSet, trainIndex: number): void {
-        // Log.debug(`vehicle 0 ${this.painter.trainModeProps.vehicleProps[0].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[0].id}`);
-        // Log.debug(`vehicle 1 ${this.painter.trainModeProps.vehicleProps[1].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[1].id}`);
-        // Log.debug(`vehicle 2 ${this.painter.trainModeProps.vehicleProps[2].get().colourSet.vehicleColours}, ${this.painter.trainModeProps.vehicleProps[2].id}`);
-        Log.debug(`New colour set for train ${trainIndex} id ${this.painter.trainModeProps.vehicleProps[trainIndex].id} is: ${JSON.stringify(newColourSet)}`);
-        // it's not saving the colour update, so im trying it here to see if it makes a difference
-        // this.painter.saveProps();
-        this.updateTrainColours(newColourSet, trainIndex);
+    private onVehicleColourChange(): void {
+        this.updateTrainColours();
     }
 
     private handleValueChange(props: PaintProps): void {
@@ -147,41 +137,105 @@ export class RideViewModel {
         });
     }
 
-    updateTrainColours(newColourSet: ColourSet, trainIndex: number): void {
+    // updateTrainColour(params: { trainPart: keyof ColourSet["vehicleColours"], trainIndex: number, colour: number }): void {
+    //     const ride = this.painter.ride;
+    //     if (!ride) return;
+
+    //     const { numberOfVehicleSets } = this.painter.trainModeProps;
+    //     const numTrains = ride[0].trains().length;
+
+    //     ColourChange.setRideVehicleScheme({ rideID: ride[0].ride().id, scheme: "perTrain" });
+    //     paintVehicle({
+    //         rideID: ride[0].ride().id,
+    //         trainIndex: params.trainIndex,
+    //         partNumber: params.trainPart == "body" ? 3 : params.trainPart == "trim" ? 4 : 5,
+    //         colour: params.colour,
+    //     });
+    // }
+
+
+    updateTrainColours(): void {
 
         const ride = this.painter.ride;
         if (!ride) return;
 
-        const { numberOfVehicleSets } = this.painter.trainModeProps;
+        const colourSets = this.painter.trainModeProps.colourSets.get();
         const numTrains = ride[0].trains().length;
+        const numberOfVehicleSets = this.painter.trainModeProps.numberVehicleSets.get();
 
         ColourChange.setRideVehicleScheme({ rideID: ride[0].ride().id, scheme: "perTrain" });
 
-        for (let i = trainIndex; i < numTrains; i += numberOfVehicleSets) {
-            Log.debug(`i: ${i}`);
-            Log.debug(`Painting vehicle ${i} of ride ${ride[0].ride().id} with colours ${newColourSet.vehicleColours}`); // todo remove this
-            // set all vehicles to the same colour
-            paintVehicle({
-                rideID: ride[0].ride().id,
-                trainIndex: i,
-                partNumber: 3,
-                colour: newColourSet.vehicleColours[0],
-            });
-            paintVehicle({
-                rideID: ride[0].ride().id,
-                trainIndex: i,
-                partNumber: 4,
-                colour: newColourSet.vehicleColours[1],
-            });
-            paintVehicle({
-                rideID: ride[0].ride().id,
-                trainIndex: i,
-                partNumber: 5,
-                colour: newColourSet.vehicleColours[2],
-            });
+        for (let i = 0; i < numTrains; i++) {
+            // Log.debug(`Colouring train ${i}`);
+            if (numberOfVehicleSets === 1) {
+                // set all vehicles to the same colour
+                // Log.debug(` 1 set,  colours ${JSON.stringify(colourSets[i].vehicleColours)}`);
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 3,
+                    colour: colourSets[0].vehicleColours.body
+                });
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 4,
+                    colour: colourSets[0].vehicleColours.trim
+                });
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 5,
+                    colour: colourSets[0].vehicleColours.tertiary
+                });
+            }
+            if (numberOfVehicleSets === 2) {
+                // check i % 2 for colouration
+                // Log.debug(` 2 sets  colours ${JSON.stringify(colourSets[i % 2].vehicleColours)}`);
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 3,
+                    colour: colourSets[(i % 2)].vehicleColours.body,
+                });
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 4,
+                    colour: colourSets[(i % 2)].vehicleColours.trim,
+                });
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 5,
+                    colour: colourSets[(i % 2)].vehicleColours.tertiary,
+                });
+            }
+            if (numberOfVehicleSets === 3) {
+                // check i % 3 for colouration
+                // Log.debug(` 3 sets  colours ${JSON.stringify(colourSets[i % 3].vehicleColours)}`);
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 3,
+                    colour: colourSets[(i % 3)].vehicleColours.body,
+                });
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 4,
+                    colour: colourSets[(i % 3)].vehicleColours.trim,
+                });
+                paintVehicle({
+                    rideID: ride[0].ride().id,
+                    trainIndex: i,
+                    partNumber: 5,
+                    colour: colourSets[(i % 3)].vehicleColours.tertiary,
+                });
+            }
         }
-    }
 
+    }
 
     /**
      * Triggers for every executed player action.
@@ -219,7 +273,7 @@ export class RideViewModel {
                 }
             case "ridesetappearance":
                 {
-                    Log.debug(`Ride appearance changed: ${JSON.stringify(event.args)}`);
+                    // Log.debug(`Ride appearance changed: ${JSON.stringify(event.args)}`);
                     // todo trigger something here to update the colour widgets, something like `this.painter.refreshColours()`
                     // this.painter.
                     break;
@@ -248,14 +302,30 @@ function paintVehicle(params: {
     partNumber: number,
     colour: number,
 }): void {
-    // Log.debug(`index/scheme: ${params.trainIndex}`);
-    context.executeAction("ridesetappearance", {
+    // Log.debug(JSON.stringify(params));
+    const { rideID, trainIndex, partNumber, colour } = params;
+    if (rideID == null || trainIndex == null || partNumber == null || colour == null) { Log.debug(`Unable to paint, something is missing`); return; }
+
+    context.queryAction("ridesetappearance", {
         ride: params.rideID,
         type: params.partNumber,
-        value: params.colour,
         index: params.trainIndex,
+        value: params.colour,
     },
-        (result) => {
-            // Log.debug(`${JSON.stringify(result, null, 2)}`);
-        });
+        result => {
+            if (!result.error) {
+                context.executeAction("ridesetappearance", {
+                    ride: params.rideID,
+                    type: params.partNumber,
+                    value: params.colour,
+                    index: params.trainIndex,
+                },
+                    (result) => {
+                        // Log.debug(`${JSON.stringify(result, null, 2)}`);
+                    });
+                return;
+            }
+            Log.debug(`ridesetappearance returned error: ${JSON.stringify(result, null, 2)}`);
+        })
+
 }

@@ -59,12 +59,29 @@ export class TrainWatcher {
                     return;
                 }
 
-                // const segmentsToPaint = new PaintValidityChecker({ paintProps: paintProp, train }).segmentsToPaint;
-                // Log.debug(`segmentsToPaint: ${JSON.stringify(segmentsToPaint)}`);
+                const segmentsToPaint = new PaintValidityChecker({ paintProps: paintProp, train, trainIndex: index }).segmentsToPaint;
 
-                // segmentsToPaint.forEach((segmentToPaint) => paintSegment(segmentToPaint));
+                // Log.debug(`segmentsToPaint: ${JSON.stringify(segmentsToPaint.map((segment) => segment))}`);
+
+                segmentsToPaint.forEach((segmentToPaint) => {
+                    // need to get the ride, colours, and colour scheme
+                    const colourIndex = index % paintProp.trainModeProps.numberVehicleSets.get();
+                    Log.debug(`Painting colourIndex: ${colourIndex}`);
+
+                    const colours = paintProp.trainModeProps.colourSets.get()[colourIndex].trackColours;
+                    const colourScheme = colourIndex % 4 as 0 | 1 | 2 | 3;
+                    const { location, trackType } = segmentToPaint;
+                    paintSegment({
+                        ride: paintProp.ride[0],
+                        colours,
+                        colourScheme: colourScheme,
+                        segmentLocationToPaint: location,
+                        trackType
+                    });
+                });
             });
         });
+
     }
 }
 
@@ -80,13 +97,15 @@ export type SegmentPaintProps = {
     ride: ParkRide,
     segmentLocationToPaint: CoordsXYZD,
     trackType: number,
-    colours: [Colour, Colour, Colour],
+    colours: { main: number, additional: number, supports: number },
     colourScheme: 0 | 1 | 2 | 3
 };
 
 const paintSegment = (params: SegmentPaintProps): void => {
     const { ride, segmentLocationToPaint, colours, colourScheme, trackType } = params;
-    ColourChange.setRideColour(ride.ride(), colours[0], colours[1], colours[2], -1, -1, -1, colourScheme);
+
+    ColourChange.setRideColour(ride.ride(), colours.main, colours.additional, colours.supports, -1, -1, -1, colourScheme);
+    Log.debug(`successfully set ride colours`);
     ColourChange.setColourScheme({
         segmentLocation: segmentLocationToPaint,
         segmentTrackType: trackType,

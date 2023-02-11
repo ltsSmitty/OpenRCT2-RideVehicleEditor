@@ -1,5 +1,5 @@
 import { TailModeProps } from './../objects/tailModeProps';
-import { FlatTrainModeProperties, TrainModePropertiesObj } from './../objects/trainModeProps';
+import { FlatTrainProperties, TrainModePropertiesObj } from './../objects/trainModeProps';
 import * as Environment from "../environment";
 import * as Log from "../utilities/logger";
 import { ParkRide } from "../objects/parkRide";
@@ -42,7 +42,7 @@ const getRideProps = (rideID?: number | string): PaintProps | undefined => {
     const props = <FlatPaintProps | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
 
     // if the props were loaded from storage, need to rehydrate the ParkRide object
-    if (props && "numberOfVehicleSets" in props.trainModeProps) {
+    if (props && "numberVehicleSets" in props.trainModeProps) {
         // todo old saves might end up corrupted after this change
         return unflattenPaintProps(props);
     }
@@ -71,7 +71,7 @@ type FlatPaintProps = {
     ride: [number, number]
     colouringEnabled: boolean
     mode: PaintMode,
-    trainModeProps: FlatTrainModeProperties
+    trainModeProps: FlatTrainProperties
     tailModeProps: TailModeProps
 };
 

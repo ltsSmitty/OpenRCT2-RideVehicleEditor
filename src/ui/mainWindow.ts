@@ -6,7 +6,7 @@ import { toggleRidePicker } from "../services/ridePicker";
 import { ParkRide } from '../objects/parkRide';
 import * as Log from '../utilities/logger';
 import { propKeyStrings, NumberOfSetsOrColours } from "../objects/PaintPropsObj";
-import { TrainModePropertiesObj, TrainModeVehicleProps } from "../objects/trainModeProps";
+import { ColourSet, TrainModePropertiesObj } from "../objects/trainModeProps";
 
 const buttonSize = 24;
 const controlsLabelWidth = 201;
@@ -144,22 +144,19 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 					}),
 					trainGroupbox({
 						ride: model.painter.rideStore,
-						trainProps: model.painter.trainModeProps.vehicleProps[0],
-						vehicleProps: model.painter.trainModeProps.vehicleProps,
+						trainProps: model.painter.trainModeProps,
 						trainIndex: 0,
 						isDisabled: compute(isTrainTabDisabled, doesTrainExist(0), isThisVehicleSetEnabled(0), (t1, t2, t3) => (t1 || !t2 || !t3))
 					}),
 					trainGroupbox({
 						ride: model.painter.rideStore,
-						trainProps: model.painter.trainModeProps.vehicleProps[1],
-						vehicleProps: model.painter.trainModeProps.vehicleProps,
+						trainProps: model.painter.trainModeProps,
 						trainIndex: 1,
 						isDisabled: compute(isTrainTabDisabled, doesTrainExist(1), isThisVehicleSetEnabled(1), (t1, t2, t3) => t1 || !t2 || !t3)
 					}),
 					trainGroupbox({
 						ride: model.painter.rideStore,
-						trainProps: model.painter.trainModeProps.vehicleProps[2],
-						vehicleProps: model.painter.trainModeProps.vehicleProps,
+						trainProps: model.painter.trainModeProps,
 						trainIndex: 2,
 						isDisabled: compute(isTrainTabDisabled, doesTrainExist(2), isThisVehicleSetEnabled(2), (t1, t2, t3) => t1 || !t2 || !t3)
 					}),
@@ -174,27 +171,33 @@ function labelCheckbox(params: LabelParams & CheckboxParams): WidgetCreator<Flex
 	return combinedLabelCheckbox(controlsLabelWidth, params);
 }
 
-function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps }: {
+function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 	ride: Store<[ParkRide, number] | null>,
-	trainProps: TrainModeVehicleProps,
-	trainIndex: number, isDisabled: Store<boolean>,
-	vehicleProps: [TrainModeVehicleProps, TrainModeVehicleProps, TrainModeVehicleProps]
+	trainProps: TrainModePropertiesObj,
+	trainIndex: 0 | 1 | 2,
+	isDisabled: Store<boolean>,
+
 }): WidgetCreator<FlexiblePosition> {
-
-	const thisColourSetStore = trainProps.colourSet;
-
-	Log.debug(`Initialized colourSetStore for the index ${trainIndex}: ${vehicleProps[trainIndex].id}`);
 
 	const calculateVisiblity = compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden");
 
-	function updateTrainColour(params: { trainIndex: number, partNumber: number, newColour: number }): void {
-		Log.debug(`Updated colourSetStore for the index ${trainIndex}: ${vehicleProps[trainIndex].id}`);
+	function updateTrainColour(params:
+		{ trainIndex: 0 | 1 | 2, colour: number, part: keyof ColourSet["vehicleColours"] }): void {
 
-		Log.debug(`Updating train colour for train ${trainIndex} part ${params.partNumber} to ${params.newColour}, ${vehicleProps[trainIndex].id}`);
-		const firstColourSet = vehicleProps[trainIndex].colourSet.get();
-		firstColourSet.vehicleColours[params.partNumber] = params.newColour;
-		vehicleProps[trainIndex].colourSet.set({ ...firstColourSet });
-		// vehicleProps[params.trainIndex].colourSet.set({ ...firstColourSet });
+		const { trainIndex, colour, part } = params;
+		Log.debug(`Train index: ${trainIndex}, new colour: ${colour}, part: ${part}`);
+
+		trainProps.setVehicleColour({ trainIndex, colour, part });
+	}
+
+	function updateTrackColour(params:
+		{ trainIndex: 0 | 1 | 2, colour: number, part: keyof ColourSet["trackColours"] }): void {
+
+		// shift the train index by 1 since the 0th index is the main colour scheme and 1-3 are the additional ones
+		const { trainIndex, colour, part } = params;
+		Log.debug(`Train index: ${trainIndex}, new colour: ${colour}, part: ${part}`);
+
+		trainProps.setTrackColour({ trainIndex, colour, part });
 	}
 
 	return groupbox({ // the options for a single train
@@ -211,62 +214,55 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps 
 					colourPicker({ // train main colour
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-						colour: compute(ride, thisColourSetStore, (r, s) => {
-							Log.debug(`Vehicle ${trainIndex}'s body is ${r ? r[0].ride().vehicleColours[trainIndex].body ?? "undefined" : "undefined"}`);
+						colour: compute(ride, trainProps.colourSets, (r, c) => {
 							return r ? r[0].ride().vehicleColours[trainIndex].body ?? 0 : 0;
 						}),
-						onChange: (c) => updateTrainColour({ trainIndex, partNumber: 0, newColour: c })
+						onChange: (c) => updateTrainColour({ trainIndex, colour: c, part: "body" })
 					}),
 					colourPicker({ // train trim colour
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-						colour: compute(ride, thisColourSetStore, (r, s) => {
-							Log.debug(`Vehicle ${trainIndex}'s trim is ${r ? r[0].ride().vehicleColours[trainIndex].trim ?? "undefined" : "undefined"}`);
+						// colour: compute(ride, (r) => {
+						colour: compute(ride, trainProps.colourSets, (r, c) => {
 							return r ? r[0].ride().vehicleColours[trainIndex].trim ?? 0 : 0;
 						}),
-						onChange: (c) => updateTrainColour({ trainIndex, partNumber: 1, newColour: c })
+						onChange: (c) => updateTrainColour({ trainIndex, colour: c, part: "trim" })
 					}),
 					colourPicker({ // train teriary colour
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-						colour: compute(ride, thisColourSetStore, (r, s) => {
-							Log.debug(`Vehicle ${trainIndex}'s tertiary is ${r ? r[0].ride().vehicleColours[trainIndex].tertiary ?? "undefined" : "undefined"}`);
+						colour: compute(ride, trainProps.colourSets, (r, c) => {
 							return r ? r[0].ride().vehicleColours[trainIndex].tertiary ?? 0 : 0;
 						}),
-						onChange: (c) => updateTrainColour({ trainIndex, partNumber: 2, newColour: c })
+						onChange: (c) => updateTrainColour({ trainIndex, colour: c, part: "tertiary" })
 					}),
+
 					label({ text: "Track colour", visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"), }),
 
-					// colourPicker({ // track main
-					// 	visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-					// 	disabled: doesTrainExist(ride, trainIndex),
-					// 	colour: compute(trainModeProps, (props) => props.vehicleSetColours[trainIndex].trackColours[0]),
-					// 	onChange: (c) => {
-					// 		const trainProps = trainModeProps.get();
-					// 		trainProps.vehicleSetColours[trainIndex].trackColours[0] = c;
-					// 		trainModeProps.set({ ...trainProps });
-					// 	}
-					// }),
-					// colourPicker({ // track additional
-					// 	visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-					// 	disabled: doesTrainExist(ride, trainIndex),
-					// 	colour: compute(trainModeProps, (props) => props.vehicleSetColours[trainIndex].trackColours[0]),
-					// 	onChange: (c) => {
-					// 		const trainProps = trainModeProps.get();
-					// 		trainProps.vehicleSetColours[trainIndex].trackColours[1] = c;
-					// 		trainModeProps.set({ ...trainProps });
-					// 	}
-					// }),
-					// colourPicker({ // track supports
-					// 	visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-					// 	disabled: doesTrainExist(ride, trainIndex),
-					// 	colour: compute(trainModeProps, (props) => props.vehicleSetColours[trainIndex].trackColours[0]),
-					// 	onChange: (c) => {
-					// 		const trainProps = trainModeProps.get();
-					// 		trainProps.vehicleSetColours[trainIndex].trackColours[2] = c;
-					// 		trainModeProps.set({ ...trainProps });
-					// 	}
-					// }),
+					colourPicker({ // track main
+						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
+						disabled: doesTrainExist(ride, trainIndex),
+						colour: compute(ride, trainProps.colourSets, (r, c) => {
+							return r ? r[0].ride().colourSchemes[trainIndex].main ?? 0 : 0;
+						}),
+						onChange: (c) => updateTrackColour({ trainIndex, colour: c, part: "main" })
+					}),
+					colourPicker({ // track additional
+						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
+						disabled: doesTrainExist(ride, trainIndex),
+						colour: compute(ride, trainProps.colourSets, (r, c) => {
+							return r ? r[0].ride().colourSchemes[trainIndex].main ?? 0 : 0;
+						}),
+						onChange: (c) => updateTrackColour({ trainIndex, colour: c, part: "additional" })
+					}),
+					colourPicker({ // track supports
+						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
+						disabled: doesTrainExist(ride, trainIndex),
+						colour: compute(ride, trainProps.colourSets, (r, c) => {
+							return r ? r[0].ride().colourSchemes[trainIndex].main ?? 0 : 0;
+						}),
+						onChange: (c) => updateTrackColour({ trainIndex, colour: c, part: "supports" })
+					}),
 
 				]
 			}),
@@ -277,7 +273,9 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps 
 					items: [propKeyStrings.withFirstCar, propKeyStrings.afterFirstCar],
 					visibility: calculateVisiblity,
 					onChange: (i) => {
-						(i === 0) ? trainProps.paintStart.set("withFirstCar") : trainProps.paintStart.set("afterLastCar");
+						(i === 0)
+							? trainProps.setPaintStart({ trainIndex, paintStart: "withFirstCar" })
+							: trainProps.setPaintStart({ trainIndex, paintStart: "afterLastCar" });
 					}
 				})
 			]),
@@ -288,36 +286,34 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled, vehicleProps 
 					items: [propKeyStrings.afterFirstCar, propKeyStrings.afterLastCar, propKeyStrings.perpetual, propKeyStrings.afterNSegments],
 					visibility: calculateVisiblity,
 					onChange: (i) => {
-						const paintEnd = trainProps.paintEnd;
 						switch (i) {
 							case 0:
-								paintEnd.set("afterFirstCar");
+								trainProps.setPaintEnd({ trainIndex, paintEnd: "afterFirstCar" });
 								break;
 							case 1:
-								paintEnd.set("afterLastCar");
+								trainProps.setPaintEnd({ trainIndex, paintEnd: "afterLastCar" });
 								break;
 							case 2:
-								paintEnd.set("perpetual");
+								trainProps.setPaintEnd({ trainIndex, paintEnd: "perpetual" });
 								break;
 							case 3:
-								paintEnd.set("afterNSegments");
+								trainProps.setPaintEnd({ trainIndex, paintEnd: "afterNSegments" });
 								break;
 						}
 					}
 				}),
 				spinner({
-					visibility: compute(calculateVisiblity, trainProps.paintEnd, (vis, paintEnd) => {
-						if (vis === "visible" && paintEnd === "afterNSegments") {
+					visibility: compute(calculateVisiblity, trainProps.numberOfNSegments, (vis, numberOfNSegment) => {
+						if (vis === "visible" && trainProps.paintEnd.get()[trainIndex - 1] === "afterNSegments") {
 							return "visible";
 						}
 						return "hidden";
 					}),
 					minimum: 0,
 					maximum: 255,
-					value: 1
-					// value: compute(trainModeProps.paintEnd, (props) => props.numberVehicleSets),
+					// value: compute(trainProps.numberOfNSegments, (numberOfSegs) => numberOfSegs[trainIndex - 1]),
 					// onChange: (v) => {
-					// 	// don't actually have a place to save this yet
+					// 	trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v });
 					// }
 				})
 			])

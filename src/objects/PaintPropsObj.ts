@@ -90,6 +90,15 @@ export class PaintPropsObj {
 
     constructor(propChangeCallback: (props: PaintProps) => void) {
         this.propChangeCallback = propChangeCallback;
+        // make sure to save on colourSet change
+        this.trainModeProps.colourSets.subscribe((_colourSets: ColourSet[]): void => {
+            Log.debug(`Saving colourSets on change.`);
+            this.saveProps();
+        });
+
+        this.trainModeProps.numberVehicleSets.subscribe((_numberVehicleSets): void => {
+            this.saveProps();
+        });
     }
 
     get ride(): [ParkRide, number] | null {
@@ -106,30 +115,36 @@ export class PaintPropsObj {
             return;
         }
 
+        Log.debug(`In set Ride, Loaded colourSet`);
+        savedValues.trainModeProps.prettyPrintVehicleColours();
+
         // set the loaded values
         this.colouringEnabled = savedValues.colouringEnabled;
         this.mode = savedValues.mode;
-        this.trainModeProps.numberOfVehicleSets = savedValues.trainModeProps.numberOfVehicleSets;
-
-        // set the vehicle props to that of the loaded values
-        this.trainModeProps.vehicleProps.forEach((vehicleProps, index) => {
-            Log.debug(`Setting vehicle props for vehicle ${index} to ${savedValues.trainModeProps.vehicleProps[index].get()} (was ${vehicleProps.get()})`);
-            vehicleProps.set(savedValues.trainModeProps.vehicleProps[index].get());
-        });
+        this.trainModeProps.setFromExistingProps(savedValues.trainModeProps);
 
         // this.tailModeProps.set(savedValues.tailModeProps);
+        this.saveProps();
+    }
+
+    setFromExistingProps(props: PaintProps): void {
+        this.rideStore.set(props.ride);
+        this.colouringEnabledStore.set(props.colouringEnabled);
+        this.modeStore.set(props.mode);
+        this.trainModeProps.setFromExistingProps(props.trainModeProps);
+        this.tailModeProps.set(props.tailModeProps);
 
         this.saveProps();
     }
 
-    set numberVehicleSets(numberOfSets: NumberOfSetsOrColours) {
-        this.trainModeProps.numberOfVehicleSets = numberOfSets;
-        this.saveProps();
-    }
+    // set numberVehicleSets(numberOfSets: NumberOfSetsOrColours) {
+    //     this.trainModeProps.numberVehicleSets.set(numberOfSets);
+    //     this.saveProps();
+    // }
 
-    get numberVehicleSets(): NumberOfSetsOrColours {
-        return this.trainModeProps.numberOfVehicleSets;
-    }
+    // get numberVehicleSets(): NumberOfSetsOrColours {
+    //     return this.trainModeProps.numberVehicleSets.get();
+    // }
 
     set mode(mode: PaintMode) {
         this.modeStore.set(mode);
@@ -154,20 +169,20 @@ export class PaintPropsObj {
     //     this.saveProps();
     // }
 
-    set trainPaintStart(params: { paintStart: PaintStartProps, index: 0 | 1 | 2 }) {
-        this.trainModeProps.vehicleProps[params.index].paintStart.set(params.paintStart);
-        this.saveProps();
-    }
+    // set trainPaintStart(params: { paintStart: PaintStartProps, index: 0 | 1 | 2 }) {
+    //     this.trainModeProps.vehicleProps[params.index].paintStart.set(params.paintStart);
+    //     this.saveProps();
+    // }
 
-    set trainPaintEnd(params: { paintEnd: PaintEndProps, index: 0 | 1 | 2 }) {
-        this.trainModeProps.vehicleProps[params.index].paintEnd.set(params.paintEnd);
-        this.saveProps();
-    }
+    // set trainPaintEnd(params: { paintEnd: PaintEndProps, index: 0 | 1 | 2 }) {
+    //     this.trainModeProps.vehicleProps[params.index].paintEnd.set(params.paintEnd);
+    //     this.saveProps();
+    // }
 
-    set trainNumberOfNSegments(params: { numberOfNSegments: number, index: 0 | 1 | 2 }) {
-        this.trainModeProps.vehicleProps[params.index].numberOfNSegments.set(params.numberOfNSegments);
-        this.saveProps();
-    }
+    // set trainNumberOfNSegments(params: { numberOfNSegments: number, index: 0 | 1 | 2 }) {
+    //     this.trainModeProps.vehicleProps[params.index].numberOfNSegments.set(params.numberOfNSegments);
+    //     this.saveProps();
+    // }
 
     updateTailModeProps(props: TailModeProps): void {
         this.tailModeProps.set(props);
@@ -175,9 +190,10 @@ export class PaintPropsObj {
     }
 
     resetValues(): void {
+        // don't reset the ride
         this.colouringEnabled = false;
         this.mode = "train";
-        this.trainModeProps.vehicleProps.forEach((props) => props.reset());
+        this.trainModeProps.reset();
         // this.tailModeProps.set(defaultTailModeProps);
         this.saveProps();
     }
