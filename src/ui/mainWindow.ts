@@ -193,9 +193,8 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 	function updateTrackColour(params:
 		{ trainIndex: 0 | 1 | 2, colour: number, part: keyof ColourSet["trackColours"] }): void {
 
-		// shift the train index by 1 since the 0th index is the main colour scheme and 1-3 are the additional ones
 		const { trainIndex, colour, part } = params;
-		Log.debug(`Train index: ${trainIndex}, new colour: ${colour}, part: ${part}`);
+		Log.debug(`Track index: ${trainIndex}, new colour: ${colour}, part: ${part}`);
 
 		trainProps.setTrackColour({ trainIndex, colour, part });
 	}
@@ -270,13 +269,36 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 				label({ text: "Paint start:", visibility: calculateVisiblity, width: 70 }),
 				dropdown({
 					width: 120,
-					items: [propKeyStrings.withFirstCar, propKeyStrings.afterLastCar],
+					items: [propKeyStrings.withFirstCar, propKeyStrings.afterLastCar, propKeyStrings.beforeNSegments],
 					visibility: calculateVisiblity,
 					onChange: (i) => {
-						(i === 0)
-							? trainProps.setPaintStart({ trainIndex, paintStart: "withFirstCar" })
-							: trainProps.setPaintStart({ trainIndex, paintStart: "afterLastCar" });
-					}
+						switch (i) {
+							case 0:
+								trainProps.setPaintStart({ trainIndex, paintStart: "withFirstCar" });
+								break;
+							case 1:
+								trainProps.setPaintStart({ trainIndex, paintStart: "afterLastCar" });
+								break;
+							case 2:
+								trainProps.setPaintStart({ trainIndex, paintStart: "beforeNSegments" });
+								break;
+						}
+					},
+					selectedIndex: compute(ride, trainProps.paintStart, (r, p) => {
+						return r ? (p[trainIndex] === "withFirstCar" ? 0 : p[trainIndex] === "afterLastCar" ? 1 : 2) : 0;
+					})
+				}),
+				spinner({
+					visibility: compute(calculateVisiblity, trainProps.numberOfNSegmentsBefore, trainProps.paintStart, (vis, numberOfNSegment, e) => {
+						if (vis === "visible" && trainProps.paintStart.get()[trainIndex] === "beforeNSegments") {
+							return "visible";
+						}
+						return "hidden";
+					}),
+					value: compute(trainProps.numberOfNSegmentsBefore, (numberOfSegs) => numberOfSegs[trainIndex]),
+					minimum: -255,
+					maximum: 255,
+					onChange: (v) => trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v, position: "before" })
 				})
 			]),
 			horizontal([ // Paint end row
@@ -300,21 +322,22 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 								trainProps.setPaintEnd({ trainIndex, paintEnd: "afterNSegments" });
 								break;
 						}
-					}
+					},
+					selectedIndex: compute(ride, trainProps.paintEnd, (r, p) => {
+						return r ? (p[trainIndex] === "afterFirstCar" ? 0 : p[trainIndex] === "afterLastCar" ? 1 : p[trainIndex] === "perpetual" ? 2 : 3) : 0;
+					})
 				}),
 				spinner({
-					visibility: compute(calculateVisiblity, trainProps.numberOfNSegments, (vis, numberOfNSegment) => {
-						if (vis === "visible" && trainProps.paintEnd.get()[trainIndex - 1] === "afterNSegments") {
+					visibility: compute(calculateVisiblity, trainProps.numberOfNSegmentsAfter, trainProps.paintEnd, (vis, numberOfNSegment, e) => {
+						if (vis === "visible" && trainProps.paintEnd.get()[trainIndex] === "afterNSegments") {
 							return "visible";
 						}
 						return "hidden";
 					}),
-					minimum: 0,
+					value: compute(trainProps.numberOfNSegmentsAfter, (numberOfSegs) => numberOfSegs[trainIndex]),
+					minimum: -255,
 					maximum: 255,
-					// value: compute(trainProps.numberOfNSegments, (numberOfSegs) => numberOfSegs[trainIndex - 1]),
-					// onChange: (v) => {
-					// 	trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v });
-					// }
+					onChange: (v) => trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v, position: "after" })
 				})
 			])
 		]

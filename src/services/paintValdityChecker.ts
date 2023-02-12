@@ -4,16 +4,18 @@ import { getTrackIteratorAtLocation } from './segmentLocator';
 import { ParkRide } from '../objects/parkRide';
 import { PaintProps, PaintMode } from '../objects/PaintPropsObj';
 
-const lazyTrackProgressAmount = 10;
+const lazyTrackProgressAmount = 15;
 
 export class PaintValidityChecker {
     private paintProps: PaintProps;
     private train: RideTrain;
     private trainIndex: number;
     private firstCarProgress: number = -1;
+    private secondCarProgress: number = -1;
     private lastCarProgress: number = -1;
     private paintMode: PaintMode;
     private firstCarLocation!: CoordsXYZD;
+    private secondCarLocation!: CoordsXYZD;
     private lastCarLocation!: CoordsXYZD;
     /**
      * An array of segments which qualify for painting this tick, based on the param's paintStart, paintEnd, and train's location.
@@ -53,6 +55,10 @@ export class PaintValidityChecker {
                 if (this.lastCarProgress < lazyTrackProgressAmount)
                     return true;
             }
+            if (paintStart == "beforeNSegments" || paintEnd == "afterNSegments") {
+                if (this.lastCarProgress < lazyTrackProgressAmount || this.firstCarProgress < lazyTrackProgressAmount)
+                    return true;
+            }
             // Log.debug(`Neither first nor last car is in threshold`);
             return false;
         }
@@ -72,21 +78,34 @@ export class PaintValidityChecker {
         this.firstCarProgress = firstCar.car().trackProgress;
         this.firstCarLocation = firstCar.car().trackLocation;
 
+
         // get the progress of the last car
         const lastCar = this.train.vehicles()[this.train.vehicles().length - 1];
         if (!lastCar) {
-            // Log.debug(`Last car not found on ${this.paintProps.ride[0].ride().name}`);
+            Log.debug(`Last car not found on ${this.paintProps.ride[0].ride().name}`);
             return;
         }
         lastCar.refresh();
         this.lastCarProgress = lastCar.car().trackProgress;
         this.lastCarLocation = lastCar.car().trackLocation;
 
+        const secondCar = this.train.vehicles()[1];
+        if (!secondCar) {
+            // Log.debug(`Second car not found on ${this.paintProps.ride[0].ride().name}`);
+            // One or zero cars, so just use the first car's location
+            this.secondCarProgress = this.lastCarProgress;
+            this.secondCarLocation = this.lastCarLocation;
+        }
+        else {
+            secondCar.refresh();
+            this.secondCarProgress = secondCar.car().trackProgress;
+            this.secondCarLocation = secondCar.car().trackLocation;
+        }
     }
 
     private computeTrainPaintSegments(): void {
 
-        const { numberOfNSegments, paintEnd, paintStart, trackColours } = this.paintProps.trainModeProps.getTrainSetInfo(this.trainIndex);
+        const { numberOfNSegmentsBefore, numberOfNSegmentsAfter, paintEnd, paintStart } = this.paintProps.trainModeProps.getTrainSetInfo(this.trainIndex);
         const segmentsToPaint: TrackSegmentProps[] = [];
 
 
@@ -109,12 +128,25 @@ export class PaintValidityChecker {
             }
         }
 
+        // paintStart = "numberOfNSegmentsBefore"
+        if (paintStart == "beforeNSegments") {
+            // if (this.firstCarProgress < lazyTrackProgressAmount) {
+            // Log.debug(`Paint start is before ${numberOfNSegmentsBefore} segments. First car progress: ${this.firstCarProgress}`);
+            const segmentsBehind = this.getSegmentsNSegmentsBehindCar({
+                carLocation: this.firstCarLocation,
+                numberOfSegments: -1 * numberOfNSegmentsBefore, // set it negative to go in front of the car instead
+                setAsMainColour: false
+            });
+            segmentsToPaint.push(...segmentsBehind);
+            // }
+        }
+
         // paintEnd = "afterFirstCar"
         if (paintEnd == "afterFirstCar") {
             // Log.debug(`Paint end is after first car. First car progress: ${this.firstCarProgress}`);
-            if (this.firstCarProgress < lazyTrackProgressAmount) {
-                const segmentBehind = this.getSegmentNSegmentsBehindCar({ carLocation: this.firstCarLocation, numberOfSegments: 1, setAsMainColour: true });
-                segmentBehind ? segmentsToPaint.push(segmentBehind) : null;
+            if (this.secondCarProgress < lazyTrackProgressAmount) {
+                const segmentsBehind = this.getSegmentsNSegmentsBehindCar({ carLocation: this.secondCarLocation, numberOfSegments: 2, setAsMainColour: true });
+                segmentsBehind ? segmentsToPaint.push(...segmentsBehind) : null;
             }
         }
 
@@ -130,13 +162,18 @@ export class PaintValidityChecker {
         // paintEnd = "afterNSegments"
         if (paintEnd == "afterNSegments") {
             // Log.debug(`Paint end is after ${numberOfNSegments} segments. First car progress: ${this.firstCarProgress}`);
-            if (this.firstCarProgress < lazyTrackProgressAmount) {
-                const segmentBehind = this.getSegmentNSegmentsBehindCar({ carLocation: this.firstCarLocation, numberOfSegments: numberOfNSegments, setAsMainColour: true });
-                segmentBehind ? segmentsToPaint.push(segmentBehind) : null;
-            }
+            // if (this.firstCarProgress < lazyTrackProgressAmount) {
+            const segmentBehind = this.getNthSegmentBehindCar({
+                carLocation: this.lastCarLocation,
+                numberOfSegments: numberOfNSegmentsAfter,
+                setAsMainColour: true
+            });
+            segmentBehind ? segmentsToPaint.push(segmentBehind) : null;
+            // }
         }
 
         // if paintEnd is perpetual, no need to do anything
+
 
         this.segmentsToPaint = segmentsToPaint.map((props) => this.composeFinalPaintProps({ trackSegmentProps: props }));
 
@@ -162,7 +199,43 @@ export class PaintValidityChecker {
     }
 
     // i think that the 0th segment is problematic, because it doesn't exactly match with where the train itself is.
-    getSegmentNSegmentsBehindCar(params: { carLocation: CoordsXYZD, numberOfSegments: Omit<number, 0>, setAsMainColour: boolean }): TrackSegmentProps | null {
+    getSegmentsNSegmentsBehindCar(params: { carLocation: CoordsXYZD, numberOfSegments: Omit<number, 0>, setAsMainColour: boolean }): TrackSegmentProps[] {
+        const { carLocation, numberOfSegments, setAsMainColour } = params;
+        // get a trackIterator at the car location
+        const trackIterator = getTrackIteratorAtLocation(carLocation);
+        if (!trackIterator) { return []; }
+
+
+        const segmentsAlongTheWay: TrackSegmentProps[] = [];
+
+        // get the initial segment
+        const trackType = trackIterator.segment?.type;
+        const location = trackIterator.position;
+        segmentsAlongTheWay.push({ trackType: trackType ?? 0, location, setAsMainColour });
+
+        // then loop through the segments until we've reached the number of segments we want
+        if (numberOfSegments > 0) {// use previous to iterate backwards
+            for (let i = 0; i < numberOfSegments; i++) {
+                if (!trackIterator.previous()) { return []; }
+                const trackType = trackIterator.segment?.type;
+                const location = trackIterator.position;
+                segmentsAlongTheWay.push({ trackType: trackType ?? 0, location, setAsMainColour });
+            }
+        }
+        else
+            if (numberOfSegments < 0) {// actually use next to iterate forwards
+                for (let i = 0; i > numberOfSegments; i--) {
+                    if (!trackIterator.next()) { return []; }
+                    const trackType = trackIterator.segment?.type;
+                    const location = trackIterator.position;
+                    segmentsAlongTheWay.push({ trackType: trackType ?? 0, location, setAsMainColour });
+                }
+            }
+        return segmentsAlongTheWay;
+    }
+
+    // i think that the 0th segment is problematic, because it doesn't exactly match with where the train itself is.
+    getNthSegmentBehindCar(params: { carLocation: CoordsXYZD, numberOfSegments: Omit<number, 0>, setAsMainColour: boolean }): TrackSegmentProps | null {
         const { carLocation, numberOfSegments, setAsMainColour } = params;
         // get a trackIterator at the car location
         const trackIterator = getTrackIteratorAtLocation(carLocation);

@@ -3,7 +3,7 @@ import { NumberOfSetsOrColours } from "./PaintPropsObj";
 import * as Log from "../utilities/logger";
 import _ from "lodash-es";
 
-export type PaintStartProps = "withFirstCar" | "afterLastCar";
+export type PaintStartProps = "withFirstCar" | "afterLastCar" | "beforeNSegments";
 
 export type PaintEndProps = "afterFirstCar" | "afterLastCar" | "perpetual" | "afterNSegments";
 
@@ -18,7 +18,8 @@ export interface TrainModeProperties {
     colourSets: ThreeTuple<ColourSet>,
     paintStart: ThreeTuple<PaintStartProps>,
     paintEnd: ThreeTuple<PaintEndProps>,
-    numberOfNSegments: ThreeTuple<number>
+    numberOfNSegmentsBefore: ThreeTuple<number>
+    numberOfNSegmentsAfter: ThreeTuple<number>
 }
 
 type TrainPropertiesStoreType = {
@@ -40,7 +41,8 @@ const defaultTrainModePropsStore: TrainPropertiesStoreType = {
     colourSets: store<ThreeTuple<ColourSet>>(defaultColourSets),
     paintStart: store<ThreeTuple<PaintStartProps>>(defaultPaintStart),
     paintEnd: store<ThreeTuple<PaintEndProps>>(defaultPaintEnd),
-    numberOfNSegments: store<ThreeTuple<number>>(defaultNSegments),
+    numberOfNSegmentsBefore: store<ThreeTuple<number>>(defaultNSegments),
+    numberOfNSegmentsAfter: store<ThreeTuple<number>>(defaultNSegments),
 };
 
 export type FlatTrainProperties = TrainModeProperties & { numberVehicleSets: NumberOfSetsOrColours };
@@ -50,14 +52,16 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
     readonly colourSets = store<ThreeTuple<ColourSet>>(defaultColourSets);
     readonly paintStart = store<ThreeTuple<PaintStartProps>>(defaultPaintStart);
     readonly paintEnd = store<ThreeTuple<PaintEndProps>>(defaultPaintEnd);
-    readonly numberOfNSegments = store<ThreeTuple<number>>(defaultNSegments);
+    readonly numberOfNSegmentsBefore = store<ThreeTuple<number>>(defaultNSegments);
+    readonly numberOfNSegmentsAfter = store<ThreeTuple<number>>(defaultNSegments);
 
     reset(): void {
         Log.debug(`Resetting train mode properties to defaults.`);
         this.colourSets.set({ ...defaultColourSets });
         this.paintStart.set({ ...defaultTrainModePropsStore.paintStart.get() });
         this.paintEnd.set({ ...defaultTrainModePropsStore.paintEnd.get() });
-        this.numberOfNSegments.set({ ...defaultTrainModePropsStore.numberOfNSegments.get() });
+        this.numberOfNSegmentsBefore.set({ ...defaultTrainModePropsStore.numberOfNSegmentsBefore.get() });
+        this.numberOfNSegmentsAfter.set({ ...defaultTrainModePropsStore.numberOfNSegmentsAfter.get() });
         this.numberVehicleSets.set(defaultNumberVehicleSets);
     }
 
@@ -82,6 +86,13 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
         [ ${this.colourSets.get()[2].vehicleColours.body}, ${this.colourSets.get()[2].vehicleColours.trim}, ${this.colourSets.get()[2].vehicleColours.tertiary} ]`);
     }
 
+    prettyPrintTrackColours(): void {
+        Log.debug(`Track colours:
+        [ ${this.colourSets.get()[0].trackColours.main}, ${this.colourSets.get()[0].trackColours.additional}, ${this.colourSets.get()[0].trackColours.supports} ]
+        [ ${this.colourSets.get()[1].trackColours.main}, ${this.colourSets.get()[1].trackColours.additional}, ${this.colourSets.get()[1].trackColours.supports} ]
+        [ ${this.colourSets.get()[2].trackColours.main}, ${this.colourSets.get()[2].trackColours.additional}, ${this.colourSets.get()[2].trackColours.supports} ]`);
+    }
+
     setPaintStart(params: { trainIndex: 0 | 1 | 2, paintStart: PaintStartProps }): void {
         const paintStart = this.paintStart.get();
         paintStart[params.trainIndex] = params.paintStart;
@@ -94,17 +105,20 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
         this.paintEnd.set({ ...paintEnd });
     }
 
-    setNumberOfNSegments(params: { trainIndex: 0 | 1 | 2, numberOfNSegments: number }): void {
-        const numberOfNSegments = this.numberOfNSegments.get();
+    setNumberOfNSegments(params: { trainIndex: 0 | 1 | 2, numberOfNSegments: number, position: "before" | "after" }): void {
+        const numberOfNSegments = params.position == "before" ? this.numberOfNSegmentsBefore.get() : this.numberOfNSegmentsAfter.get();
         numberOfNSegments[params.trainIndex] = params.numberOfNSegments;
-        this.numberOfNSegments.set({ ...numberOfNSegments });
+        params.position == "before"
+            ? this.numberOfNSegmentsBefore.set({ ...numberOfNSegments })
+            : this.numberOfNSegmentsAfter.set({ ...numberOfNSegments });
     }
 
     setFromExistingProps(trainModeProps: TrainModePropertiesObj): void {
         this.colourSets.set(trainModeProps.colourSets.get());
         this.paintStart.set(trainModeProps.paintStart.get());
         this.paintEnd.set(trainModeProps.paintEnd.get());
-        this.numberOfNSegments.set(trainModeProps.numberOfNSegments.get());
+        this.numberOfNSegmentsBefore.set(trainModeProps.numberOfNSegmentsBefore?.get() ?? defaultNSegments);
+        this.numberOfNSegmentsAfter.set(trainModeProps.numberOfNSegmentsAfter?.get() ?? defaultNSegments);
         this.numberVehicleSets.set(trainModeProps.numberVehicleSets.get());
     }
 
@@ -113,7 +127,8 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
             colourSets: { ...this.colourSets.get() },
             paintStart: this.paintStart.get(),
             paintEnd: this.paintEnd.get(),
-            numberOfNSegments: this.numberOfNSegments.get(),
+            numberOfNSegmentsBefore: this.numberOfNSegmentsBefore.get(),
+            numberOfNSegmentsAfter: this.numberOfNSegmentsAfter.get(),
             numberVehicleSets: this.numberVehicleSets.get(),
         };
     }
@@ -143,18 +158,32 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
         this.setColourSets(flatProps.colourSets);
         this.paintStart.set(flatProps.paintStart);
         this.paintEnd.set(flatProps.paintEnd);
-        this.numberOfNSegments.set(flatProps.numberOfNSegments);
+        this.numberOfNSegmentsBefore.set(flatProps.numberOfNSegmentsBefore);
+        this.numberOfNSegmentsAfter.set(flatProps.numberOfNSegmentsAfter);
         this.numberVehicleSets.set(flatProps.numberVehicleSets);
 
     }
 
     getTrainSetInfo(index: number): TrainSetInfo {
+
+        // // check if any of the props are undefined; if they are, then call reset to set them to default values
+        // if (this.colourSets.get() == undefined ||
+        //     this.paintStart.get() == undefined ||
+        //     this.paintEnd.get() == undefined ||
+        //     this.numberOfNSegmentsBefore.get() == undefined ||
+        //     this.numberOfNSegmentsAfter.get() == undefined) {
+        //     Log.debug(`Resetting train mode props because one of them was undefined`);
+        //     this.reset();
+        // }
+
+
         return {
             vehicleColours: this.colourSets.get()[index].vehicleColours,
             trackColours: this.colourSets.get()[index].trackColours,
             paintStart: this.paintStart.get()[index],
             paintEnd: this.paintEnd.get()[index],
-            numberOfNSegments: this.numberOfNSegments.get()[index],
+            numberOfNSegmentsBefore: this.numberOfNSegmentsBefore.get()[index],
+            numberOfNSegmentsAfter: this.numberOfNSegmentsAfter.get()[index],
         };
     }
 }
@@ -164,5 +193,6 @@ type TrainSetInfo = {
     trackColours: ColourSet["trackColours"],
     paintStart: PaintStartProps,
     paintEnd: PaintEndProps,
-    numberOfNSegments: number,
+    numberOfNSegmentsBefore: number,
+    numberOfNSegmentsAfter: number,
 };

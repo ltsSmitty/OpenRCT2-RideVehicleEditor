@@ -28,7 +28,7 @@ export function getTrackIteratorAtLocation(trackLocation: CoordsXYZD): TrackIter
 /**
  * Finds the index of a matching track element on the specified tile.
  */
-function getIndexForTrackElementAt(coords: CoordsXYZD): number[] {
+export function getIndexForTrackElementAt(coords: CoordsXYZD): number[] {
     const tile = map.getTile(Math.trunc(coords.x / UnitsPerTile), Math.trunc(coords.y / UnitsPerTile));
     const allElements = tile.elements, len = allElements.length;
 
@@ -40,7 +40,21 @@ function getIndexForTrackElementAt(coords: CoordsXYZD): number[] {
             && element.baseZ === coords.z
             && element.direction === coords.direction) {
             matchingElements.push(i);
-            // return i;
+        }
+    }
+    return matchingElements;
+}
+
+export function getTrackElementsAt(coords: CoordsXYZD): TrackElement[] {
+    const tile = map.getTile(Math.trunc(coords.x / UnitsPerTile), Math.trunc(coords.y / UnitsPerTile));
+    const allElements = tile.elements, len = allElements.length;
+
+    const matchingElements: TrackElement[] = [];
+
+    for (let i = 0; i < len; i++) {
+        const element = tile.elements[i];
+        if (element.type === "track") {
+            matchingElements.push(element);
         }
     }
     return matchingElements;

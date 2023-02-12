@@ -13,8 +13,9 @@ export type NumberOfSetsOrColours = 1 | 2 | 3;
 export const propKeyStrings: Record<PaintEndProps | PaintStartProps | PaintMode | NumberOfSetsOrColours, string> = {
     "afterFirstCar": "After first car",
     "afterLastCar": "After last car",
+    "beforeNSegments": "N segments before",
     "perpetual": "Perpetual",
-    "afterNSegments": "After N segments",
+    "afterNSegments": "N segments after",
     "withFirstCar": "With first car",
     "train": "Train Mode",
     "tail": "Tail Mode",
@@ -117,6 +118,8 @@ export class PaintPropsObj {
 
         Log.debug(`In set Ride, Loaded colourSet`);
         savedValues.trainModeProps.prettyPrintVehicleColours();
+        savedValues.trainModeProps.prettyPrintTrackColours();
+
 
         // set the loaded values
         this.colouringEnabled = savedValues.colouringEnabled;

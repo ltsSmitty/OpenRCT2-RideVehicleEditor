@@ -1,11 +1,10 @@
-import { loadAllPropsOnOpen, propStorage } from './preferenceSerializer';
+import { loadAllPropsOnOpen } from './preferenceSerializer';
 import { ArrayStore } from "openrct2-flexui";
-import { ParkRide } from "../objects/parkRide";
 import * as Log from "../utilities/logger";
-import { getTrackElementFromCoords } from "./ridePicker";
 import ColourChange from "./ridePainter";
 import { PaintValidityChecker, SegmentPaintProps } from './paintValdityChecker';
 import { PaintProps } from '../objects/PaintPropsObj';
+import { getTrackElementsAt } from './segmentLocator';
 
 const lazyTrackProgressAmount = 10;
 
@@ -73,9 +72,32 @@ const paintSegment = (params: SegmentPaintProps): void => {
         ColourChange.setRideColour(ride.ride(), colours.main, colours.additional, colours.supports, -1, -1, -1, colourScheme);
     }
 
-    ColourChange.setColourScheme({
-        segmentLocation: segmentLocationToPaint,
-        segmentTrackType: trackType,
-        colourScheme: colourScheme,
-    });
+    queryExecuteSetColourScheme({ location: segmentLocationToPaint, trackType: trackType, colourScheme: colourScheme });
 };
+
+function queryExecuteSetColourScheme(params: { location: CoordsXYZD, trackType: number, colourScheme: 0 | 1 | 2 | 3 }): void {
+    context.queryAction("ridesetcolourscheme", { ...params.location, trackType: params.trackType, colourScheme: params.colourScheme }, (queryResults) => {
+        if (queryResults.error) {
+            // console.log(`Query failed: Initial args were: ${JSON.stringify(params, null, 2)}`);
+
+            // look up what segments are actually on that x,y
+            const matchingSegments = getTrackElementsAt(params.location).filter((segment) => segment.trackType === params.trackType);
+            if (matchingSegments.length > 1) {
+                Log.debug(`Unable to find the right segment since there are two of them at this location, leaving unchanged.`);
+                return;
+            }
+            if (matchingSegments.length === 0) {
+                Log.debug(`Unable to find the right segment since there are none of them at this location.`);
+                return;
+            }
+            // Log.debug(`Found a segment that matches the right type at a corrected z of ${matchingSegments[0].baseZ} instead of ${params.location.z}.`);
+            const correctedZ = matchingSegments[0].baseZ;
+            params.location.z = correctedZ;
+
+            queryExecuteSetColourScheme(params);
+        }
+        else context.executeAction("ridesetcolourscheme", { ...params.location, trackType: params.trackType, colourScheme: params.colourScheme }, (paintResult) => {
+            // Log.debug(`Colour change result: ${JSON.stringify(paintResult, null, 2)}`);
+        });
+    });
+}
