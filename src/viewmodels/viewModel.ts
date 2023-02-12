@@ -1,5 +1,5 @@
 import { loadAllPropsOnOpen, propStorage as storage } from '../services/preferenceSerializer';
-import { Store, store, arrayStore, compute } from "openrct2-flexui";
+import { Store, store, arrayStore } from "openrct2-flexui";
 import { getAllRides, ParkRide } from "../objects/parkRide";
 import { findIndex } from "../utilities/arrayHelper";
 import { TrainWatcher } from '../services/trainWatcher';
@@ -7,7 +7,6 @@ import ColourChange from '../services/ridePainter';
 import { PaintProps, PaintPropsObj } from '../objects/PaintPropsObj';
 import * as Log from "../utilities/logger";
 import _ from "lodash-es";
-import { ColourSet } from '../objects/trainModeProps';
 
 
 export class RideViewModel {
@@ -137,23 +136,6 @@ export class RideViewModel {
         });
     }
 
-    // updateTrainColour(params: { trainPart: keyof ColourSet["vehicleColours"], trainIndex: number, colour: number }): void {
-    //     const ride = this.painter.ride;
-    //     if (!ride) return;
-
-    //     const { numberOfVehicleSets } = this.painter.trainModeProps;
-    //     const numTrains = ride[0].trains().length;
-
-    //     ColourChange.setRideVehicleScheme({ rideID: ride[0].ride().id, scheme: "perTrain" });
-    //     paintVehicle({
-    //         rideID: ride[0].ride().id,
-    //         trainIndex: params.trainIndex,
-    //         partNumber: params.trainPart == "body" ? 3 : params.trainPart == "trim" ? 4 : 5,
-    //         colour: params.colour,
-    //     });
-    // }
-
-
     updateTrainColours(): void {
 
         const ride = this.painter.ride;
@@ -169,7 +151,6 @@ export class RideViewModel {
             // Log.debug(`Colouring train ${i}`);
             if (numberOfVehicleSets === 1) {
                 // set all vehicles to the same colour
-                // Log.debug(` 1 set,  colours ${JSON.stringify(colourSets[i].vehicleColours)}`);
                 paintVehicle({
                     rideID: ride[0].ride().id,
                     trainIndex: i,
@@ -191,7 +172,6 @@ export class RideViewModel {
             }
             if (numberOfVehicleSets === 2) {
                 // check i % 2 for colouration
-                // Log.debug(` 2 sets  colours ${JSON.stringify(colourSets[i % 2].vehicleColours)}`);
                 paintVehicle({
                     rideID: ride[0].ride().id,
                     trainIndex: i,
