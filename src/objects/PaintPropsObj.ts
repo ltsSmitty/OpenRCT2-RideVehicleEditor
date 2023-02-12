@@ -137,15 +137,6 @@ export class PaintPropsObj {
         this.saveProps();
     }
 
-    // set numberVehicleSets(numberOfSets: NumberOfSetsOrColours) {
-    //     this.trainModeProps.numberVehicleSets.set(numberOfSets);
-    //     this.saveProps();
-    // }
-
-    // get numberVehicleSets(): NumberOfSetsOrColours {
-    //     return this.trainModeProps.numberVehicleSets.get();
-    // }
-
     set mode(mode: PaintMode) {
         this.modeStore.set(mode);
         this.saveProps();
@@ -163,26 +154,6 @@ export class PaintPropsObj {
     get colouringEnabled(): boolean {
         return this.colouringEnabledStore.get();
     }
-
-    // set trainColours(params: { colours: ColourSet, index: 0 | 1 | 2 }) {
-    //     this.trainModeProps.vehicleProps[params.index].colourSet.set(params.colours);
-    //     this.saveProps();
-    // }
-
-    // set trainPaintStart(params: { paintStart: PaintStartProps, index: 0 | 1 | 2 }) {
-    //     this.trainModeProps.vehicleProps[params.index].paintStart.set(params.paintStart);
-    //     this.saveProps();
-    // }
-
-    // set trainPaintEnd(params: { paintEnd: PaintEndProps, index: 0 | 1 | 2 }) {
-    //     this.trainModeProps.vehicleProps[params.index].paintEnd.set(params.paintEnd);
-    //     this.saveProps();
-    // }
-
-    // set trainNumberOfNSegments(params: { numberOfNSegments: number, index: 0 | 1 | 2 }) {
-    //     this.trainModeProps.vehicleProps[params.index].numberOfNSegments.set(params.numberOfNSegments);
-    //     this.saveProps();
-    // }
 
     updateTailModeProps(props: TailModeProps): void {
         this.tailModeProps.set(props);

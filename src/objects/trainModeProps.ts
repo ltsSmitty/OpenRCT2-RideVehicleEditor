@@ -52,11 +52,6 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
     readonly paintEnd = store<ThreeTuple<PaintEndProps>>(defaultPaintEnd);
     readonly numberOfNSegments = store<ThreeTuple<number>>(defaultNSegments);
 
-    // areColourSetsTheSame(): void {
-    //     Log.debug(`Are the vehicle sets the same object? ${this.colourSets.get()[0].vehicleColours === this.colourSets.get()[1].vehicleColours}`);
-    //     Log.debug(`Are the vehicle sets the same object? ${this.colourSets.get()[0].vehicleColours == this.colourSets.get()[1].vehicleColours}`);
-    // }
-
     reset(): void {
         Log.debug(`Resetting train mode properties to defaults.`);
         this.colourSets.set({ ...defaultColourSets });
@@ -144,9 +139,6 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
 
         if (!flatProps.colourSets) { return; }
         Log.debug(`Unflatten`);
-        // Log.debug(`flatProps.colourSets: ${JSON.stringify(flatProps.colourSets)}`);
-
-        const vehicleProps = [flatProps.colourSets[0].vehicleColours, flatProps.colourSets[1].vehicleColours, flatProps.colourSets[2].vehicleColours];
 
         this.setColourSets(flatProps.colourSets);
         this.paintStart.set(flatProps.paintStart);
@@ -155,4 +147,22 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
         this.numberVehicleSets.set(flatProps.numberVehicleSets);
 
     }
+
+    getTrainSetInfo(index: number): TrainSetInfo {
+        return {
+            vehicleColours: this.colourSets.get()[index].vehicleColours,
+            trackColours: this.colourSets.get()[index].trackColours,
+            paintStart: this.paintStart.get()[index],
+            paintEnd: this.paintEnd.get()[index],
+            numberOfNSegments: this.numberOfNSegments.get()[index],
+        };
+    }
 }
+
+type TrainSetInfo = {
+    vehicleColours: ColourSet["vehicleColours"],
+    trackColours: ColourSet["trackColours"],
+    paintStart: PaintStartProps,
+    paintEnd: PaintEndProps,
+    numberOfNSegments: number,
+};

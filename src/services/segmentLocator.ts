@@ -1,4 +1,5 @@
 import * as Log from "../utilities/logger";
+import _ from "lodash-es";
 
 const UnitsPerTile = 32;
 /**
@@ -6,12 +7,17 @@ const UnitsPerTile = 32;
  */
 export function getTrackIteratorAtLocation(trackLocation: CoordsXYZD): TrackIterator | null {
     const currentTrackIndex = getIndexForTrackElementAt(trackLocation);
+
     if (currentTrackIndex === null) {
         Log.debug(`Could not find track for car at position; ${trackLocation.x}, ${trackLocation.y}, ${trackLocation.z}, direction; ${trackLocation.direction}`);
         return null;
     }
 
-    const iterator = map.getTrackIterator(trackLocation, currentTrackIndex);
+    if (currentTrackIndex.length > 1) {
+        // Log.debug(`There is more than one matching track at this location! Probably on a diagonal or helix.`);
+    }
+
+    const iterator = map.getTrackIterator(trackLocation, _.last(currentTrackIndex) ?? 0); // use last to handle diagonal/helix
     if (!iterator) {
         Log.debug(`Could not start track iterator for car at position; ${trackLocation.x}, ${trackLocation.y}, ${trackLocation.z}, direction; ${trackLocation.direction}, index; ${currentTrackIndex}`);
         return null;
@@ -22,17 +28,20 @@ export function getTrackIteratorAtLocation(trackLocation: CoordsXYZD): TrackIter
 /**
  * Finds the index of a matching track element on the specified tile.
  */
-function getIndexForTrackElementAt(coords: CoordsXYZD): number | null {
+function getIndexForTrackElementAt(coords: CoordsXYZD): number[] {
     const tile = map.getTile(Math.trunc(coords.x / UnitsPerTile), Math.trunc(coords.y / UnitsPerTile));
     const allElements = tile.elements, len = allElements.length;
+
+    const matchingElements: number[] = [];
 
     for (let i = 0; i < len; i++) {
         const element = tile.elements[i];
         if (element.type === "track"
             && element.baseZ === coords.z
             && element.direction === coords.direction) {
-            return i;
+            matchingElements.push(i);
+            // return i;
         }
     }
-    return null;
+    return matchingElements;
 }
