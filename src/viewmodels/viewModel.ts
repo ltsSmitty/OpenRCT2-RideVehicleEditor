@@ -148,73 +148,25 @@ export class RideViewModel {
         ColourChange.setRideVehicleScheme({ rideID: ride[0].ride().id, scheme: "perTrain" });
 
         for (let i = 0; i < numTrains; i++) {
-            // Log.debug(`Colouring train ${i}`);
-            if (numberOfVehicleSets === 1) {
-                // set all vehicles to the same colour
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 3,
-                    colour: colourSets[0].vehicleColours.body
-                });
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 4,
-                    colour: colourSets[0].vehicleColours.trim
-                });
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 5,
-                    colour: colourSets[0].vehicleColours.tertiary
-                });
-            }
-            if (numberOfVehicleSets === 2) {
-                // check i % 2 for colouration
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 3,
-                    colour: colourSets[(i % 2)].vehicleColours.body,
-                });
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 4,
-                    colour: colourSets[(i % 2)].vehicleColours.trim,
-                });
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 5,
-                    colour: colourSets[(i % 2)].vehicleColours.tertiary,
-                });
-            }
-            if (numberOfVehicleSets === 3) {
-                // check i % 3 for colouration
-                // Log.debug(` 3 sets  colours ${JSON.stringify(colourSets[i % 3].vehicleColours)}`);
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 3,
-                    colour: colourSets[(i % 3)].vehicleColours.body,
-                });
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 4,
-                    colour: colourSets[(i % 3)].vehicleColours.trim,
-                });
-                paintVehicle({
-                    rideID: ride[0].ride().id,
-                    trainIndex: i,
-                    partNumber: 5,
-                    colour: colourSets[(i % 3)].vehicleColours.tertiary,
-                });
-            }
+            paintVehicle({
+                rideID: ride[0].ride().id,
+                trainIndex: i,
+                partNumber: 3,
+                colour: colourSets[(i % numberOfVehicleSets)].vehicleColours.body
+            });
+            paintVehicle({
+                rideID: ride[0].ride().id,
+                trainIndex: i,
+                partNumber: 4,
+                colour: colourSets[i % numberOfVehicleSets].vehicleColours.trim
+            });
+            paintVehicle({
+                rideID: ride[0].ride().id,
+                trainIndex: i,
+                partNumber: 5,
+                colour: colourSets[i % numberOfVehicleSets].vehicleColours.tertiary
+            });
         }
-
     }
 
     /**
