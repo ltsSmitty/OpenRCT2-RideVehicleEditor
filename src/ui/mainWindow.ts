@@ -270,7 +270,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 				label({ text: "Paint start:", visibility: calculateVisiblity, width: 70 }),
 				dropdown({
 					width: 120,
-					items: [propKeyStrings.withFirstCar, propKeyStrings.afterFirstCar],
+					items: [propKeyStrings.withFirstCar, propKeyStrings.afterLastCar],
 					visibility: calculateVisiblity,
 					onChange: (i) => {
 						(i === 0)
