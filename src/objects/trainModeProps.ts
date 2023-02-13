@@ -31,6 +31,7 @@ const defaultColourSet: ColourSet = {
     vehicleColours: { body: 0, trim: 0, tertiary: 0 },
     trackColours: { main: 0, additional: 0, supports: 0 }
 };
+
 const defaultColourSets: ThreeTuple<ColourSet> = [{ ...defaultColourSet }, { ...defaultColourSet }, { ...defaultColourSet }];
 const defaultPaintStart: ThreeTuple<PaintStartProps> = ["withFirstCar", "withFirstCar", "withFirstCar"];
 const defaultPaintEnd: ThreeTuple<PaintEndProps> = ["perpetual", "perpetual", "perpetual"];
@@ -70,6 +71,7 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
         colourSets[params.trainIndex].vehicleColours[params.part] = (params.colour);
 
         this.colourSets.set({ ...colourSets });
+        this.prettyPrintVehicleColours();
     }
 
     setTrackColour(params: { trainIndex: 0 | 1 | 2, part: keyof ColourSet["trackColours"], colour: number }): void {
@@ -77,6 +79,8 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
         colourSets[params.trainIndex].trackColours[params.part] = (params.colour);
 
         this.colourSets.set({ ...colourSets });
+
+        this.prettyPrintTrackColours();
     }
 
     prettyPrintVehicleColours(): void {
@@ -94,18 +98,21 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
     }
 
     setPaintStart(params: { trainIndex: 0 | 1 | 2, paintStart: PaintStartProps }): void {
+        Log.debug(`Setting paint start to withFirstCar for train ${params.trainIndex}`);
         const paintStart = this.paintStart.get();
         paintStart[params.trainIndex] = params.paintStart;
         this.paintStart.set({ ...paintStart });
     }
 
     setPaintEnd(params: { trainIndex: 0 | 1 | 2, paintEnd: PaintEndProps }): void {
+        Log.debug(`Setting paint end to afterFirstCar for train ${params.trainIndex}`);
         const paintEnd = this.paintEnd.get();
         paintEnd[params.trainIndex] = params.paintEnd;
         this.paintEnd.set({ ...paintEnd });
     }
 
     setNumberOfNSegments(params: { trainIndex: 0 | 1 | 2, numberOfNSegments: number, position: "before" | "after" }): void {
+        Log.debug(`Setting number of n segments to ${params.numberOfNSegments} for train ${params.trainIndex}`);
         const numberOfNSegments = params.position == "before" ? this.numberOfNSegmentsBefore.get() : this.numberOfNSegmentsAfter.get();
         numberOfNSegments[params.trainIndex] = params.numberOfNSegments;
         params.position == "before"
@@ -165,18 +172,6 @@ export class TrainModePropertiesObj implements TrainPropertiesStoreType {
     }
 
     getTrainSetInfo(index: number): TrainSetInfo {
-
-        // // check if any of the props are undefined; if they are, then call reset to set them to default values
-        // if (this.colourSets.get() == undefined ||
-        //     this.paintStart.get() == undefined ||
-        //     this.paintEnd.get() == undefined ||
-        //     this.numberOfNSegmentsBefore.get() == undefined ||
-        //     this.numberOfNSegmentsAfter.get() == undefined) {
-        //     Log.debug(`Resetting train mode props because one of them was undefined`);
-        //     this.reset();
-        // }
-
-
         return {
             vehicleColours: this.colourSets.get()[index].vehicleColours,
             trackColours: this.colourSets.get()[index].trackColours,

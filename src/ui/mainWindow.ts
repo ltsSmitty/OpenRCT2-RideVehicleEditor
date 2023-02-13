@@ -7,6 +7,7 @@ import { ParkRide } from '../objects/parkRide';
 import * as Log from '../utilities/logger';
 import { propKeyStrings, NumberOfSetsOrColours } from "../objects/PaintPropsObj";
 import { ColourSet, TrainModePropertiesObj } from "../objects/trainModeProps";
+import ColourChange from "../services/ridePainter";
 
 const buttonSize = 24;
 const controlsLabelWidth = 201;
@@ -29,6 +30,18 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 
 	const isTailTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore, (r, c, m) => r == undefined || !c || m !== "tail");
 
+	const paintMainColourScheme = (colour: number, part: keyof ColourSet["trackColours"]): void => {
+
+		const ride = model.painter.rideStore.get();
+		if (!ride) return;
+
+		ColourChange.setRideColourAlt({
+			ride: ride[0].ride(),
+			colour,
+			partNumber: (part == "main" ? 0 : part == "additional" ? 1 : part == "supports" ? 2 : 0),
+			trainNumber: 0,
+		});
+	}
 
 	return tabwindow({
 		title,
@@ -105,7 +118,7 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 				]
 			}),
 			tab({ // train mode tab
-				image: context.getIcon("link_chain"),
+				image: 5186, //context.getIcon("link_chain"),
 				spacing: 5,
 				content: [
 					groupbox({ // train mode
@@ -139,6 +152,24 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 										model.painter.trainModeProps.numberVehicleSets.set(i + 1 as NumberOfSetsOrColours);
 									}
 								})
+							]),
+							horizontal([ // selected ride's main colour scheme display
+								label({ text: `Ride main colour scheme:`, visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible") }),
+								colourPicker({
+									colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].main ?? 0),
+									onChange: (colour) => { paintMainColourScheme(colour, "main"); },
+									visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible")
+								}),
+								colourPicker({
+									colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].additional ?? 0),
+									onChange: (colour) => { paintMainColourScheme(colour, "additional"); },
+									visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible")
+								}),
+								colourPicker({
+									colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].supports ?? 0),
+									onChange: (colour) => { paintMainColourScheme(colour, "supports"); },
+									visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible")
+								}),
 							])
 						]
 					}),
@@ -213,7 +244,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 					colourPicker({ // train main colour
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-						colour: compute(ride, trainProps.colourSets, (r, c) => {
+						colour: compute(ride, trainProps.colourSets, trainProps.numberVehicleSets, (r, c, n) => {
 							return r ? r[0].ride().vehicleColours[trainIndex].body ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrainColour({ trainIndex, colour: c, part: "body" })
@@ -222,7 +253,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
 						// colour: compute(ride, (r) => {
-						colour: compute(ride, trainProps.colourSets, (r, c) => {
+						colour: compute(ride, trainProps.colourSets, trainProps.numberVehicleSets, (r, c, n) => {
 							return r ? r[0].ride().vehicleColours[trainIndex].trim ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrainColour({ trainIndex, colour: c, part: "trim" })
@@ -230,7 +261,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 					colourPicker({ // train teriary colour
 						disabled: doesTrainExist(ride, trainIndex),
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
-						colour: compute(ride, trainProps.colourSets, (r, c) => {
+						colour: compute(ride, trainProps.colourSets, trainProps.numberVehicleSets, (r, c, n) => {
 							return r ? r[0].ride().vehicleColours[trainIndex].tertiary ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrainColour({ trainIndex, colour: c, part: "tertiary" })
@@ -242,7 +273,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
 						disabled: doesTrainExist(ride, trainIndex),
 						colour: compute(ride, trainProps.colourSets, (r, c) => {
-							return r ? r[0].ride().colourSchemes[trainIndex].main ?? 0 : 0;
+							return r ? c[trainIndex].trackColours.main ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrackColour({ trainIndex, colour: c, part: "main" })
 					}),
@@ -250,7 +281,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
 						disabled: doesTrainExist(ride, trainIndex),
 						colour: compute(ride, trainProps.colourSets, (r, c) => {
-							return r ? r[0].ride().colourSchemes[trainIndex].main ?? 0 : 0;
+							return r ? c[trainIndex].trackColours.additional ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrackColour({ trainIndex, colour: c, part: "additional" })
 					}),
@@ -258,7 +289,7 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 						visibility: compute(isDisabled, (disabled) => !disabled ? "visible" : "hidden"),
 						disabled: doesTrainExist(ride, trainIndex),
 						colour: compute(ride, trainProps.colourSets, (r, c) => {
-							return r ? r[0].ride().colourSchemes[trainIndex].main ?? 0 : 0;
+							return r ? c[trainIndex].trackColours.supports ?? 0 : 0;
 						}),
 						onChange: (c) => updateTrackColour({ trainIndex, colour: c, part: "supports" })
 					}),
@@ -298,7 +329,9 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 					value: compute(trainProps.numberOfNSegmentsBefore, (numberOfSegs) => numberOfSegs[trainIndex]),
 					minimum: -255,
 					maximum: 255,
-					onChange: (v) => trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v, position: "before" })
+					onChange: (v) => {
+						trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v, position: "before" });
+					}
 				})
 			]),
 			horizontal([ // Paint end row
@@ -337,7 +370,9 @@ function trainGroupbox({ ride, trainProps, trainIndex, isDisabled }: {
 					value: compute(trainProps.numberOfNSegmentsAfter, (numberOfSegs) => numberOfSegs[trainIndex]),
 					minimum: -255,
 					maximum: 255,
-					onChange: (v) => trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v, position: "after" })
+					onChange: (v) => {
+						trainProps.setNumberOfNSegments({ trainIndex, numberOfNSegments: v, position: "after" });
+					}
 				})
 			])
 		]

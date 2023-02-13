@@ -1,5 +1,5 @@
 import { loadAllPropsOnOpen, propStorage as storage } from '../services/preferenceSerializer';
-import { Store, store, arrayStore } from "openrct2-flexui";
+import { Store, store, arrayStore, compute } from "openrct2-flexui";
 import { getAllRides, ParkRide } from "../objects/parkRide";
 import { findIndex } from "../utilities/arrayHelper";
 import { TrainWatcher } from '../services/trainWatcher';
@@ -22,7 +22,10 @@ export class RideViewModel {
         this.rides.subscribe(r => updateSelectionOrNull(this.painter.rideStore, r));
         this.painter.rideStore.subscribe(() => this.onRideSelectionChange()); // handle updating the booleans
         this.ridesToPaint.subscribe(() => this.onRidesToPaintChange()); // handle updating the serialised values
+
+
         this.painter.trainModeProps.colourSets.subscribe(() => this.onVehicleColourChange()); // handle painting the trains
+        this.painter.trainModeProps.numberVehicleSets.subscribe(() => this.onVehicleColourChange()); // handle painting the trains
         this._onPlayerAction ||= context.subscribe("action.execute", e => this._onPlayerActionExecuted(e));
 
         // initialize the train watcher
