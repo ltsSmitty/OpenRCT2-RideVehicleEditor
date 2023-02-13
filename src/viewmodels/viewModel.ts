@@ -69,6 +69,7 @@ export class RideViewModel {
     }
 
     private onRideSelectionChange(): void {
+        Log.debug(`On ride selection change`);
         const selectedParkRide = this.painter.ride;
         const rideIDAsKey = selectedParkRide?.[0].ride().id.toString();
 
@@ -123,7 +124,19 @@ export class RideViewModel {
         // const loadedPreferences = loadAllPropsOnOpen({ reset: true });
         const loadedPreferences = loadAllPropsOnOpen();
         Log.debug(`Loading preferences:`);
-        // Log.debug(JSON.stringify(loadedPreferences));
+        // let's add a safety check by looping through and making sure that the ride exists in the park before pushing it
+        loadedPreferences.forEach((p, i) => {
+            const ride = p.ride;
+            if (!ride) {
+                Log.debug(`Ride does not exist in the park. Removing from preferences.`);
+                loadedPreferences.splice(i, 1);
+            }
+            const rideOnMap = map.getRide(ride[0].id);
+            if (!rideOnMap) {
+                Log.debug(`Ride  does not exist on the map. Removing from preferences.`);
+                loadedPreferences.splice(i, 1);
+            }
+        });
         this.ridesToPaint.set(loadedPreferences);
     }
 
@@ -177,46 +190,47 @@ export class RideViewModel {
      * @param event The arguments describing the executed action.
      */
     private _onPlayerActionExecuted(event: GameActionEventArgs): void {
+
         const action = event.action as ActionType;
+
+        type argArgs = { ride: number; flags: number };
+        const args = event.args as argArgs; // guards to make sure it's not a ghost create/delete
+
         switch (action) {
             case "ridecreate":
             case "ridesetname":
                 {
-                    Log.debug("Ride created or renamed");
-                    this.rides.set(getAllRides());
+                    if (args.flags < 1) { // flag to make sure it's not a ghost create/delete
+                        Log.debug("Ride created or renamed");
+                        this.rides.set(getAllRides());
+                    }
                     break;
                 }
             case "ridedemolish":
                 {
-                    Log.debug("Ride demolished");
-                    this.rides.set(getAllRides());
-                    // remove the ride from the list of rides to paint
-                    const _ridesToPaint = this.ridesToPaint.get();
-                    const rideID = (event.args as RideDemolishArgs).ride;
-                    const paintPropIdx = _.findIndex(_ridesToPaint, r => r.ride[0].ride().id === rideID);
-                    if (paintPropIdx !== -1) {
-                        this.ridesToPaint.splice(paintPropIdx, 1);
+                    if (args.flags < 1) { // flag to make sure it's not a ghost create/delete
+                        Log.debug("Ride demolished");
+                        this.rides.set(getAllRides());
+
+                        // remove the ride from the list of rides to paint
+                        const _ridesToPaint = this.ridesToPaint.get();
+                        const rideID = (event.args as RideDemolishArgs).ride;
+                        const paintPropIdx = _.findIndex(_ridesToPaint, r => r.ride[0].ride().id === rideID);
+
+                        if (paintPropIdx !== -1) {
+                            this.ridesToPaint.splice(paintPropIdx, 1);
+                        }
                     }
                     break;
                 }
             case "ridesetvehicle":
                 {
-                    Log.debug("Ride vehicle changed");
-                    this.rides.set(getAllRides());
-                    // this.painter.resetValues();
+                    if (this.painter.ride && args.ride === this.painter.ride[0].id) {
+                        Log.debug("Ride vehicle changed");
+                        this.rides.set(getAllRides());
+                    }
                     break;
                 }
-            case "ridesetappearance":
-                {
-                    // Log.debug(`Ride appearance changed: ${JSON.stringify(event.args)}`);
-                    // todo trigger something here to update the colour widgets, something like `this.painter.refreshColours()`
-                    // this.painter.
-                    break;
-                }
-            // case "ridesetcolourscheme": {
-            //     Log.debug(`Ride colour scheme changed: ${JSON.stringify(event.args)}`);
-            //     break;
-            // }
         }
     }
 }

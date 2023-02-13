@@ -20,7 +20,8 @@ if (isDevelopment) {
 
 export const mainWindow = (model: RideViewModel): WindowTemplate => {
 
-	const isTrainTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore, (r, c, m) => r == undefined || !c || m !== "train");
+	const isTrainTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore,
+		(ride, colouringEnabled, mode) => ride == undefined || !colouringEnabled || mode !== "train");
 
 	const numTrains = compute(model.painter.rideStore, (r) => (r ? r[0].trains().length : 0));
 

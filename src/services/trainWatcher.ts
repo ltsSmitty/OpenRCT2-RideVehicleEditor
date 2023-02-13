@@ -29,6 +29,7 @@ export class TrainWatcher {
             }
 
             const ride = paintProp.ride[0];
+            ride.refresh();
 
             // sometimes the save can get corrupted. If that happens, refresh the ride and try again
             if (!ride?.trains) {
