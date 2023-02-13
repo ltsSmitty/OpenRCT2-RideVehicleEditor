@@ -82,13 +82,16 @@ function queryExecuteSetColourScheme(params: { location: CoordsXYZD, trackType: 
 
             // look up what segments are actually on that x,y
             const matchingSegments = getTrackElementsAt(params.location).filter((segment) => segment.trackType === params.trackType);
-            if (matchingSegments.length > 1) {
-                Log.debug(`Unable to find the right segment since there are two of them at this location, leaving unchanged.`);
-                return;
-            }
+
             if (matchingSegments.length === 0) {
                 Log.debug(`Unable to find the right segment since there are none of them at this location.`);
                 return;
+            }
+
+            if (matchingSegments.length > 1) {
+                Log.debug(`Unable to find the right segment since there are two of them at this location. Original z: ${params.location.z}; located ${matchingSegments.map(s => s.baseZ).join(", ")}. Returning whichever one is closer`);
+                // sort matching segments by subtracting params.location.z from the baseZ of each segment
+                matchingSegments.sort((a, b) => Math.abs(a.baseZ - params.location.z) - Math.abs(b.baseZ - params.location.z)); // sort in place
             }
             // Log.debug(`Found a segment that matches the right type at a corrected z of ${matchingSegments[0].baseZ} instead of ${params.location.z}.`);
             const correctedZ = matchingSegments[0].baseZ;
