@@ -2,26 +2,35 @@
 
 Your ride vehicles are dripping with paint, covering the tracks with paint as they roll over them!
 
-![(Gif of train repainting the track under it)](https://github.com/ltsSmitty/OpenRCT2-RideVehicleEditor/blob/1e7d94cb9b6d7103e5d82efc84d930bd8ddbac12/img/vertical-painter.gif)
+![(Image of a ride with a purple track, with one white, one pink and one yellow train, demonstrating how the plugin works.)](https://i.imgur.com/WTBPxnR.png)
 
-### Current features
-- Paint the tracks under a ride with up to three different colour themes.
+## See it in action
+### Orange and blue trains permanently painting the tracks as they drive over it.
+![(Video of a ride being painted orange and blue as trains go.)](https://media3.giphy.com/media/Ntsve4sZvwqGUTXidZ/giphy.gif)
+
+### Paint in front of the train as it passes, then return the track to their original colour after it has gone by.
+![(Video of an orange train painting the purple track before and behind it as it traverses the tracks.)](https://media2.giphy.com/media/wv5hoqhthLH2i3Uscp/giphy.gif)
+
+### Mayhem? Combine train different options and colour schemes for each train set.
+![(Hectic video of multiple trains colouring track in multiple ways as they go over the tracks.)](https://media2.giphy.com/media/nLUaVMamFna1B98T0x/giphy.gif)
+
+
+## Current features
+- Paint the tracks under a vehicle with up to three different colour themes.
+- Use any combination of vehicle & track colours for each theme
+- Multiple modes to control when the vehicle starts & stops painting.
 
 ## How to use it
 1. Open the plugin and select a ride from the dropdown or pick one with the eyedropper, and enable colour matching.
-2. In the ride's paint window, change the ride colour mode to `Different colours per train`.
-3. Set the individual train cars to the colours you want:
-  - The first train colour becomes the main track colour
-  - The second train colour becomes the secondary track colour
-  - The third colour becomes the track support colour
-4. **If your ride has more than 3 trains**, you'll need to set the multiples of three trains to have the same colours. E.g., you'll need to manually set
-* `Train 1` & `Train 4` & `Train 7` to have the same colours, and
-* `Train 2` & `Train 5` & `Train 8` to have the same colours, and
-* `Train 3` & `Train 6` & `Train 9` to have the same colours, etc.
+2. Open the `Train Mode` tab to select painting & colour options.
+3. Select how many colour sets to use. This is limited to by the number of trains on a ride – a ride with only one train can only have one colour set, and the maximum number of sets is 3, no matter how many trains are on the ride.
+4. Select train and track colours
+5. Choose when the train should start and stop painting. `Note: it's possible to selection options which override each other and produce no change.`
 
 ### FAQ
 - The plugin uses the `Alternative track colour schemes` for setting the track colours, which is what limits to using only 3 different paint schemes.
--
+- This plugin can be processor-heavy if you have multiple trains being painted at the same time. If you're running into performance issues, disable colouring for some of the rides.
+
 ###  Is it safe to uninstall the plugin if I don't want it anymore?
 **Answer:** yes, uninstalling the plugin (by removing it from the Plugins folder) does not break your game or save files.
 
