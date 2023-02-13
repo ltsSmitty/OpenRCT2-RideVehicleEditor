@@ -1,3 +1,5 @@
+import * as Log from "../utilities/logger";
+
 export default class ColourChange {
     /**
      * @param part is defined from ColourChange table:
@@ -15,7 +17,7 @@ export default class ColourChange {
         ride: Ride,
         part: number,
         colour: number,
-        colourScheme: 0 | 1 | 2 | 3 = 0
+        colourScheme: number = 0
     ): void => {
         if (colour === -1) return;
         if (colour >= 0 && colour < 32) {
@@ -38,6 +40,20 @@ export default class ColourChange {
         To keep a colour value unchanged without getting this warning, pass in '-1' for the colour value.`);
         }
     };
+
+    static setRideColourAlt = ({
+        ride,
+        partNumber,
+        colour,
+        trainNumber }: {
+            ride: Ride,
+            colour: number,
+            partNumber: 0 | 1 | 2 | 3 | 4 | 5 | 6,
+            trainNumber: number,
+        }): void => {
+        ColourChange.setRideColourPart(ride, partNumber, colour, trainNumber);
+    }
+
 
     /**
      * Set a ride's colour. To not change a colour for a param, input -1 for the param.
@@ -77,4 +93,21 @@ export default class ColourChange {
     static setRideStationStyle = (ride: Ride, stationStyle: number): void => {
         ColourChange.setRideColourPart(ride, 7, stationStyle);
     };
+
+    static setRideVehicleScheme({ rideID, scheme }: {
+        rideID: number,
+        scheme: "allSame" | "perTrain" | "perCar",
+    }): void {
+        context.executeAction("ridesetappearance", {
+            ride: rideID,
+            type: 6,
+            value: scheme === "allSame" ? 0 : scheme === "perTrain" ? 1 : 2,
+            index: 0,
+        },
+            (result) => {
+                if (result.error) Log.debug(`${result?.errorMessage}`);
+            });
+    }
 }
+
+

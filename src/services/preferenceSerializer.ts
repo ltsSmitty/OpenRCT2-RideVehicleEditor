@@ -1,59 +1,99 @@
+import { TailModeProps } from './../objects/tailModeProps';
+import { FlatTrainProperties, TrainModePropertiesObj } from './../objects/trainModeProps';
 import * as Environment from "../environment";
-import { ParkRide } from "../objects/parkRide";
-import { RidePaintPreference } from "../viewmodels/rideViewModel";
 import * as Log from "../utilities/logger";
+import { ParkRide } from "../objects/parkRide";
+import { PaintProps, PaintMode } from '../objects/PaintPropsObj';
 
-const saveKey = `${Environment.pluginName}.ridePreferences`;
+const saveKey = `${Environment.pluginName}.rideProps`;
 
-type SavePreference = {
-    rideIDAsKey: string;
-    values: {
-        enableColourMatching: boolean;
-        enableColourReset: boolean;
-    } | undefined
-};
+/**
+ * Load all the props from storage on park load. If the save gets corrupted, use the `reset` flat to clear the saved props and start again.
+ * @param props.reset
+ * @returns
+ */
+export const loadAllPropsOnOpen = (props?: { reset: boolean }): PaintProps[] => {
+    const rideProps: PaintProps[] = [];
+    for (let i = 0; i < map.numRides; i++) {
+        Log.debug(`Loading Props for ride ${i}`);
 
-type SaveValues = SavePreference["values"];
-
-export const loadAllPreferencesOnOpen = (): RidePaintPreference[] => {
-    const ridePreferences: RidePaintPreference[] = [];
-    let i = 0;
-    const numRides = map.numRides;
-    while (i < numRides) {
-        Log.debug(`Loading preferences for ride ${i}`);
-        const pref = getRidePreferences(i);
-        ridePreferences.push({
-            ride: new ParkRide(i),
-            values: pref.values || {
-                enableColourMatching: false,
-                enableColourReset: false,
-            }
-        });
-        i++;
+        // It is possible during development for the plugin to reach an unstable state where the rideProps don't align with the park values
+        // If that happens, run this with the `reset` flag to clear the storage and start again
+        if (props?.reset) {
+            const rideIDAsKey = i.toString();
+            context.getParkStorage(saveKey).set(
+                rideIDAsKey,
+                undefined
+            );
+        }
+        const pref = getRideProps(i);
+        if (pref) rideProps.push(pref);
     }
-    return ridePreferences;
+    return rideProps;
+
 };
 
-const getRidePreferences = (rideID: number | string): SavePreference => {
+/**
+ * Load the paint props from parkStorage for a specific ride.
+ */
+const getRideProps = (rideID?: number | string): PaintProps | undefined => {
+    if (!rideID) return undefined;
     const rideIDAsKey = rideID.toString();
-    const values = <SaveValues | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
+    const props = <FlatPaintProps | undefined>context.getParkStorage(saveKey).get(rideIDAsKey);
 
-    return {
-        rideIDAsKey,
-        values,
-    };
+    // if the props were loaded from storage, need to rehydrate the ParkRide object
+    if (props && "numberVehicleSets" in props.trainModeProps) {
+        // todo old saves might end up corrupted after this change
+        return unflattenPaintProps(props);
+    }
+    return;
 };
 
-const saveRidePreferences = (preferences: SavePreference): void => {
-    const { rideIDAsKey, values } = preferences;
+/**
+ * Save the paint props to parkStorage for a specific ride.
+ */
+const saveRideProps = (props: PaintProps): void => {
+    const rideIDAsKey = props.ride[0].ride().id.toString();
+    const flattenedProps = flattenPaintProps(props);
 
     context.getParkStorage(saveKey).set(
         rideIDAsKey,
-        values
+        flattenedProps
     );
 };
 
-export const PreferenceStorage = {
-    getRidePreferences,
-    saveRidePreferences,
+export const propStorage = {
+    getRideProps,
+    saveRideProps,
 };
+
+type FlatPaintProps = {
+    ride: [number, number]
+    colouringEnabled: boolean
+    mode: PaintMode,
+    trainModeProps: FlatTrainProperties
+    tailModeProps: TailModeProps
+};
+
+
+const flattenPaintProps = (props: PaintProps): FlatPaintProps => {
+    return {
+        ride: [props.ride[0].id, props.ride[1]],
+        colouringEnabled: props.colouringEnabled,
+        mode: props.mode,
+        trainModeProps: props.trainModeProps.flatten(),
+        tailModeProps: props.tailModeProps
+    };
+};
+
+const unflattenPaintProps = (props: FlatPaintProps): PaintProps => {
+    const newObj = new TrainModePropertiesObj();
+    newObj.unflatten(props.trainModeProps);
+    return {
+        ride: [new ParkRide(props.ride[0]), props.ride[1]],
+        colouringEnabled: props.colouringEnabled,
+        mode: props.mode,
+        trainModeProps: newObj,
+        tailModeProps: props.tailModeProps
+    };
+}

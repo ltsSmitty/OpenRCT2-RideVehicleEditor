@@ -1,6 +1,6 @@
 {
-	"name": "openrct2-ride-vehicle-editor",
-	"author": "Basssiiie",
+	"name": "openrct2-pet-paint-plugin",
+	"author": "ltsSmitty",
 	"license": "MIT",
 	"version": "1.0.0",
 	"description": "",
@@ -23,7 +23,7 @@
 	},
 	"dependencies": {
 		"lodash-es": "^4.17.21",
-		"openrct2-flexui": "^0.1.0-prerelease.4"
+		"openrct2-flexui": "^0.1.0-prerelease.9"
 	},
 	"devDependencies": {
 		"@ava/typescript": "^3.0.1",
