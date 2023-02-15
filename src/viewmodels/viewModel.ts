@@ -88,8 +88,9 @@ export class RideViewModel {
             ? this.painter.trainModeProps.setFromExistingProps(props.trainModeProps)
             : this.painter.trainModeProps.reset();
 
-        // todo something for tail mode
-        this.painter.tailModeProps.set(props?.tailModeProps ?? this.painter.tailModeProps.get());
+        props?.tailModeProps
+            ? this.painter.tailModeProps.setFromExistingProps(props.tailModeProps)
+            : this.painter.tailModeProps.reset();
     }
 
     private onVehicleColourChange(): void {
@@ -110,11 +111,6 @@ export class RideViewModel {
             return;
         }
         // splice out the old version and push the new one
-        // Log.debug(`about to splice out ${JSON.stringify(JSON.stringify(this.ridesToPaint.get()[rideIndex]))}
-
-        // and replace with
-
-        // ${JSON.stringify(props)}`);
         this.ridesToPaint.splice(rideIndex, 1);
         this.ridesToPaint.push(props);
         return;

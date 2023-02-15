@@ -12,7 +12,7 @@ export type ColourSet = {
     trackColours: { main: number, additional: number, supports: number };
 };
 
-type ThreeTuple<T> = [T, T, T];
+export type ThreeTuple<T> = [T, T, T];
 
 export interface TrainModeProperties {
     colourSets: ThreeTuple<ColourSet>,

@@ -1,4 +1,4 @@
-import { TailModeProps } from './../objects/tailModeProps';
+import { TailModeProperties, TailModePropertiesObj, } from './../objects/tailModeProps';
 import { FlatTrainProperties, TrainModePropertiesObj } from './../objects/trainModeProps';
 import * as Environment from "../environment";
 import * as Log from "../utilities/logger";
@@ -72,7 +72,7 @@ type FlatPaintProps = {
     colouringEnabled: boolean
     mode: PaintMode,
     trainModeProps: FlatTrainProperties
-    tailModeProps: TailModeProps
+    tailModeProps: TailModeProperties
 };
 
 
@@ -82,18 +82,24 @@ const flattenPaintProps = (props: PaintProps): FlatPaintProps => {
         colouringEnabled: props.colouringEnabled,
         mode: props.mode,
         trainModeProps: props.trainModeProps.flatten(),
-        tailModeProps: props.tailModeProps
+        tailModeProps: props.tailModeProps.flatten()
     };
 };
 
 const unflattenPaintProps = (props: FlatPaintProps): PaintProps => {
-    const newObj = new TrainModePropertiesObj();
-    newObj.unflatten(props.trainModeProps);
+    const newTrainObj = new TrainModePropertiesObj();
+    newTrainObj.unflatten(props.trainModeProps);
+
+    const newTailObj = new TailModePropertiesObj();
+    newTailObj.unflatten(props.tailModeProps);
+
     return {
         ride: [new ParkRide(props.ride[0]), props.ride[1]],
         colouringEnabled: props.colouringEnabled,
         mode: props.mode,
-        trainModeProps: newObj,
-        tailModeProps: props.tailModeProps
+        trainModeProps: newTrainObj,
+        tailModeProps: newTailObj
     };
 }
+
+

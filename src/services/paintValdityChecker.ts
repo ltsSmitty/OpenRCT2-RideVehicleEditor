@@ -3,8 +3,11 @@ import * as Log from "../utilities/logger";
 import { getTrackIteratorAtLocation } from './segmentLocator';
 import { ParkRide } from '../objects/parkRide';
 import { PaintProps, PaintMode } from '../objects/PaintPropsObj';
+import { PatternValue } from '../objects/tailModeProps';
 
 const lazyTrackProgressAmount = 15;
+const tailModeStartBeforeSegment = 0;
+const tailModeEndAfterSegment = 0;
 
 export class PaintValidityChecker {
     private paintProps: PaintProps;
@@ -39,11 +42,15 @@ export class PaintValidityChecker {
         if (this.paintMode === "train") {
             this.computeTrainPaintSegments();
         }
+
+        // if we're in tail mode, compute the segments to paint
+        if (this.paintMode === "tail") {
+            this.computeTailPaintSegments();
+        }
     }
 
     private shouldComputeRepaint(): boolean {
         if (this.paintMode === "train") {
-
             const { paintEnd, paintStart } = this.paintProps.trainModeProps.getTrainSetInfo(this.trainIndex);
             // consider the paintStart prop
             if (paintStart == "withFirstCar" || paintEnd == "afterFirstCar") {
@@ -62,7 +69,11 @@ export class PaintValidityChecker {
             // Log.debug(`Neither first nor last car is in threshold`);
             return false;
         }
-        // todo implement for Tail mode
+
+        if (this.paintMode === "tail") {
+            if (this.lastCarProgress < lazyTrackProgressAmount || this.firstCarProgress < lazyTrackProgressAmount)
+                return true;
+        }
         // Log.debug(`Not painting because paint mode is not train.`);
         return false;
     }
@@ -101,6 +112,42 @@ export class PaintValidityChecker {
             this.secondCarProgress = secondCar.car().trackProgress;
             this.secondCarLocation = secondCar.car().trackLocation;
         }
+    }
+
+    private computeTailPaintSegments(): void {
+        const { patternAfter, patternBefore } = this.paintProps.tailModeProps;
+        const segmentsToPaintBefore: TrackSegmentProps[] = [];
+        // first build the tail of segment which should go before
+        // start at the index of tailModeStartBeforeSegment: 0 is under the first car, 1 is one segment before the car
+        const beforeTailSegments = this.getSegmentsNSegmentsBehindCar({
+            carLocation: this.firstCarLocation,
+            numberOfSegments: -1 * patternBefore.get().length, // set it negative to go in front of the car instead
+            setAsMainColour: false
+        });
+        segmentsToPaintBefore.push(...beforeTailSegments);
+
+        // remove tailModeStartBeforeSegment number of segments from the beginning of the array
+        segmentsToPaintBefore.splice(0, tailModeStartBeforeSegment);
+
+        // build the tail segment to go after the train: 0 is under the last car, 1 is the first segment after the car
+        const segmentsToPaintAfter: TrackSegmentProps[] = [];
+        const afterTailSegments = this.getSegmentsNSegmentsBehindCar({
+            carLocation: this.lastCarLocation,
+            numberOfSegments: patternAfter.get().length,
+            setAsMainColour: false
+        });
+        segmentsToPaintAfter.push(...afterTailSegments);
+
+        // remove tailModeStartAfterSegment number of segments from the end of the array
+        segmentsToPaintAfter.splice(tailModeEndAfterSegment);
+
+        const beforeSegmentPaintProps: SegmentPaintProps[] = segmentsToPaintBefore.map(props => this.composeFinalTailPaintProps(
+            {
+                trackSegmentProps: props,
+                pattern: patternBefore.get()
+            }));
+
+        // this.segmentsToPaint = segmentsToPaint.map((props) => this.composeFinalTrainPaintProps({ trackSegmentProps: props }));
     }
 
     private computeTrainPaintSegments(): void {
@@ -175,11 +222,11 @@ export class PaintValidityChecker {
         // if paintEnd is perpetual, no need to do anything
 
 
-        this.segmentsToPaint = segmentsToPaint.map((props) => this.composeFinalPaintProps({ trackSegmentProps: props }));
+        this.segmentsToPaint = segmentsToPaint.map((props) => this.composeFinalTrainPaintProps({ trackSegmentProps: props }));
 
     }
 
-    composeFinalPaintProps(params: { trackSegmentProps: TrackSegmentProps }): SegmentPaintProps {
+    composeFinalTrainPaintProps(params: { trackSegmentProps: TrackSegmentProps }): SegmentPaintProps {
         const { trackColours } = this.paintProps.trainModeProps.getTrainSetInfo(this.trainIndex);
         const { trackType, location, setAsMainColour } = params.trackSegmentProps;
 
@@ -196,6 +243,11 @@ export class PaintValidityChecker {
             colourScheme: setAsMainColour ? 0 : (initialColourScheme + 1 as 0 | 1 | 2 | 3),
         };
         return finalPaintProps;
+    }
+
+    composeFinalTailPaintProps(params: { trackSegmentProps: TrackSegmentProps, pattern: PatternValue[] }): SegmentPaintProps {
+        const beforeTrackColours = this.paintProps.tailModeProps.patternBefore.get();
+        const afterTrackColours = this.paintProps.tailModeProps.patternAfter.get();
     }
 
     // i think that the 0th segment is problematic, because it doesn't exactly match with where the train itself is.

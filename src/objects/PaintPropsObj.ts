@@ -3,6 +3,7 @@ import * as Log from "../utilities/logger"
 import { ParkRide } from "./parkRide";
 import { PaintEndProps, PaintStartProps, TrainModePropertiesObj, ColourSet } from "./trainModeProps";
 import { propStorage as storage } from '../services/preferenceSerializer';
+import { PatternChoice, TailModePropertiesObj } from "./tailModeProps";
 
 export type PaintMode = "train" | "tail";
 
@@ -10,7 +11,7 @@ export const paintModes: PaintMode[] = ["train", "tail"];
 
 export type NumberOfSetsOrColours = 1 | 2 | 3;
 
-export const propKeyStrings: Record<PaintEndProps | PaintStartProps | PaintMode | NumberOfSetsOrColours, string> = {
+export const propKeyStrings: Record<PaintEndProps | PaintStartProps | PaintMode | NumberOfSetsOrColours | PatternChoice, string> = {
     "afterFirstCar": "After first car",
     "afterLastCar": "After last car",
     "beforeNSegments": "N segments before",
@@ -22,82 +23,47 @@ export const propKeyStrings: Record<PaintEndProps | PaintStartProps | PaintMode 
     1: "1",
     2: "2",
     3: "3",
+    "before": "Before train",
+    "after": "After train",
 } as const;
 
-export type TailProps = {
-    tailColours: {
-        main: number,
-        additional: number,
-        supports: number
-    };
-    tailLength: number;
-};
-
-export interface TailModeProps {
-    numberOfTailColours: NumberOfSetsOrColours,
-    paintStart: PaintStartProps,
-    tailProps: TailProps[],
-}
 
 export type PaintProps = {
     ride: [ParkRide, number],
     colouringEnabled: boolean,
     mode: PaintMode,
     trainModeProps: TrainModePropertiesObj;
-    tailModeProps: TailModeProps;
-};
-
-const defaultTailColourProps: TailProps[] = [
-    {
-        tailColours: {
-            main: 26,
-            additional: 21,
-            supports: 26
-        },
-        tailLength: 3,
-    },
-    {
-        tailColours: {
-            main: 21,
-            additional: 20,
-            supports: 21
-        },
-        tailLength: 2,
-    },
-    {
-        tailColours: {
-            main: 20,
-            additional: 19,
-            supports: 20
-        },
-        tailLength: 1,
-    }
-];
-
-const defaultTailModeProps: TailModeProps = {
-    numberOfTailColours: 3,
-    paintStart: "afterLastCar",
-    tailProps: defaultTailColourProps
+    tailModeProps: TailModePropertiesObj;
 };
 
 export class PaintPropsObj {
     readonly rideStore = store<[ParkRide, number] | null>(null);
     readonly colouringEnabledStore = store<boolean>(false);
     readonly modeStore: Store<PaintMode> = store<PaintMode>("train");
-    readonly tailModeProps: Store<TailModeProps> = store<TailModeProps>(defaultTailModeProps);
+    readonly tailModeProps = new TailModePropertiesObj();
     readonly trainModeProps = new TrainModePropertiesObj();
 
     private propChangeCallback: (props: PaintProps) => void;
 
     constructor(propChangeCallback: (props: PaintProps) => void) {
         this.propChangeCallback = propChangeCallback;
-        // make sure to save on colourSet change
-        this.trainModeProps.colourSets.subscribe((_colourSets: ColourSet[]): void => {
+
+        this.trainModeProps.colourSets.subscribe((_colourSets: ColourSet[]): void => { // handle train mode colour sets
             Log.debug(`Saving colourSets on change.`);
             this.saveProps();
         });
 
-        this.trainModeProps.numberVehicleSets.subscribe((_numberVehicleSets): void => {
+        this.trainModeProps.numberVehicleSets.subscribe((_numberVehicleSets): void => { // handle train mode number of sets
+            this.saveProps();
+        });
+
+        this.tailModeProps.trackColourSets.subscribe((_trackColourSets): void => { // handle tail mode colour sets
+            Log.debug(`Saving tail track colourSets on change.`);
+            this.saveProps();
+        });
+
+        this.tailModeProps.numberOfTailSets.subscribe((_vehicleColourSets): void => { // handle tail mode colour sets
+            Log.debug(`Saving tail vehicle colourSets on change.`);
             this.saveProps();
         });
     }
@@ -117,14 +83,12 @@ export class PaintPropsObj {
         }
 
         Log.debug(`In set Ride, Loaded colourSet`);
-        savedValues.trainModeProps.prettyPrintVehicleColours();
-        savedValues.trainModeProps.prettyPrintTrackColours();
-
 
         // set the loaded values
         this.colouringEnabled = savedValues.colouringEnabled;
         this.mode = savedValues.mode;
         this.trainModeProps.setFromExistingProps(savedValues.trainModeProps);
+        this.tailModeProps.setFromExistingProps(savedValues.tailModeProps);
 
         // this.tailModeProps.set(savedValues.tailModeProps);
         this.saveProps();
@@ -135,7 +99,7 @@ export class PaintPropsObj {
         this.colouringEnabledStore.set(props.colouringEnabled);
         this.modeStore.set(props.mode);
         this.trainModeProps.setFromExistingProps(props.trainModeProps);
-        this.tailModeProps.set(props.tailModeProps);
+        this.tailModeProps.setFromExistingProps(props.tailModeProps);
 
         this.saveProps();
     }
@@ -158,17 +122,12 @@ export class PaintPropsObj {
         return this.colouringEnabledStore.get();
     }
 
-    updateTailModeProps(props: TailModeProps): void {
-        this.tailModeProps.set(props);
-        this.saveProps();
-    }
-
     resetValues(): void {
         // don't reset the ride
         this.colouringEnabled = false;
         this.mode = "train";
         this.trainModeProps.reset();
-        // this.tailModeProps.set(defaultTailModeProps);
+        this.tailModeProps.reset();
         this.saveProps();
     }
 
@@ -184,7 +143,7 @@ export class PaintPropsObj {
             colouringEnabled: this.colouringEnabled,
             mode: this.mode,
             trainModeProps: this.trainModeProps,
-            tailModeProps: this.tailModeProps.get(),
+            tailModeProps: this.tailModeProps
         };
 
         storage.saveRideProps(props);

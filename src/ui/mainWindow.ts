@@ -1,4 +1,4 @@
-import { CheckboxParams, compute, dropdown, FlexiblePosition, groupbox, horizontal, listview, label, spinner, LabelParams, toggle, WidgetCreator, tab, tabwindow, WindowTemplate, colourPicker, Store } from "openrct2-flexui";
+import { CheckboxParams, compute, dropdown, FlexiblePosition, groupbox, horizontal, listview, label, spinner, LabelParams, toggle, WidgetCreator, tab, tabwindow, WindowTemplate, colourPicker, Store, Padding, button } from "openrct2-flexui";
 import { isDevelopment, pluginVersion } from "../environment";
 import { combinedLabelCheckbox } from "./utilityControls";
 import { RideViewModel } from "../viewmodels/viewModel";
@@ -12,6 +12,8 @@ import ColourChange from "../services/ridePainter";
 const buttonSize = 24;
 const controlsLabelWidth = 201;
 
+const colourSetBoxPadding: Padding = [0, "10%", 0, "20%"];
+
 let title = `Wet Paint (v${pluginVersion})`;
 if (isDevelopment) {
 	title += " [DEBUG]";
@@ -23,26 +25,25 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 	const isTrainTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore,
 		(ride, colouringEnabled, mode) => ride == undefined || !colouringEnabled || mode !== "train");
 
-	const numTrains = compute(model.painter.rideStore, (r) => (r ? r[0].trains().length : 0));
+	const isTailTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore,
+		(ride, colouringEnabled, mode) => ride == undefined || !colouringEnabled || mode !== "tail");
 
+	const numTrains = compute(model.painter.rideStore, (r) => (r ? r[0].trains().length : 0));
 	const doesTrainExist = (trainIndex: number): Store<boolean> => compute(numTrains, (n) => (trainIndex < n));
+
+	const isThisTrackSetDisabled = (trackIndex: number): Store<boolean> => compute(model.painter.tailModeProps.numberOfTailSets, numTailSets => numTailSets <= (trackIndex - 1));
 
 	const isThisVehicleSetEnabled = (vehIndex: number): Store<boolean> => compute(model.painter.trainModeProps.numberVehicleSets, numVehicleSets => numVehicleSets > vehIndex);
 
-	const isTailTabDisabled = compute(model.painter.rideStore, model.painter.colouringEnabledStore, model.painter.modeStore, (r, c, m) => r == undefined || !c || m !== "tail");
-
-	const paintMainColourScheme = (colour: number, part: keyof ColourSet["trackColours"]): void => {
-
-		const ride = model.painter.rideStore.get();
-		if (!ride) return;
-
+	const paintColourScheme = (colour: number, part: keyof ColourSet["trackColours"], schemeNumber: 0 | 1 | 2 | 3): void => {
+		const ride = model.painter.rideStore.get(); if (!ride) return;
 		ColourChange.setRideColourAlt({
 			ride: ride[0].ride(),
 			colour,
 			partNumber: (part == "main" ? 0 : part == "additional" ? 1 : part == "supports" ? 2 : 0),
-			trainNumber: 0,
+			trainNumber: schemeNumber,
 		});
-	}
+	};
 
 	return tabwindow({
 		title,
@@ -95,6 +96,7 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 								dropdown({
 									items: [propKeyStrings.train, propKeyStrings.tail],
 									onChange: i => i === 0 ? model.painter.mode = ("train") : model.painter.mode = ("tail"),
+									selectedIndex: compute(model.painter.modeStore, m => m === "train" ? 0 : 1),
 								})
 							]
 							)
@@ -103,7 +105,7 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 					listview({
 						items: compute(model.ridesToPaint, r => r.map(r => [
 							`${r.ride[0].ride().name}`,
-							// `${r.paintMode}`
+							`${propKeyStrings[r.mode]}`
 						])),
 						columns: [{ header: "Painting Enabled", width: "60%" }, { header: "Colour Mode" }],
 						height: 90,
@@ -158,17 +160,17 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 								label({ text: `Ride main colour scheme:`, visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible") }),
 								colourPicker({
 									colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].main ?? 0),
-									onChange: (colour) => { paintMainColourScheme(colour, "main"); },
+									onChange: (colour) => { paintColourScheme(colour, "main", 0); },
 									visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible")
 								}),
 								colourPicker({
 									colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].additional ?? 0),
-									onChange: (colour) => { paintMainColourScheme(colour, "additional"); },
+									onChange: (colour) => { paintColourScheme(colour, "additional", 0); },
 									visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible")
 								}),
 								colourPicker({
 									colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].supports ?? 0),
-									onChange: (colour) => { paintMainColourScheme(colour, "supports"); },
+									onChange: (colour) => { paintColourScheme(colour, "supports", 0); },
 									visibility: compute(isTrainTabDisabled, d => d ? "hidden" : "visible")
 								}),
 							])
@@ -193,11 +195,216 @@ export const mainWindow = (model: RideViewModel): WindowTemplate => {
 						isDisabled: compute(isTrainTabDisabled, doesTrainExist(2), isThisVehicleSetEnabled(2), (t1, t2, t3) => t1 || !t2 || !t3)
 					}),
 				]
+			}),
+			tab({ // tail mode tab
+				image: 5170, //context.getIcon("link_chain"),
+				spacing: 5,
+				content: [
+					groupbox({ // Top section
+						text: `Tail Mode`,
+						content: [
+							label({
+								padding: [0, 10],
+								text: compute(model.painter.rideStore, model.painter.colouringEnabledStore, (ride, paintingEnabled) => {
+									if (!paintingEnabled || model.painter.mode !== "tail") return "Enable painting & `Tail Mode` on the \nfirst tab to enable Tail Mode options.";
+									return `${ride ? ride[0].ride().name : `No ride`} selected`;
+								})
+							}),
+							horizontal([
+								label({
+									width: "80%",
+									text: "Number of tail colour sets:",
+									visibility: compute(isTailTabDisabled, d => d ? "hidden" : "visible")
+								}),
+								dropdown({
+									width: "20%",
+									visibility: compute(isTailTabDisabled, d => d ? "hidden" : "visible"),
+									items: ["1", "2", "3"],
+									selectedIndex: compute(model.painter.tailModeProps.numberOfTailSets, model.painter.rideStore, (numberTailSets, ride) => numberTailSets - 1),
+									onChange: (i) => {
+										Log.debug(`Number of vehicle sets changed to ${i + 1}.`);
+										model.painter.tailModeProps.setNumberOfTailSets(i + 1 as NumberOfSetsOrColours);
+									}
+								})
+							])
+						]
+					}),
+					groupbox({
+						text: "Colour Schemes",
+						width: "100%",
+						visibility: compute(isTailTabDisabled, d => d ? "none" : "visible"),
+						content: [
+							horizontal([
+								groupbox({
+									text: "Main",
+									padding: colourSetBoxPadding,
+									visibility: compute(isTailTabDisabled, d => d ? "hidden" : "visible"),
+									content: [
+										horizontal([
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].main ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "main", 0); },
+												visibility: compute(isTailTabDisabled, d => d ? "hidden" : "visible")
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].additional ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "additional", 0); },
+												visibility: compute(isTailTabDisabled, d => d ? "hidden" : "visible")
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[0].supports ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "supports", 0); },
+												visibility: compute(isTailTabDisabled, d => d ? "hidden" : "visible")
+											}),
+										])
+
+									]
+								}),
+								groupbox({
+									text: "Tail 1",
+									padding: colourSetBoxPadding,
+									visibility: compute(isTailTabDisabled, d => d ? "none" : "visible"),
+									content: [
+										horizontal([
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[1].main ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "main", 1); },
+												visibility: compute(isTailTabDisabled, d => d ? "none" : "visible")
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[1].additional ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "additional", 1); },
+												visibility: compute(isTailTabDisabled, d => d ? "none" : "visible")
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[1].supports ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "supports", 1); },
+												visibility: compute(isTailTabDisabled, d => d ? "none" : "visible")
+											}),
+										])
+
+									]
+								}),
+								groupbox({
+									text: "Tail 2",
+									padding: colourSetBoxPadding,
+									visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(2), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+									content: [
+										horizontal([
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[2].main ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "main", 2); },
+												visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(2), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[2].additional ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "additional", 2); },
+												visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(2), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[2].supports ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "supports", 2); },
+												visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(2), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+											}),
+										])
+									]
+								}),
+								groupbox({
+									text: "Tail 3",
+									padding: colourSetBoxPadding,
+									visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(3), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+									content: [
+										horizontal([
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[3].main ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "main", 3); },
+												visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(3), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[3].additional ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "additional", 3); },
+												visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(3), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+											}),
+											colourPicker({
+												colour: compute(model.painter.rideStore, (ride) => ride?.[0].ride().colourSchemes[3].supports ?? 0),
+												onChange: (colour) => { paintColourScheme(colour, "supports", 3); },
+												visibility: compute(isTailTabDisabled, isThisTrackSetDisabled(3), (tailTabDisabled, trackSetDisabled) => tailTabDisabled || trackSetDisabled ? "none" : "visible"),
+											}),
+										])
+									]
+								})
+							])
+						]
+					}),
+					groupbox({
+						text: "Create tail pattern",
+						content: [
+							horizontal([
+								label({ text: "Tail end" }),
+								dropdown({
+									items: [propKeyStrings.before, propKeyStrings.after],
+									selectedIndex: compute(model.painter.rideStore, model.painter.tailModeProps.patternChoice, (ride, pattern) => pattern === "before" ? 0 : 1),
+									onChange: (index) => model.painter.tailModeProps.setPatternChoice(index === 0 ? "before" : "after")
+								})
+							]),
+							horizontal({
+								height: 30,
+								content: [
+
+									button({
+										text: "Main",
+										onClick: () => model.painter.tailModeProps.addToPattern({ pattern: model.painter.tailModeProps.patternChoice.get(), value: 0 })
+									}),
+									button({
+										text: "Set 1",
+										onClick: () => model.painter.tailModeProps.addToPattern({ pattern: model.painter.tailModeProps.patternChoice.get(), value: 1 })
+									}),
+									button({
+										text: "Set 2",
+										onClick: () => model.painter.tailModeProps.addToPattern({ pattern: model.painter.tailModeProps.patternChoice.get(), value: 2 })
+									}),
+									button({
+										text: "Set 3",
+										onClick: () => model.painter.tailModeProps.addToPattern({ pattern: model.painter.tailModeProps.patternChoice.get(), value: 3 })
+									}),
+									button({
+										text: "Delete",
+										onClick: () => model.painter.tailModeProps.removeFromPattern({ pattern: model.painter.tailModeProps.patternChoice.get() })
+									}),
+								]
+							}),
+							horizontal({
+								height: 30,
+								padding: [5, 0, 0, 0],
+								content: [
+									label({ text: `Before:`, width: "20%" }),
+									label({ text: compute(model.painter.tailModeProps.patternBefore, (pattern) => pattern.join(", ")) }),
+								]
+							}),
+							horizontal({
+								height: 30,
+								content: [
+									label({ text: `After:`, width: "20%" }),
+									label({ text: compute(model.painter.tailModeProps.patternAfter, (pattern) => pattern.join(", ")) }),
+								]
+							}),
+							button({
+								text: "Clear patterns",
+								onClick: () => {
+									model.painter.tailModeProps.setPattern({ pattern: "before", values: [] });
+									model.painter.tailModeProps.setPattern({ pattern: "after", values: [] });
+								}
+
+							})
+
+						]
+					})
+				]
 			})
 		]
-
 	});
 };
+
 
 function labelCheckbox(params: LabelParams & CheckboxParams): WidgetCreator<FlexiblePosition> {
 	return combinedLabelCheckbox(controlsLabelWidth, params);
