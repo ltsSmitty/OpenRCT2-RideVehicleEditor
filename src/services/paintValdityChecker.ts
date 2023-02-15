@@ -141,11 +141,11 @@ export class PaintValidityChecker {
         // remove tailModeStartAfterSegment number of segments from the end of the array
         segmentsToPaintAfter.splice(tailModeEndAfterSegment);
 
-        const beforeSegmentPaintProps: SegmentPaintProps[] = segmentsToPaintBefore.map(props => this.composeFinalTailPaintProps(
-            {
-                trackSegmentProps: props,
-                pattern: patternBefore.get()
-            }));
+        // const beforeSegmentPaintProps: SegmentPaintProps[] = segmentsToPaintBefore.map(props => this.composeFinalTailPaintProps(
+        //     {
+        //         trackSegmentProps: props,
+        //         pattern: patternBefore.get()
+        //     }));
 
         // this.segmentsToPaint = segmentsToPaint.map((props) => this.composeFinalTrainPaintProps({ trackSegmentProps: props }));
     }
@@ -245,7 +245,8 @@ export class PaintValidityChecker {
         return finalPaintProps;
     }
 
-    composeFinalTailPaintProps(params: { trackSegmentProps: TrackSegmentProps, pattern: PatternValue[] }): SegmentPaintProps {
+    // composeFinalTailPaintProps(params: { trackSegmentProps: TrackSegmentProps, pattern: PatternValue[] }): SegmentPaintProps {
+    composeFinalTailPaintProps(params: { trackSegmentProps: TrackSegmentProps, pattern: PatternValue[] }): void {
         const beforeTrackColours = this.paintProps.tailModeProps.patternBefore.get();
         const afterTrackColours = this.paintProps.tailModeProps.patternAfter.get();
     }

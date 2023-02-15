@@ -1,4 +1,4 @@
-import { store, Store } from "openrct2-flexui";
+import { store, Store, Colour } from "openrct2-flexui";
 import { NumberOfSetsOrColours } from "./PaintPropsObj";
 import * as Log from "../utilities/logger";
 import _ from "lodash-es";
@@ -8,8 +8,8 @@ export type PaintStartProps = "withFirstCar" | "afterLastCar" | "beforeNSegments
 export type PaintEndProps = "afterFirstCar" | "afterLastCar" | "perpetual" | "afterNSegments";
 
 export type ColourSet = {
-    vehicleColours: { body: number, trim: number, tertiary: number },
-    trackColours: { main: number, additional: number, supports: number };
+    vehicleColours: { body: Colour, trim: Colour, tertiary: Colour },
+    trackColours: { main: Colour, additional: Colour, supports: Colour };
 };
 
 export type ThreeTuple<T> = [T, T, T];
